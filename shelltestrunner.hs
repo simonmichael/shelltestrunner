@@ -63,15 +63,21 @@ shelltest = do
   x <- optionMaybe expectedexitcode
   return ShellTest{filename=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
-commandline,input,expectedoutput,expectederror,delimiter,line :: Parser String
-commandline = line
-input = string "<<<\n" >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
-expectedoutput = try $ string ">>>" >> optional (char '1') >> char '\n' >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
-expectederror = string ">>>2" >> (liftM $ unlines.tail) (line `manyTill` (lookAhead delimiter)) -- why tail ?
-delimiter = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
+line,commandline,delimiter,input,expectedoutput,expectederror :: Parser String
+
 line =  do
   l <- anyChar `manyTill` newline
   if take 1 (strip l) == ";" then line else return l
+
+commandline = line
+
+delimiter = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
+
+input = string "<<<\n" >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
+
+expectedoutput = try $ string ">>>" >> optional (char '1') >> char '\n' >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
+
+expectederror = string ">>>2" >> (liftM $ unlines.tail) (line `manyTill` (lookAhead delimiter)) -- why tail ?
 
 expectedexitcode :: Parser ExitCode
 expectedexitcode = do
