@@ -11,6 +11,7 @@ See shelltestrunner.cabal.
 
 module Main
 where
+--import Control.Concurrent (forkIO)
 import Control.Monad (liftM,when)
 import Data.List (partition)
 import Data.Maybe (fromMaybe,fromJust)
@@ -20,6 +21,7 @@ import System.Environment (withArgs)
 import System.Exit (ExitCode(..),exitWith)
 import System.IO (hGetContents, hPutStr, stderr)
 import System.Process (runInteractiveCommand, waitForProcess)
+-- import System.Process (createProcess, shell, CreateProcess(..), StdStream(..))
 import Test.Framework (defaultMain)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
@@ -95,6 +97,7 @@ shelltest :: Parser ShellTest
 shelltest = do
   st <- getParserState
   let f = sourceName $ statePos st
+  many commentline
   c <- commandline
   i <- optionMaybe input
   o <- optionMaybe expectedoutput
@@ -102,11 +105,15 @@ shelltest = do
   x <- optionMaybe expectedexitcode
   return ShellTest{filename=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
-line,commandline,delimiter,input,expectedoutput,expectederror :: Parser String
+line,commentline,commandline,delimiter,input,expectedoutput,expectederror :: Parser String
 
-line =  do
-  l <- anyChar `manyTill` newline
-  if take 1 (strip l) == ";" then line else return l
+line = anyChar `manyTill` newline
+
+commentline = char ';' >> anyChar `manyTill` newline
+
+-- noncommentline =  do
+--   l <- line
+--   if take 1 (strip l) == ";" then line else return l
 
 commandline = line
 
@@ -127,11 +134,16 @@ runShellTest exe ShellTest{
   let cmd = unwords [exe,c]
       (i',o',e',x') = (fromMaybe "" i, fromMaybe "" o, fromMaybe "" e, fromMaybe ExitSuccess x)
   -- printf "%s .. " f; hFlush stdout
+
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
+  -- forkIO $ hPutStr ih i' -- separate thread in case cmd does not read stdin
+  -- (Just ih,Just oh,Just eh,ph) <- createProcess $ (shell cmd){std_in=CreatePipe,std_out=CreatePipe,std_err=CreatePipe}
   hPutStr ih i'
   out <- hGetContents oh
   err <- hGetContents eh
+  -- on a mac, this hangs if cmd does not read stdin (http://hackage.haskell.org/trac/ghc/ticket/3369)
   exit <- waitForProcess ph
+
   let (outputok, errorok, exitok) = (out==o', err==e', exit==x')
   if outputok && errorok && exitok 
    then do

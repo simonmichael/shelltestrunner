@@ -1,7 +1,7 @@
 name:           shelltestrunner
 version:        0.3
 category:       Testing
-synopsis:       A handy tool for testing command-line programs.
+synopsis:       A tool for testing command-line programs.
 description:
                 Run a given program through "shell" tests specifed by
                 one or more test files, each of which specifies:
@@ -10,10 +10,9 @@ description:
                 was extracted from the hledger project, and inspired
                 by the tests in John Wiegley's ledger project.
 
-                This uses test-framework's test runner.  Output order
-                is currently a bit mixed up. Any command-line options
-                are passed through to the test-framework runner, but
-                they must not contain spaces, so use eg -tpattern not
+                This uses test-framework's test runner. Any command-line
+                options are passed through to the test-framework runner,
+                but they must not contain spaces, so use eg -tpattern not
                 -t pattern. You may be able to get a big speedup by
                 running tests in parallel: try -j8.
 
@@ -23,6 +22,7 @@ description:
 
                 Test file format:
 
+                ; 0 or more comment lines beginning with ;
                 -opt1 -opt2 arg1 arg2
                 <<<
                 0 or more lines of input
@@ -33,11 +33,16 @@ description:
                 >>>=
                 expected numeric exit code
 
-                Lines whose first non-whitespace character is ; are
-                ignored, mostly.  The first line is the command line,
-                to be appended to the executable name.  All remaining
-                fields are optional; when omitted they are assumed
-                to be "", "", "", and 0 respectively.
+                Initial lines beginning with ; are ignored.  The next line
+                is the command-line arguments which will be appended to
+                the executable name.  All remaining fields are optional;
+                when omitted they are assumed to be "", "", "", and 0
+                respectively.
+
+                Issues:
+                
+                - on mac, will hang if executable does not read stdin
+                - output order is mixed up
 
 license:        GPL
 license-file:   LICENSE
