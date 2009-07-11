@@ -80,11 +80,7 @@ expectedoutput = try $ string ">>>" >> optional (char '1') >> newline >> (liftM 
 expectederror = try $ string ">>>2\n" >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
 
 expectedexitcode :: Parser ExitCode
-expectedexitcode = do
-  string "<<<"
-  c <- liftM (toExitCode.read) line
-  string ">>>"
-  return c
+expectedexitcode = string ">>>=" >> (liftM (toExitCode.read.unlines) (line `manyTill` eof))
 
 runShellTest :: FilePath -> ShellTest -> IO Bool
 runShellTest exe ShellTest{
