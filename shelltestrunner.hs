@@ -75,9 +75,9 @@ delimiter = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
 
 input = string "<<<\n" >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
 
-expectedoutput = try $ string ">>>" >> optional (char '1') >> char '\n' >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
+expectedoutput = try $ string ">>>" >> optional (char '1') >> newline >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
 
-expectederror = string ">>>2" >> (liftM $ unlines.tail) (line `manyTill` (lookAhead delimiter)) -- why tail ?
+expectederror = try $ string ">>>2\n" >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
 
 expectedexitcode :: Parser ExitCode
 expectedexitcode = do
