@@ -145,7 +145,7 @@ runShellTest exe ShellTest{
      return False
 
 printExpectedActual :: String -> String -> String -> IO ()
-printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:\n%s**Got:\n%s" f e a
+printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:\n%s**Got %s:\n%s" f e f a
 
 toExitCode :: Int -> ExitCode
 toExitCode 0 = ExitSuccess
