@@ -30,7 +30,7 @@ strace :: Show a => a -> a
 strace a = trace (show a) a
 
 
-version = "0.2" -- sync with .cabal
+version = "0.3" -- sync with .cabal
 
 data ArgId = HelpFlag
            | VersionFlag

@@ -1,5 +1,5 @@
 name:           shelltestrunner
-version:        0.2
+version:        0.3
 category:       Testing
 synopsis:       A handy tool for testing command-line programs.
 description:
