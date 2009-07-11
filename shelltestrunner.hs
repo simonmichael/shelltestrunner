@@ -30,8 +30,7 @@ Test file format:
 0 or more lines of expected output
 >>>2
 0 or more lines of expected error output
----
-expected numeric exit code
+<<<expected numeric exit code>>>
 @
 
 Lines whose first non-whitespace character is ; are ignored, mostly.
