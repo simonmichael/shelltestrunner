@@ -43,6 +43,7 @@ description:
                 
                 - on mac, will hang if executable does not read stdin
                 - output order is mixed up
+                - can't test input/ouput which does not end with newline
 
 license:        GPL
 license-file:   LICENSE
