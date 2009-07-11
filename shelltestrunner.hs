@@ -3,40 +3,7 @@
 
 shelltestrunner - a handy tool for testing command-line programs.
 
-Run a given program through "shell" tests specifed by one or more test
-files, each of which specifies: command-line arguments, input,
-expected output, expected stderr output, and expected exit code.  This
-was extracted from the hledger project, and inspired by the tests in
-John Wiegley's ledger project.
-
-This uses test-framework's test runner.  Output order is currently a
-bit mixed up. Any command-line options are passed through to the
-test-framework runner, but they must not contain spaces, so use eg
--tpattern not -t pattern. You may be able to get a big speedup by
-running tests in parallel: try -j8.
-
-Usage: 
-
-$ ghc --make -threaded ./shelltestrunner.hs
-$ ./shelltestrunner [testrunneropts] executable testfile1 [testfile2 ...]
-
-Test file format:
-
-@
--opt1 -opt2 arg1 arg2
-<<<
-0 or more lines of input
->>>
-0 or more lines of expected output
->>>2
-0 or more lines of expected error output
-<<<expected numeric exit code>>>
-@
-
-Lines whose first non-whitespace character is ; are ignored, mostly.
-The first line is the command line, to be appended to the executable
-name.  All remaining fields are optional; when omitted they are
-assumed to be "", "", "", and 0 respectively.
+See shelltestrunner.cabal.
 
 (c) Simon Michael 2009, released under GNU GPLv3
 
