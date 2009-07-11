@@ -54,6 +54,7 @@ extra-source-files:
 
 executable shelltestrunner
   main-is:        shelltestrunner.hs
+  ghc-options:    -Wall -threaded
   build-depends:
                  base >= 3 && < 5
                 ,parsec
