@@ -1,7 +1,7 @@
 #!/usr/bin/env runhaskell
 {-
 
-shelltestrunner - a tool for testing command-line programs.
+shelltestrunner - a handy tool for testing command-line programs.
 
 Run a given program through "shell" tests specifed by one or more test
 files, each of which specifies: command-line arguments, input,
@@ -34,12 +34,9 @@ Test file format:
 @
 
 Lines whose first non-whitespace character is ; are ignored, mostly.
-The first line is the command line, to be appended to the executable name.
-All remaining fields line are optional; when omitted they are assumed
-to be "", "", "", and 0 respectively.
-
-Issues:
-
+The first line is the command line, to be appended to the executable
+name.  All remaining fields are optional; when omitted they are
+assumed to be "", "", "", and 0 respectively.
 
 (c) Simon Michael 2009, released under GNU GPLv3
 
