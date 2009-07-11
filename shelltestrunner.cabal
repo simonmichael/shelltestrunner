@@ -1,0 +1,63 @@
+name:           shelltestrunner
+version:        0.1
+category:       Testing
+synopsis:       A handy tool for testing command-line programs.
+description:
+                Run a given program through "shell" tests specifed by
+                one or more test files, each of which specifies:
+                command-line arguments, input, expected output,
+                expected stderr output, and expected exit code.  This
+                was extracted from the hledger project, and inspired
+                by the tests in John Wiegley's ledger project.
+
+                This uses test-framework's test runner.  Output order
+                is currently a bit mixed up. Any command-line options
+                are passed through to the test-framework runner, but
+                they must not contain spaces, so use eg -tpattern not
+                -t pattern. You may be able to get a big speedup by
+                running tests in parallel: try -j8.
+
+                Usage: 
+
+                $ shelltestrunner [testrunneropts] executable testfile1 [testfile2 ...]
+
+                Test file format:
+
+                -opt1 -opt2 arg1 arg2
+                <<<
+                0 or more lines of input
+                >>>
+                0 or more lines of expected output
+                >>>2
+                0 or more lines of expected error output
+                <<<expected numeric exit code>>>
+
+                Lines whose first non-whitespace character is ; are
+                ignored, mostly.  The first line is the command line,
+                to be appended to the executable name.  All remaining
+                fields are optional; when omitted they are assumed
+                to be "", "", "", and 0 respectively.
+
+license:        GPL
+-- license-file:   LICENSE
+author:         Simon Michael <simon@joyful.com>
+maintainer:     Simon Michael <simon@joyful.com>
+homepage:       http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner
+-- bug-reports:    
+stability:      experimental
+tested-with:    GHC==6.10
+cabal-version:  >= 1.2
+build-type:     Simple
+
+extra-tmp-files:
+extra-source-files:
+
+executable shelltestrunner
+  main-is:        shelltestrunner.hs
+  build-depends:
+                 base >= 3 && < 5
+                ,parsec
+                ,process
+                ,HUnit
+                ,test-framework
+                ,test-framework-hunit >= 0.2 && < 0.3
