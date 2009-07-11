@@ -25,9 +25,10 @@ import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
 import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
--- import Debug.Trace
--- strace :: Show a => a -> a
--- strace a = trace (show a) a
+import Debug.Trace
+strace :: Show a => a -> a
+strace a = trace (show a) a
+
 
 data ShellTest = ShellTest {
      filename         :: String
