@@ -13,8 +13,9 @@ module Main
 where
 import Control.Monad (liftM,when)
 import Data.List (partition)
-import Data.Maybe (fromMaybe)
+import Data.Maybe (fromMaybe,fromJust)
 import qualified Test.HUnit (Test)
+import System.Console.ParseArgs
 import System.Environment (getArgs,withArgs)
 import System.Exit (ExitCode(..))
 import System.IO (hGetContents, hPutStr, stderr)
@@ -37,14 +38,34 @@ data ShellTest = ShellTest {
     ,exitCodeExpected :: Maybe ExitCode
     } deriving (Show)
 
+data ArgId = HelpFlag
+           | ExecutableArg
+             deriving (Ord, Eq, Show)
+
+argspec :: [Arg ArgId]
+argspec = [
+  Arg {argIndex = HelpFlag,
+       argName  = Just "help",
+       argAbbr  = Just 'h',
+       argData  = Nothing,
+       argDesc  = "show help"
+      }
+ ,Arg {argIndex = ExecutableArg,
+       argName  = Nothing,
+       argAbbr  = Nothing,
+       argData  = argDataRequired "executable" ArgtypeString,
+       argDesc  = "executable program or shell command to test, should accept stdin"
+      }
+ ]
+
 main :: IO ()
 main = do
-  args <- getArgs
-  let (opts,args') = partition ((=="-").take 1) args
-      args'' = if null args' && ("--help" `elem` opts) then [""] else args' -- temp
-      (exe:files) = args''
-  shelltests <- mapM parseShellTest files
-  withArgs opts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest exe) shelltests
+  args <- parseArgsIO ArgsInterspersed argspec
+  when (gotArg args HelpFlag) $ usageError args "" -- never gets this far
+  let (unprocessedopts, testfiles) = partition ((=="-").take 1) $ argsRest args
+      exe = fromJust $ getArgString args ExecutableArg
+  shelltests <- mapM parseShellTest testfiles
+  withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest exe) shelltests
 
 shellTestToHUnitTest :: FilePath -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest exe t = filename t ~: do {r <- runShellTest exe t; assertBool "" r}

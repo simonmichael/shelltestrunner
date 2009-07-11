@@ -63,3 +63,4 @@ executable shelltestrunner
                 ,HUnit
                 ,test-framework
                 ,test-framework-hunit >= 0.2 && < 0.3
+                ,parseargs >= 0.1 && < 0.2
