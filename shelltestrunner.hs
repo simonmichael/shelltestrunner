@@ -29,7 +29,7 @@ import Debug.Trace
 strace :: Show a => a -> a
 strace a = trace (show a) a
 
-
+version :: String
 version = "0.3" -- sync with .cabal
 
 data ArgId = HelpFlag
@@ -79,8 +79,10 @@ main = do
   shelltests <- mapM parseShellTest testfiles
   withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest exe) shelltests
 
+printVersion :: IO ()
 printVersion = putStrLn version >> exitWith ExitSuccess
 
+printHelp :: Args ArgId -> IO ()
 printHelp args = putStrLn (argsUsage args) >> exitWith ExitSuccess
 
 shellTestToHUnitTest :: FilePath -> ShellTest -> Test.HUnit.Test
