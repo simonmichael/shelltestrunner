@@ -1,0 +1,4 @@
+; with no args, output should contain usage
+ 2>&1 | grep -q 'usage:'
+>>>=
+0

@@ -1,0 +1,4 @@
+; with --help, output should contain usage
+--help any old -args 2>&1 >/dev/null | grep -q "usage:"
+>>>=
+0
