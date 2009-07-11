@@ -39,7 +39,7 @@ description:
                 to be "", "", "", and 0 respectively.
 
 license:        GPL
--- license-file:   LICENSE
+license-file:   LICENSE
 author:         Simon Michael <simon@joyful.com>
 maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner
