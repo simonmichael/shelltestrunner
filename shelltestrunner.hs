@@ -17,7 +17,7 @@ import Data.Maybe (fromMaybe,fromJust)
 import qualified Test.HUnit (Test)
 import System.Console.ParseArgs hiding (args)
 import System.Environment (withArgs)
-import System.Exit (ExitCode(..))
+import System.Exit (ExitCode(..),exitWith)
 import System.IO (hGetContents, hPutStr, stderr)
 import System.Process (runInteractiveCommand, waitForProcess)
 import Test.Framework (defaultMain)
@@ -30,16 +30,10 @@ strace :: Show a => a -> a
 strace a = trace (show a) a
 
 
-data ShellTest = ShellTest {
-     filename         :: String
-    ,command          :: String
-    ,stdin            :: Maybe String
-    ,stdoutExpected   :: Maybe String
-    ,stderrExpected   :: Maybe String
-    ,exitCodeExpected :: Maybe ExitCode
-    } deriving (Show)
+version = "0.2" -- sync with .cabal
 
 data ArgId = HelpFlag
+           | VersionFlag
            | ExecutableArg
              deriving (Ord, Eq, Show)
 
@@ -51,6 +45,12 @@ argspec = [
        argData  = Nothing,
        argDesc  = "show help"
       }
+ ,Arg {argIndex = VersionFlag,
+       argName  = Just "version",
+       argAbbr  = Just 'V',
+       argData  = Nothing,
+       argDesc  = "show version"
+      }
  ,Arg {argIndex = ExecutableArg,
        argName  = Nothing,
        argAbbr  = Nothing,
@@ -59,14 +59,29 @@ argspec = [
       }
  ]
 
+data ShellTest = ShellTest {
+     filename         :: String
+    ,command          :: String
+    ,stdin            :: Maybe String
+    ,stdoutExpected   :: Maybe String
+    ,stderrExpected   :: Maybe String
+    ,exitCodeExpected :: Maybe ExitCode
+    } deriving (Show)
+
 main :: IO ()
 main = do
   args <- parseArgsIO ArgsInterspersed argspec
-  when (gotArg args HelpFlag) $ usageError args "" -- never gets this far
+  -- parseargs issue: if there's no exe, exits at first gotArg
+  when (gotArg args VersionFlag) printVersion
+  when (gotArg args HelpFlag) $ printHelp args
   let (unprocessedopts, testfiles) = partition ((=="-").take 1) $ argsRest args
       exe = fromJust $ getArgString args ExecutableArg
   shelltests <- mapM parseShellTest testfiles
   withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest exe) shelltests
+
+printVersion = putStrLn version >> exitWith ExitSuccess
+
+printHelp args = putStrLn (argsUsage args) >> exitWith ExitSuccess
 
 shellTestToHUnitTest :: FilePath -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest exe t = filename t ~: do {r <- runShellTest exe t; assertBool "" r}
