@@ -21,7 +21,7 @@ description:
                 Test file format:
 
                 @
-                ; 0 or more comment lines beginning with ;
+                # 0 or more comment lines beginning with #
                 -opt1 -opt2 arg1 arg2 # command line, executable will be prepended
                 <<<
                 0 or more lines of input

@@ -109,11 +109,11 @@ line,commentline,commandline,delimiter,input,expectedoutput,expectederror :: Par
 
 line = anyChar `manyTill` newline
 
-commentline = char ';' >> anyChar `manyTill` newline
+commentline = char '#' >> anyChar `manyTill` newline
 
 -- noncommentline =  do
 --   l <- line
---   if take 1 (strip l) == ";" then line else return l
+--   if take 1 (strip l) == "#" then line else return l
 
 commandline = line
 
