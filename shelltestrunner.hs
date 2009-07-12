@@ -36,6 +36,7 @@ version = "0.3" -- sync with .cabal
 
 data ArgId = HelpFlag
            | VersionFlag
+           | DebugFlag
            | ExecutableArg
              deriving (Ord, Eq, Show)
 
@@ -53,6 +54,12 @@ argspec = [
        argData  = Nothing,
        argDesc  = "show version"
       }
+ ,Arg {argIndex = DebugFlag,
+       argName  = Just "debug",
+       argAbbr  = Just 'd',
+       argData  = Nothing,
+       argDesc  = "show verbose debugging output"
+      }
  ,Arg {argIndex = ExecutableArg,
        argName  = Nothing,
        argAbbr  = Nothing,
@@ -62,8 +69,8 @@ argspec = [
  ]
 
 data ShellTest = ShellTest {
-     filename         :: String
-    ,command          :: String
+     testname         :: String
+    ,commandargs      :: String
     ,stdin            :: Maybe String
     ,stdoutExpected   :: Maybe String
     ,stderrExpected   :: Maybe String
@@ -73,13 +80,14 @@ data ShellTest = ShellTest {
 main :: IO ()
 main = do
   args <- parseArgsIO ArgsInterspersed argspec
-  -- parseargs issue: if there's no exe, exits at first gotArg
-  when (gotArg args VersionFlag) printVersion
-  when (gotArg args HelpFlag) $ printHelp args
+  -- parseargs issue: exits at first gotArg if there's no exe argument
+  when (args `gotArg` VersionFlag) printVersion
+  when (args `gotArg` HelpFlag) $ printHelp args
   let (unprocessedopts, testfiles) = partition ((=="-").take 1) $ argsRest args
-      exe = fromJust $ getArgString args ExecutableArg
-  shelltests <- mapM parseShellTest testfiles
-  withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest exe) shelltests
+  when (args `gotArg` DebugFlag) $ do
+         putStrLn $ "testing executable: " ++ (show $ fromJust $ getArgString args ExecutableArg)
+  shelltests <- mapM (parseShellTest args) testfiles
+  withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests
 
 printVersion :: IO ()
 printVersion = putStrLn version >> exitWith ExitSuccess
@@ -87,54 +95,62 @@ printVersion = putStrLn version >> exitWith ExitSuccess
 printHelp :: Args ArgId -> IO ()
 printHelp args = putStrLn (argsUsage args) >> exitWith ExitSuccess
 
-shellTestToHUnitTest :: FilePath -> ShellTest -> Test.HUnit.Test
-shellTestToHUnitTest exe t = filename t ~: do {r <- runShellTest exe t; assertBool "" r}
+-- parsing
 
-parseShellTest :: FilePath -> IO ShellTest
-parseShellTest = liftM (either (error.show) id) . parseFromFile shelltest
+parseShellTest :: Args ArgId -> FilePath -> IO ShellTest
+parseShellTest args f = do
+  t <- liftM (either (error.show) id) $ parseFromFile shelltestp f
+  when (args `gotArg` DebugFlag) $ do
+    putStrLn $ "parsing file: " ++ f
+    putStrLn $ "parsed test: " ++ show t
+  return t
 
-shelltest :: Parser ShellTest
-shelltest = do
+shelltestp :: Parser ShellTest
+shelltestp = do
   st <- getParserState
   let f = sourceName $ statePos st
-  many commentline
-  c <- commandline
-  i <- optionMaybe input
-  o <- optionMaybe expectedoutput
-  e <- optionMaybe expectederror
-  x <- optionMaybe expectedexitcode
-  return ShellTest{filename=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  many commentlinep
+  c <- commandargsp
+  i <- optionMaybe inputp
+  o <- optionMaybe expectedoutputp
+  e <- optionMaybe expectederrorp
+  x <- optionMaybe expectedexitcodep
+  return ShellTest{testname=f,commandargs=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
-line,commentline,commandline,delimiter,input,expectedoutput,expectederror :: Parser String
+linep,commentlinep,commandargsp,delimiterp,inputp,expectedoutputp,expectederrorp :: Parser String
 
-line = anyChar `manyTill` newline
+linep = anyChar `manyTill` newline
 
-commentline = char '#' >> anyChar `manyTill` newline
+commentlinep = char '#' >> anyChar `manyTill` newline
 
--- noncommentline =  do
---   l <- line
---   if take 1 (strip l) == "#" then line else return l
+commandargsp = linep
 
-commandline = line
+delimiterp = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
 
-delimiter = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
+inputp = string "<<<\n" >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
-input = string "<<<\n" >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
+expectedoutputp = try $ string ">>>" >> optional (char '1') >> newline >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
-expectedoutput = try $ string ">>>" >> optional (char '1') >> newline >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
+expectederrorp = try $ string ">>>2\n" >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
-expectederror = try $ string ">>>2\n" >> (liftM unlines) (line `manyTill` (lookAhead delimiter))
+expectedexitcodep :: Parser ExitCode
+expectedexitcodep = string ">>>=" >> (liftM (toExitCode.read.unlines) (linep `manyTill` eof))
 
-expectedexitcode :: Parser ExitCode
-expectedexitcode = string ">>>=" >> (liftM (toExitCode.read.unlines) (line `manyTill` eof))
+-- running
 
-runShellTest :: FilePath -> ShellTest -> IO Bool
-runShellTest exe ShellTest{
-    filename=_,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} = do
-  let cmd = unwords [exe,c]
+shellTestToHUnitTest :: Args ArgId -> ShellTest -> Test.HUnit.Test
+shellTestToHUnitTest args t = testname t ~: do {r <- runShellTest args t; assertBool "" r}
+
+runShellTest :: Args ArgId -> ShellTest -> IO Bool
+runShellTest args ShellTest{testname=_,commandargs=c,stdin=i,stdoutExpected=o,
+                            stderrExpected=e,exitCodeExpected=x} = do
+  let exe = fromJust $ getArgString args ExecutableArg
+      cmd = unwords [exe,c]
       (i',o',e',x') = (fromMaybe "" i, fromMaybe "" o, fromMaybe "" e, fromMaybe ExitSuccess x)
   -- printf "%s .. " f; hFlush stdout
 
+  when (args `gotArg` DebugFlag) $ do
+    putStrLn $ "running command: " ++ cmd
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
   -- forkIO $ hPutStr ih i' -- separate thread in case cmd does not read stdin
   -- (Just ih,Just oh,Just eh,ph) <- createProcess $ (shell cmd){std_in=CreatePipe,std_out=CreatePipe,std_err=CreatePipe}
@@ -142,6 +158,7 @@ runShellTest exe ShellTest{
   out <- hGetContents oh
   err <- hGetContents eh
   -- on a mac, this hangs if cmd does not read stdin (http://hackage.haskell.org/trac/ghc/ticket/3369)
+  -- not always ?
   exit <- waitForProcess ph
 
   let (outputok, errorok, exitok) = (out==o', err==e', exit==x')
@@ -158,6 +175,8 @@ runShellTest exe ShellTest{
 
 printExpectedActual :: String -> String -> String -> IO ()
 printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:\n%s**Got %s:\n%s" f e f a
+
+-- utils
 
 toExitCode :: Int -> ExitCode
 toExitCode 0 = ExitSuccess
