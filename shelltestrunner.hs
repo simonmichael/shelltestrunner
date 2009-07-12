@@ -11,7 +11,7 @@ See shelltestrunner.cabal.
 
 module Main
 where
---import Control.Concurrent (forkIO)
+import Control.Concurrent (forkIO)
 import Control.Monad (liftM,when)
 import Data.List (partition)
 import Data.Maybe (fromMaybe,fromJust)
@@ -142,35 +142,27 @@ shellTestToHUnitTest :: Args ArgId -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args t = testname t ~: do {r <- runShellTest args t; assertBool "" r}
 
 runShellTest :: Args ArgId -> ShellTest -> IO Bool
-runShellTest args ShellTest{testname=_,commandargs=c,stdin=i,stdoutExpected=o,
+runShellTest args ShellTest{testname=_,commandargs=c,stdin=i',stdoutExpected=o,
                             stderrExpected=e,exitCodeExpected=x} = do
   let exe = fromJust $ getArgString args ExecutableArg
       cmd = unwords [exe,c]
-      (i',o',e',x') = (fromMaybe "" i, fromMaybe "" o, fromMaybe "" e, fromMaybe ExitSuccess x)
-  -- printf "%s .. " f; hFlush stdout
-
-  when (args `gotArg` DebugFlag) $ do
-    putStrLn $ "running command: " ++ cmd
+      (i,o_expected,e_expected,x_expected) = (fromMaybe "" i', fromMaybe "" o, fromMaybe "" e, fromMaybe ExitSuccess x)
+  when (args `gotArg` DebugFlag) $ putStrLn $ "running command: " ++ cmd
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
-  -- forkIO $ hPutStr ih i' -- separate thread in case cmd does not read stdin
-  -- (Just ih,Just oh,Just eh,ph) <- createProcess $ (shell cmd){std_in=CreatePipe,std_out=CreatePipe,std_err=CreatePipe}
-  hPutStr ih i'
-  out <- hGetContents oh
-  err <- hGetContents eh
-  -- on a mac, this hangs if cmd does not read stdin (http://hackage.haskell.org/trac/ghc/ticket/3369)
-  -- not always ?
-  exit <- waitForProcess ph
-
-  let (outputok, errorok, exitok) = (out==o', err==e', exit==x')
-  if outputok && errorok && exitok 
+  -- hPutStr will block until cmd has finished reading, I believe. Use a
+  -- separate thread since cmd may not read stdin.
+  forkIO $ hPutStr ih i
+  o_actual <- hGetContents oh
+  e_actual <- hGetContents eh
+  x_actual <- waitForProcess ph
+  let (o_ok, e_ok, x_ok) = (o_actual==o_expected, e_actual==e_expected, x_actual==x_expected)
+  if o_ok && e_ok && x_ok
    then do
-     -- putStrLn "ok"
      return True 
    else do
-     -- hPutStr stderr $ printf "FAIL\n"
-     when (not outputok) $ printExpectedActual "stdout" o' out
-     when (not errorok)  $ printExpectedActual "stderr" e' err
-     when (not exitok)   $ printExpectedActual "exit code" (show (fromExitCode x')++"\n") (show (fromExitCode exit)++"\n")
+     when (not o_ok) $ printExpectedActual "stdout" o_expected o_actual
+     when (not e_ok) $ printExpectedActual "stderr" e_expected e_actual
+     when (not x_ok) $ printExpectedActual "exit code" (show (fromExitCode x_expected)++"\n") (show (fromExitCode x_actual)++"\n")
      return False
 
 printExpectedActual :: String -> String -> String -> IO ()
