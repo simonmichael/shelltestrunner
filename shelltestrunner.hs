@@ -86,6 +86,8 @@ main = do
   let (unprocessedopts, testfiles) = partition ((=="-").take 1) $ argsRest args
   when (args `gotArg` DebugFlag) $ do
          putStrLn $ "testing executable: " ++ (show $ fromJust $ getArgString args ExecutableArg)
+         putStrLn $ "unprocessed options: " ++ show unprocessedopts
+         putStrLn $ "test files: " ++ show testfiles
   shelltests <- mapM (parseShellTest args) testfiles
   withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests
 
@@ -142,11 +144,13 @@ shellTestToHUnitTest :: Args ArgId -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args t = testname t ~: do {r <- runShellTest args t; assertBool "" r}
 
 runShellTest :: Args ArgId -> ShellTest -> IO Bool
-runShellTest args ShellTest{testname=_,commandargs=c,stdin=i,stdoutExpected=o_expected,
+runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_expected,
                             stderrExpected=e_expected,exitCodeExpected=x_expected} = do
   let exe = fromJust $ getArgString args ExecutableArg
       cmd = unwords [exe,c]
-  when (args `gotArg` DebugFlag) $ putStrLn $ "running command: " ++ cmd
+  when (args `gotArg` DebugFlag) $ do
+    putStrLn $ "running test: " ++ n
+    putStrLn $ "running command: " ++ cmd
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
   -- hPutStr will block until cmd has finished reading, I believe. Use a
   -- separate thread since cmd may not read stdin.
