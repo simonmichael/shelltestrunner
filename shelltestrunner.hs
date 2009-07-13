@@ -79,7 +79,7 @@ data ShellTest = ShellTest {
 
 main :: IO ()
 main = do
-  args <- parseArgsIO ArgsInterspersed argspec
+  args <- parseArgsIO ArgsTrailing argspec
   -- parseargs issue: exits at first gotArg if there's no exe argument
   when (args `gotArg` VersionFlag) printVersion
   when (args `gotArg` HelpFlag) $ printHelp args
