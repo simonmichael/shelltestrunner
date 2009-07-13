@@ -181,11 +181,11 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
     putStrLn $ "running test: " ++ n
     putStrLn $ "running command: " ++ cmd
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
-  -- hPutStr will block until cmd has finished reading, I believe. Use a
-  -- separate thread since cmd may not read stdin.
   when (isJust i) $ forkIO (hPutStr ih $ fromJust i) >> return ()
   o_actual <- hGetContents oh
   e_actual <- hGetContents eh
+  -- force some evaluation here to avoid occasional waitForProcess hangs. cf http://hackage.haskell.org/trac/ghc/ticket/3369
+  putStr $ printf "%d,%d" (length o_actual) (length e_actual)                                                                                                                  
   x_actual <- waitForProcess ph
   let o_ok = maybe True (either (o_actual `matches`) (o_actual==)) o_expected
   let e_ok = maybe True (either (e_actual `matches`) (e_actual==)) e_expected
