@@ -38,6 +38,7 @@ version = "0.3" -- sync with .cabal
 data ArgId = HelpFlag
            | VersionFlag
            | DebugFlag
+           | ImplicitTestsFlag
            | ExecutableArg
              deriving (Ord, Eq, Show)
 
@@ -60,6 +61,12 @@ argspec = [
        argAbbr  = Just 'd',
        argData  = Nothing,
        argDesc  = "show verbose debugging output"
+      }
+ ,Arg {argIndex = ImplicitTestsFlag,
+       argName  = Just "implicit-tests",
+       argAbbr  = Just 'i',
+       argData  = Nothing,
+       argDesc  = "provide implicit tests for all omitted fields"
       }
  ,Arg {argIndex = ExecutableArg,
        argName  = Nothing,
@@ -200,6 +207,16 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
                             stderrExpected=e_expected,exitCodeExpected=x_expected} = do
   let exe = fromJust $ getArgString args ExecutableArg
       cmd = unwords [exe,c]
+      (o_expected',e_expected',x_expected') =
+          case (args `gotArg` ImplicitTestsFlag) of
+            True  -> (case o_expected of
+                       Just m -> Just m
+                       _ -> Just $ Exact ""
+                    ,case e_expected of Just m -> Just m
+                                        _      -> Just $ Exact  ""
+                    ,case x_expected of Just m -> Just m
+                                        _      -> Just $ Numeric "0")
+            False -> (o_expected,e_expected,x_expected)
   when (args `gotArg` DebugFlag) $ do
     putStrLn $ "running test: " ++ n
     putStrLn $ "running command: " ++ cmd
@@ -210,22 +227,22 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
   -- force some evaluation here to avoid occasional waitForProcess hangs. cf http://hackage.haskell.org/trac/ghc/ticket/3369
   putStr $ printf "%d,%d" (length o_actual) (length e_actual)                                                                                                                  
   x_actual <- waitForProcess ph
-  let o_ok = maybe True (o_actual `matches`) o_expected
-  let e_ok = maybe True (e_actual `matches`) e_expected
-  let x_ok = maybe True ((show $ fromExitCode x_actual) `matches`) x_expected
+  let o_ok = maybe True (o_actual `matches`) o_expected'
+  let e_ok = maybe True (e_actual `matches`) e_expected'
+  let x_ok = maybe True ((show $ fromExitCode x_actual) `matches`) x_expected'
   if o_ok && e_ok && x_ok
    then do
      return True 
    else do
-     when (not o_ok) $ printExpectedActual "stdout" (fromJust o_expected) o_actual
-     when (not e_ok) $ printExpectedActual "stderr" (fromJust e_expected) e_actual
-     when (not x_ok) $ printExpectedActual "exit code" (fromJust x_expected) (show $ fromExitCode x_actual)
+     when (not o_ok) $ printExpectedActual "stdout" (fromJust o_expected') o_actual
+     when (not e_ok) $ printExpectedActual "stderr" (fromJust e_expected') e_actual
+     when (not x_ok) $ printExpectedActual "exit code" (fromJust x_expected') (show $ fromExitCode x_actual)
      return False
 
 matches :: String -> Matcher -> Bool
 matches s (PositiveRegex r) = s `containsRegex` r
 matches s (NegativeRegex r) = not $ s `containsRegex` r
-matches s (Numeric p)       = read s == (read p :: Int)
+matches s (Numeric p)       = s == p
 matches s (Exact p)         = s == p
 
 showMatcher :: Matcher -> String
