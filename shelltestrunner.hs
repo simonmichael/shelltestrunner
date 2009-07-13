@@ -14,7 +14,7 @@ where
 import Control.Concurrent (forkIO)
 import Control.Monad (liftM,when)
 import Data.List (partition)
-import Data.Maybe (fromMaybe,fromJust)
+import Data.Maybe (fromMaybe,fromJust,isJust,maybe)
 import qualified Test.HUnit (Test)
 import System.Console.ParseArgs hiding (args)
 import System.Environment (withArgs)
@@ -142,27 +142,28 @@ shellTestToHUnitTest :: Args ArgId -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args t = testname t ~: do {r <- runShellTest args t; assertBool "" r}
 
 runShellTest :: Args ArgId -> ShellTest -> IO Bool
-runShellTest args ShellTest{testname=_,commandargs=c,stdin=i',stdoutExpected=o,
-                            stderrExpected=e,exitCodeExpected=x} = do
+runShellTest args ShellTest{testname=_,commandargs=c,stdin=i,stdoutExpected=o_expected,
+                            stderrExpected=e_expected,exitCodeExpected=x_expected} = do
   let exe = fromJust $ getArgString args ExecutableArg
       cmd = unwords [exe,c]
-      (i,o_expected,e_expected,x_expected) = (fromMaybe "" i', fromMaybe "" o, fromMaybe "" e, fromMaybe ExitSuccess x)
   when (args `gotArg` DebugFlag) $ putStrLn $ "running command: " ++ cmd
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
   -- hPutStr will block until cmd has finished reading, I believe. Use a
   -- separate thread since cmd may not read stdin.
-  forkIO $ hPutStr ih i
+  when (isJust i) $ forkIO (hPutStr ih $ fromJust i) >> return ()
   o_actual <- hGetContents oh
   e_actual <- hGetContents eh
   x_actual <- waitForProcess ph
-  let (o_ok, e_ok, x_ok) = (o_actual==o_expected, e_actual==e_expected, x_actual==x_expected)
+  let o_ok = maybe True (o_actual==) o_expected
+  let e_ok = maybe True (e_actual==) e_expected
+  let x_ok = maybe True (x_actual==) x_expected
   if o_ok && e_ok && x_ok
    then do
      return True 
    else do
-     when (not o_ok) $ printExpectedActual "stdout" o_expected o_actual
-     when (not e_ok) $ printExpectedActual "stderr" e_expected e_actual
-     when (not x_ok) $ printExpectedActual "exit code" (show (fromExitCode x_expected)++"\n") (show (fromExitCode x_actual)++"\n")
+     when (not o_ok) $ printExpectedActual "stdout" (fromJust o_expected) o_actual
+     when (not e_ok) $ printExpectedActual "stderr" (fromJust e_expected) e_actual
+     when (not x_ok) $ printExpectedActual "exit code" (show (fromExitCode (fromJust x_expected))++"\n") (show (fromExitCode x_actual)++"\n")
      return False
 
 printExpectedActual :: String -> String -> String -> IO ()
