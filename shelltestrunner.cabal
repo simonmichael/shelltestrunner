@@ -3,57 +3,59 @@ version:        0.3
 category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
-                Run a given program through "shell" tests specifed by one
-                or more test files, each of which can specify: command-line
-                arguments, input, expected output, expected stderr output,
-                and expected exit code.  This was extracted from the
-                hledger project, inspired by the tests in John Wiegley's
-                ledger project, and uses test-framework's test runner. 
-
-                Usage: 
-
-                $ shelltestrunner [opts] executable testfile1 [testfile2 ...] [-- <test-framework runner opts>]
-
-                You can pass options through to test-framework's runner;
-                they must go after -- at the end. You may be able to get a
-                big speedup by running tests in parallel: try -- -j8.
-
-                Test file format:
-
-                @
-                # 0 or more comment lines beginning with #
-                -opt1 -opt2 arg1 arg2 # command line args, executable will be prepended
-                <<<
-                0 or more lines of input
-                >>>
-                0 or more lines of expected output
-                >>>2
-                0 or more lines of expected error output
-                >>>=
-                expected numeric exit code
-                @
-
-                Apart from the command line, all fields are optional. Only fields
-                specified in the test will be tested.
-
-                Issues:
-                
-                - output order is mixed up
-
-                - option processing is weak
-
-                - can't test input/output which does not end with newline
-
-                Wishlist:
-
-                - regular expression matching
-
-                - configurable delimiters
-
-                - multiple tests per file
-
-                - configurable implicit tests ?
-
+ .
+ Run a given program through "shell" tests specifed by one or more test
+ files, each of which can specify: command-line arguments, input, expected
+ output, expected stderr output, and expected exit code.  This was
+ extracted from the hledger project, inspired by the tests in John
+ Wiegley's ledger project, and uses test-framework's test runner.
+ .
+ Usage: 
+ .
+ > shelltestrunner [opts] executable testfile1 [testfile2 ...] [-- <test-framework runner opts>]
+ .
+ You can pass options through to test-framework's runner; they must go
+ after -- at the end. You may be able to get a big speedup by running
+ tests in parallel: try -- -j8.
+ .
+ Test file format:
+ .
+ > # 0 or more comment lines beginning with #
+ > -opt1 -opt2 arg1 arg2 # command line args, executable will be prepended
+ > <<<
+ > 0 or more lines of input
+ > >>> [match expression]
+ > [..or 0 or more lines of expected output]
+ > >>>2 [match expression]
+ > [..or 0 or more lines of expected error output]
+ > >>>= [match expression]
+ > [..or expected numeric exit code]
+ .
+ The expected fields can also have a regular expression match expression following
+ the delimiter on the same line, with no following data lines, in which case the 
+ test passes if the output is matched by the regexp. 
+ .
+ Apart from the command line, all fields are optional. Only fields
+ specified in the test will be tested.
+ .
+ Issues:
+ .
+ - output order is mixed up
+ .
+ - option processing is weak
+ .
+ - can't test input/output which does not end with newline
+ .
+ Wishlist:
+ .
+ - negatable regular expressions
+ .
+ - multiple tests per file
+ .
+ - configurable delimiters
+ .
+ - configurable implicit tests ?
+ .
 license:        GPL
 license-file:   LICENSE
 author:         Simon Michael <simon@joyful.com>
@@ -79,3 +81,4 @@ executable shelltestrunner
                 ,test-framework
                 ,test-framework-hunit >= 0.2 && < 0.3
                 ,parseargs >= 0.1 && < 0.2
+                ,regexpr >= 0.5.1
