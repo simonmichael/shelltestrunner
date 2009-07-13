@@ -14,14 +14,13 @@ where
 import Control.Concurrent (forkIO)
 import Control.Monad (liftM,when)
 import Data.List (partition)
-import Data.Maybe (fromMaybe,fromJust,isJust,maybe)
+import Data.Maybe (fromJust,isJust,maybe)
 import qualified Test.HUnit (Test)
 import System.Console.ParseArgs hiding (args)
 import System.Environment (withArgs)
 import System.Exit (ExitCode(..),exitWith)
 import System.IO (hGetContents, hPutStr, stderr)
 import System.Process (runInteractiveCommand, waitForProcess)
--- import System.Process (createProcess, shell, CreateProcess(..), StdStream(..))
 import Test.Framework (defaultMain)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
@@ -30,6 +29,7 @@ import Text.Printf (printf)
 import Debug.Trace
 strace :: Show a => a -> a
 strace a = trace (show a) a
+
 
 version :: String
 version = "0.3" -- sync with .cabal
@@ -64,7 +64,7 @@ argspec = [
        argName  = Nothing,
        argAbbr  = Nothing,
        argData  = argDataRequired "executable" ArgtypeString,
-       argDesc  = "executable program or shell command to test, should accept stdin"
+       argDesc  = "executable program or shell command to test"
       }
  ]
 
