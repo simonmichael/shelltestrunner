@@ -1,4 +1,4 @@
-; with --help, output should contain usage
+# with --help, output should contain usage
 --help 2>&1 | grep -q "usage:"
 >>>=
 0
