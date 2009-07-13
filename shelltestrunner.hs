@@ -26,6 +26,7 @@ import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
 import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
+import Text.RegexPR
 import Debug.Trace
 strace :: Show a => a -> a
 strace a = trace (show a) a
@@ -72,9 +73,9 @@ data ShellTest = ShellTest {
      testname         :: String
     ,commandargs      :: String
     ,stdin            :: Maybe String
-    ,stdoutExpected   :: Maybe String
-    ,stderrExpected   :: Maybe String
-    ,exitCodeExpected :: Maybe ExitCode
+    ,stdoutExpected   :: Maybe (Either Matcher String)
+    ,stderrExpected   :: Maybe (Either Matcher String)
+    ,exitCodeExpected :: Maybe (Either Matcher String)
     } deriving (Show)
 
 main :: IO ()
@@ -119,7 +120,7 @@ shelltestp = do
   x <- optionMaybe expectedexitcodep
   return ShellTest{testname=f,commandargs=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
-linep,commentlinep,commandargsp,delimiterp,inputp,expectedoutputp,expectederrorp :: Parser String
+linep,commentlinep,commandargsp,delimiterp,inputp,whitespacep :: Parser String
 
 linep = anyChar `manyTill` newline
 
@@ -131,12 +132,40 @@ delimiterp = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
 
 inputp = string "<<<\n" >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
-expectedoutputp = try $ string ">>>" >> optional (char '1') >> newline >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
+expectedoutputp :: Parser (Either Matcher String)
+expectedoutputp = try $ do
+                    string ">>>" >> optional (char '1')
+                    choice [try regexpmatcherp, datalinesp]
 
-expectederrorp = try $ string ">>>2\n" >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
+expectederrorp :: Parser (Either Matcher String)
+expectederrorp = try $ do
+                    string ">>>2"
+                    choice [try regexpmatcherp, datalinesp]
 
-expectedexitcodep :: Parser ExitCode
-expectedexitcodep = string ">>>=" >> (liftM (toExitCode.read.unlines) (linep `manyTill` eof))
+expectedexitcodep :: Parser (Either Matcher String)
+expectedexitcodep = do
+                      string ">>>="
+                      choice [try regexpmatcherp, datalinesp]
+
+type Matcher = String
+
+regexpmatcherp :: Parser (Either Matcher String)
+regexpmatcherp = do
+  whitespacep
+  char '/'
+  r <- many $ noneOf "/"
+  char '/'
+  whitespacep
+  newline
+  return $ Left r
+
+datalinesp :: Parser (Either Matcher String)
+datalinesp = do
+  whitespacep
+  newline
+  (liftM $ Right . unlines) (linep `manyTill` (lookAhead delimiterp))
+
+whitespacep = many $ oneOf " \t"
 
 -- running
 
@@ -158,26 +187,30 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
   o_actual <- hGetContents oh
   e_actual <- hGetContents eh
   x_actual <- waitForProcess ph
-  let o_ok = maybe True (o_actual==) o_expected
-  let e_ok = maybe True (e_actual==) e_expected
-  let x_ok = maybe True (x_actual==) x_expected
+  let o_ok = maybe True (either (o_actual `matches`) (o_actual==)) o_expected
+  let e_ok = maybe True (either (e_actual `matches`) (e_actual==)) e_expected
+  let x_ok = maybe True (either (show (fromExitCode x_actual) `matches`) ((fromExitCode x_actual ==).read)) x_expected
   if o_ok && e_ok && x_ok
    then do
      return True 
    else do
      when (not o_ok) $ printExpectedActual "stdout" (fromJust o_expected) o_actual
      when (not e_ok) $ printExpectedActual "stderr" (fromJust e_expected) e_actual
-     when (not x_ok) $ printExpectedActual "exit code" (show (fromExitCode (fromJust x_expected))++"\n") (show (fromExitCode x_actual)++"\n")
+     when (not x_ok) $ printExpectedActual "exit code" (fromJust x_expected) (show $ fromExitCode x_actual)
      return False
 
-printExpectedActual :: String -> String -> String -> IO ()
-printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:\n%s**Got %s:\n%s" f e f a
+matches :: String -> Matcher -> Bool
+matches s m = s `containsRegex` m
+
+printExpectedActual :: String -> Either Matcher String -> String -> IO ()
+printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:%s**Got %s:\n%s" f (showmatcher e) f a
+    where showmatcher = either ((" /"++).(++"/\n")) ("\n"++)
 
 -- utils
 
-toExitCode :: Int -> ExitCode
-toExitCode 0 = ExitSuccess
-toExitCode n = ExitFailure n
+-- toExitCode :: Int -> ExitCode
+-- toExitCode 0 = ExitSuccess
+-- toExitCode n = ExitFailure n
 
 fromExitCode :: ExitCode -> Int
 fromExitCode ExitSuccess     = 0
@@ -188,3 +221,8 @@ strip = lstrip . rstrip
 lstrip = dropws
 rstrip = reverse . dropws . reverse
 dropws = dropWhile (`elem` " \t")
+
+containsRegex :: String -> String -> Bool
+containsRegex s r = case matchRegexPR (""++r) s of
+                      Just _ -> True
+                      _ -> False

@@ -1,4 +1,5 @@
-# with no args, should fail
+# with no args, should complain and fail
 
+>>>2 /missing required argument/
 >>>=
 1
