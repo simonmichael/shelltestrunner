@@ -4,7 +4,7 @@ category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
                 Run a given program through "shell" tests specifed by one
-                or more test files, each of which specifies: command-line
+                or more test files, each of which can specify: command-line
                 arguments, input, expected output, expected stderr output,
                 and expected exit code.  This was extracted from the
                 hledger project, inspired by the tests in John Wiegley's
@@ -14,15 +14,15 @@ description:
 
                 $ shelltestrunner [opts] executable testfile1 [testfile2 ...] [-- <test-framework runner opts>]
 
-                To pass options through to test-framework's runner, it's
-                best to put them last, after --. You may be able to get a
+                You can pass options through to test-framework's runner;
+                they must go after -- at the end. You may be able to get a
                 big speedup by running tests in parallel: try -- -j8.
 
                 Test file format:
 
                 @
                 # 0 or more comment lines beginning with #
-                -opt1 -opt2 arg1 arg2 # command line, executable will be prepended
+                -opt1 -opt2 arg1 arg2 # command line args, executable will be prepended
                 <<<
                 0 or more lines of input
                 >>>
@@ -33,16 +33,26 @@ description:
                 expected numeric exit code
                 @
 
-                Apart from the command line, all fields are optional; when
-                omitted they are assumed to be "", "", "", 0 respectively.
+                Apart from the command line, all fields are optional. Only fields
+                specified in the test will be tested.
 
                 Issues:
                 
-                - on mac, will hang if executable does not read stdin
-
                 - output order is mixed up
 
-                - can't test input/ouput which does not end with newline
+                - option processing is weak
+
+                - can't test input/output which does not end with newline
+
+                Wishlist:
+
+                - regular expression matching
+
+                - configurable delimiters
+
+                - multiple tests per file
+
+                - configurable implicit tests ?
 
 license:        GPL
 license-file:   LICENSE
