@@ -24,22 +24,26 @@ description:
  > -opt1 -opt2 arg1 arg2 # command line args, executable will be prepended
  > <<<
  > 0 or more lines of input
- > >>> [match expression]
+ > >>> [/regexp/]
  > [..or 0 or more lines of expected output]
- > >>>2 [match expression]
+ > >>>2 [/regexp/]
  > [..or 0 or more lines of expected error output]
- > >>>= [match expression]
+ > >>>= [/regexp/]
  > [..or expected numeric exit code]
  .
- The expected fields can also have a regular expression match expression following
- the delimiter on the same line, with no following data lines, in which case the 
- test passes if the output is matched by the regexp. A ! preceding the expression 
- negates the match. For example, this tests that stdout does not contain "axe":
+ The expected fields can also have a regular expression match expression
+ following the delimiter on the same line, with no other data lines, in
+ which case the test passes if the output is matched by the regexp. The
+ regexp is enclosed in forward slashess. A ! preceding the expression
+ negates the match. For example, to check that stdout does not contain
+ "axe":
  .
  > >>> !/axe/
  .
  Apart from the command line, all fields are optional. Only fields
- specified in the test will be tested.
+ specified in the test will be tested, unless you use the
+ -i/--implicit-tests flag which provides defaults for all omitted tests
+ (expecting "", "" and 0 respectively).
  .
  Issues:
  .
@@ -54,13 +58,9 @@ description:
  .
  Wishlist:
  .
- - negatable regular expressions
- .
  - multiple tests per file
  .
  - configurable delimiters
- .
- - configurable implicit tests ?
  .
 license:        GPL
 license-file:   LICENSE
