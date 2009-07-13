@@ -73,10 +73,18 @@ data ShellTest = ShellTest {
      testname         :: String
     ,commandargs      :: String
     ,stdin            :: Maybe String
-    ,stdoutExpected   :: Maybe (Either Matcher String)
-    ,stderrExpected   :: Maybe (Either Matcher String)
-    ,exitCodeExpected :: Maybe (Either Matcher String)
+    ,stdoutExpected   :: Maybe Matcher
+    ,stderrExpected   :: Maybe Matcher
+    ,exitCodeExpected :: Maybe Matcher
     } deriving (Show)
+
+type Regex = String
+
+data Matcher = Exact String
+             | Numeric String
+             | PositiveRegex Regex
+             | NegativeRegex Regex
+               deriving (Show)
 
 main :: IO ()
 main = do
@@ -132,38 +140,53 @@ delimiterp = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
 
 inputp = string "<<<\n" >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
-expectedoutputp :: Parser (Either Matcher String)
+expectedoutputp :: Parser Matcher
 expectedoutputp = try $ do
                     string ">>>" >> optional (char '1')
-                    choice [try regexpmatcherp, datalinesp]
+                    whitespacep
+                    choice [positiveregexmatcherp, negativeregexmatcherp, datalinesp]
 
-expectederrorp :: Parser (Either Matcher String)
+expectederrorp :: Parser Matcher
 expectederrorp = try $ do
                     string ">>>2"
-                    choice [try regexpmatcherp, datalinesp]
+                    whitespacep
+                    choice [positiveregexmatcherp, negativeregexmatcherp, datalinesp]
 
-expectedexitcodep :: Parser (Either Matcher String)
+expectedexitcodep :: Parser Matcher
 expectedexitcodep = do
                       string ">>>="
-                      choice [try regexpmatcherp, datalinesp]
+                      whitespacep
+                      choice [positiveregexmatcherp, negativeregexmatcherp, numericdatalinesp]
 
-type Matcher = String
+negativeregexmatcherp :: Parser Matcher
+negativeregexmatcherp = do
+  char '!'
+  PositiveRegex r <- positiveregexmatcherp
+  return $ NegativeRegex r
 
-regexpmatcherp :: Parser (Either Matcher String)
-regexpmatcherp = do
-  whitespacep
+positiveregexmatcherp :: Parser Matcher
+positiveregexmatcherp = do
   char '/'
   r <- many $ noneOf "/"
   char '/'
   whitespacep
   newline
-  return $ Left r
+  return $ PositiveRegex r
 
-datalinesp :: Parser (Either Matcher String)
+datalinesp :: Parser Matcher
 datalinesp = do
   whitespacep
   newline
-  (liftM $ Right . unlines) (linep `manyTill` (lookAhead delimiterp))
+  (liftM $ Exact . unlines) (linep `manyTill` (lookAhead delimiterp))
+
+numericdatalinesp :: Parser Matcher
+numericdatalinesp = do
+  whitespacep
+  newline
+  whitespacep
+  s <- many1 $ oneOf "0123456789"
+  newline
+  return $ Numeric s
 
 whitespacep = many $ oneOf " \t"
 
@@ -187,9 +210,9 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
   -- force some evaluation here to avoid occasional waitForProcess hangs. cf http://hackage.haskell.org/trac/ghc/ticket/3369
   putStr $ printf "%d,%d" (length o_actual) (length e_actual)                                                                                                                  
   x_actual <- waitForProcess ph
-  let o_ok = maybe True (either (o_actual `matches`) (o_actual==)) o_expected
-  let e_ok = maybe True (either (e_actual `matches`) (e_actual==)) e_expected
-  let x_ok = maybe True (either (show (fromExitCode x_actual) `matches`) ((fromExitCode x_actual ==).read)) x_expected
+  let o_ok = maybe True (o_actual `matches`) o_expected
+  let e_ok = maybe True (e_actual `matches`) e_expected
+  let x_ok = maybe True ((show $ fromExitCode x_actual) `matches`) x_expected
   if o_ok && e_ok && x_ok
    then do
      return True 
@@ -200,11 +223,20 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
      return False
 
 matches :: String -> Matcher -> Bool
-matches s m = s `containsRegex` m
+matches s (PositiveRegex r) = s `containsRegex` r
+matches s (NegativeRegex r) = not $ s `containsRegex` r
+matches s (Numeric p)       = read s == (read p :: Int)
+matches s (Exact p)         = s == p
 
-printExpectedActual :: String -> Either Matcher String -> String -> IO ()
-printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:%s**Got %s:\n%s" f (showmatcher e) f a
-    where showmatcher = either ((" /"++).(++"/\n")) ("\n"++)
+showMatcher :: Matcher -> String
+showMatcher (PositiveRegex r) = " /"++r++"/\n"
+showMatcher (NegativeRegex r) = " !/"++r++"/\n"
+showMatcher (Numeric s)       = "\n"++s
+showMatcher (Exact s)         = "\n"++s
+
+printExpectedActual :: String -> Matcher -> String -> IO ()
+printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:%s**Got %s:\n%s" f (showMatcher e) f a
+
 
 -- utils
 

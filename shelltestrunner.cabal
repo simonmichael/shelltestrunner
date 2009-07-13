@@ -33,7 +33,10 @@ description:
  .
  The expected fields can also have a regular expression match expression following
  the delimiter on the same line, with no following data lines, in which case the 
- test passes if the output is matched by the regexp. 
+ test passes if the output is matched by the regexp. A ! preceding the expression 
+ negates the match. For example, this tests that stdout does not contain "axe":
+ .
+ > >>> !/axe/
  .
  Apart from the command line, all fields are optional. Only fields
  specified in the test will be tested.
@@ -45,6 +48,9 @@ description:
  - option processing is weak
  .
  - can't test input/output which does not end with newline
+ .
+ - currently prints number of stdout and stderr characters as a crude
+   workaround to avoid hangs
  .
  Wishlist:
  .
