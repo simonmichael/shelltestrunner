@@ -33,7 +33,7 @@ strace a = trace (show a) a
 
 
 version :: String
-version = "0.3" -- sync with .cabal
+version = "0.4" -- sync with .cabal
 
 data ArgId = HelpFlag
            | VersionFlag
