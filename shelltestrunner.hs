@@ -20,7 +20,7 @@ import qualified Test.HUnit (Test)
 import System.Console.ParseArgs hiding (args)
 import System.Environment (withArgs)
 import System.Exit (ExitCode(..),exitWith)
-import System.IO (hGetContents, hPutStr, stderr)
+import System.IO (Handle, hGetContents, hPutStr, stderr)
 import System.Process (runInteractiveCommand, waitForProcess)
 import Test.Framework (defaultMain)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
@@ -221,17 +221,16 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
   when (args `gotArg` DebugFlag) $ do
     putStrLn $ "running test: " ++ n
     putStrLn $ "running command: " ++ cmd
+
   -- run the command, passing it the stdin if any, and reading the
   -- stdout/stderr/exit code.  This has to be done carefully.
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
   when (isJust i) $ forkIO (hPutStr ih $ fromJust i) >> return ()
   o <- newEmptyMVar
-  forkIO $ hGetContents oh >>= \s -> length s `seq` putMVar o s
   e <- newEmptyMVar
-  forkIO $ hGetContents eh >>= \s -> length s `seq` putMVar e s
-  x <- newEmptyMVar
-  forkIO $ waitForProcess ph >>= \s -> s `seq` putMVar x s
-  x_actual <- takeMVar x
+  forkIO $ oh `hGetContentsStrictlyAnd` putMVar o
+  forkIO $ eh `hGetContentsStrictlyAnd` putMVar e
+  x_actual <- waitForProcess ph
   o_actual <- takeMVar o
   e_actual <- takeMVar e
 
@@ -246,6 +245,9 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
      when (not e_ok) $ printExpectedActual "stderr" (fromJust e_expected') e_actual
      when (not x_ok) $ printExpectedActual "exit code" (fromJust x_expected') (show $ fromExitCode x_actual)
      return False
+
+hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
+hGetContentsStrictlyAnd h f = hGetContents h >>= \c -> length c `seq` f c
 
 matches :: String -> Matcher -> Bool
 matches s (PositiveRegex r) = s `containsRegex` r
