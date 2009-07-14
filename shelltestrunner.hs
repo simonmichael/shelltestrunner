@@ -12,6 +12,7 @@ See shelltestrunner.cabal.
 module Main
 where
 import Control.Concurrent (forkIO)
+import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when)
 import Data.List (partition)
 import Data.Maybe (fromJust,isJust,maybe)
@@ -220,13 +221,20 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
   when (args `gotArg` DebugFlag) $ do
     putStrLn $ "running test: " ++ n
     putStrLn $ "running command: " ++ cmd
+  -- run the command, passing it the stdin if any, and reading the
+  -- stdout/stderr/exit code.  This has to be done carefully.
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
   when (isJust i) $ forkIO (hPutStr ih $ fromJust i) >> return ()
-  o_actual <- hGetContents oh
-  e_actual <- hGetContents eh
-  -- force some evaluation here to avoid occasional waitForProcess hangs. cf http://hackage.haskell.org/trac/ghc/ticket/3369
-  putStr $ printf "%d,%d" (length o_actual) (length e_actual)                                                                                                                  
-  x_actual <- waitForProcess ph
+  o <- newEmptyMVar
+  forkIO $ hGetContents oh >>= \s -> length s `seq` putMVar o s
+  e <- newEmptyMVar
+  forkIO $ hGetContents eh >>= \s -> length s `seq` putMVar e s
+  x <- newEmptyMVar
+  forkIO $ waitForProcess ph >>= \s -> s `seq` putMVar x s
+  x_actual <- takeMVar x
+  o_actual <- takeMVar o
+  e_actual <- takeMVar e
+
   let o_ok = maybe True (o_actual `matches`) o_expected'
   let e_ok = maybe True (e_actual `matches`) e_expected'
   let x_ok = maybe True ((show $ fromExitCode x_actual) `matches`) x_expected'
