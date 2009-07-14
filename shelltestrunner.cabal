@@ -4,7 +4,7 @@ category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
  .
- Run a given program through "shell" tests specifed by one or more test
+ Run a given program through \"shell\" tests specifed by one or more test
  files, each of which can specify: command-line arguments, input, expected
  output, expected stderr output, and expected exit code.  This was
  extracted from the hledger project, inspired by the tests in John
@@ -31,25 +31,24 @@ description:
  > >>>= [/regexp/]
  > [..or expected numeric exit code]
  .
- The expected fields can also have a regular expression match expression
- following the delimiter on the same line, with no other data lines, in
- which case the test passes if the output is matched by the regexp. The
- regexp is enclosed in forward slashess. A ! preceding the expression
- negates the match. For example, to check that stdout does not contain
- "axe":
- .
- > >>> !/axe/
+ Each expected field can have either a regular expression match
+ expression, in which case the test passes if the output is matched, or 0
+ or more data lines, in which case the output must match these exactly.  A
+ ! preceding a /regexp/ negates the match. The regular expression syntax
+ is that supported by the regexpr library.
  .
  Apart from the command line, all fields are optional. Only fields
  specified in the test will be tested, unless you use the
  -i/--implicit-tests flag, which will test for empty stdout, empty stderr,
- or 0 exit code whenever fields are omitted.
+ or 0 exit code where fields are omitted.
  .
  Issues:
  .
  - output order is mixed up
  .
  - option processing is weak
+ .
+ - can't put / in a regexp
  .
  - can't test input/output which does not end with newline
  .
