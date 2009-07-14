@@ -42,8 +42,8 @@ description:
  .
  Apart from the command line, all fields are optional. Only fields
  specified in the test will be tested, unless you use the
- -i/--implicit-tests flag which provides defaults for all omitted tests
- (expecting "", "" and 0 respectively).
+ -i/--implicit-tests flag, which will test for empty stdout, empty stderr,
+ or 0 exit code whenever fields are omitted.
  .
  Issues:
  .
@@ -53,14 +53,11 @@ description:
  .
  - can't test input/output which does not end with newline
  .
- - currently prints number of stdout and stderr characters as a crude
-   workaround to avoid hangs
- .
  Wishlist:
  .
- - multiple tests per file
- .
  - configurable delimiters
+ .
+ - multiple tests per file
  .
 license:        GPL
 license-file:   LICENSE
