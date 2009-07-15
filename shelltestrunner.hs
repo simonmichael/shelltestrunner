@@ -120,7 +120,7 @@ parseShellTestFile :: Args ArgId -> FilePath -> IO [ShellTest]
 parseShellTestFile args f = do
   when (args `gotArg` DebugFlag) $ putStrLn $ "parsing file: " ++ f
   ts <- liftM (either (error.show) id) $ parseFromFile (many shelltestp) f
-  let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip [1..] ts]
+  let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
           | otherwise     = ts
   when (args `gotArg` DebugFlag) $ putStrLn $ "parsed tests: " ++ show ts'
   return ts'
