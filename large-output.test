@@ -1,0 +1,3 @@
+# generate lots of output, trying to provoke a hang
+# ideally test-framework's --timeout option would break out of a hang, but it doesn't
+| head -n 50000 /usr/share/dict/words
