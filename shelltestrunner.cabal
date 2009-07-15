@@ -44,13 +44,11 @@ description:
  .
  Issues:
  .
- - output order is mixed up
- .
- - option processing is weak
- .
  - can't put / in a regexp
  .
  - can't test input/output which does not end with newline
+ .
+ - option processing is weak
  .
  Wishlist:
  .

@@ -20,7 +20,7 @@ import qualified Test.HUnit (Test)
 import System.Console.ParseArgs hiding (args)
 import System.Environment (withArgs)
 import System.Exit (ExitCode(..),exitWith)
-import System.IO (Handle, hGetContents, hPutStr, stderr)
+import System.IO (Handle, hGetContents, hPutStr)
 import System.Process (runInteractiveCommand, waitForProcess)
 import Test.Framework (defaultMain)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
@@ -201,11 +201,9 @@ whitespacep = many $ oneOf " \t"
 -- running
 
 shellTestToHUnitTest :: Args ArgId -> ShellTest -> Test.HUnit.Test
-shellTestToHUnitTest args t = testname t ~: do {r <- runShellTest args t; assertBool "" r}
-
-runShellTest :: Args ArgId -> ShellTest -> IO Bool
-runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_expected,
-                            stderrExpected=e_expected,exitCodeExpected=x_expected} = do
+shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_expected,
+                                    stderrExpected=e_expected,exitCodeExpected=x_expected} = 
+ n ~: do
   let exe = fromJust $ getArgString args ExecutableArg
       cmd = unwords [exe,c]
       (o_expected',e_expected',x_expected') =
@@ -234,17 +232,19 @@ runShellTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_ex
   o_actual <- takeMVar o
   e_actual <- takeMVar e
 
-  let o_ok = maybe True (o_actual `matches`) o_expected'
-  let e_ok = maybe True (e_actual `matches`) e_expected'
-  let x_ok = maybe True ((show $ fromExitCode x_actual) `matches`) x_expected'
-  if o_ok && e_ok && x_ok
-   then do
-     return True 
-   else do
-     when (not o_ok) $ printExpectedActual "stdout" (fromJust o_expected') o_actual
-     when (not e_ok) $ printExpectedActual "stderr" (fromJust e_expected') e_actual
-     when (not x_ok) $ printExpectedActual "exit code" (fromJust x_expected') (show $ fromExitCode x_actual)
-     return False
+  assertString $ addnewline $ concat 
+      [if (maybe True (o_actual `matches`) o_expected')
+        then "" 
+        else showExpectedActual "stdout"    (fromJust o_expected') o_actual
+      ,if (maybe True (e_actual `matches`) e_expected')
+        then "" 
+        else showExpectedActual "stderr"    (fromJust e_expected') e_actual
+      ,if (maybe True ((show $ fromExitCode x_actual) `matches`) x_expected')
+        then ""
+        else showExpectedActual "exit code" (fromJust x_expected') (show $ fromExitCode x_actual)
+      ]
+      where addnewline "" = ""
+            addnewline s  = "\n"++s
 
 hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
 hGetContentsStrictlyAnd h f = hGetContents h >>= \c -> length c `seq` f c
@@ -255,14 +255,15 @@ matches s (NegativeRegex r) = not $ s `containsRegex` r
 matches s (Numeric p)       = s == p
 matches s (Exact p)         = s == p
 
+showExpectedActual :: String -> Matcher -> String -> String
+showExpectedActual field e a =
+    printf "**Expected %s:%s**Got %s:\n%s" field (showMatcher e) field a
+
 showMatcher :: Matcher -> String
 showMatcher (PositiveRegex r) = " /"++r++"/\n"
 showMatcher (NegativeRegex r) = " !/"++r++"/\n"
 showMatcher (Numeric s)       = "\n"++s
 showMatcher (Exact s)         = "\n"++s
-
-printExpectedActual :: String -> Matcher -> String -> IO ()
-printExpectedActual f e a = hPutStr stderr $ printf "**Expected %s:%s**Got %s:\n%s" f (showMatcher e) f a
 
 
 -- utils
