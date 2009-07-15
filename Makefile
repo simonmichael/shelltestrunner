@@ -4,7 +4,7 @@ build:
 	ghc --make -threaded -Wall shelltestrunner.hs
 
 test:
-	shelltestrunner shelltestrunner.hs *.test -- -j8
+	shelltestrunner.hs shelltestrunner.hs *.test -- -j8
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
 VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)
@@ -12,7 +12,7 @@ VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)
 tagrepo:
 	@(darcs show tags | grep -q "^$(VERSION)$$") && echo tag $(VERSION) already present || darcs tag $(VERSION)
 
-upload: tagrepo
+release: test tagrepo
 	cabal sdist
 	(cabal upload $(TARBALL) --check | grep '^OK$$') \
 		&& cabal upload $(TARBALL) \
