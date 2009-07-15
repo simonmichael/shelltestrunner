@@ -14,7 +14,7 @@ where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when)
-import Data.List (partition)
+import Data.List (partition, intercalate)
 import Data.Maybe (fromJust,isJust,maybe)
 import qualified Test.HUnit (Test)
 import System.Console.ParseArgs hiding (args)
@@ -232,7 +232,7 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
   o_actual <- takeMVar o
   e_actual <- takeMVar e
 
-  assertString $ addnewline $ concat 
+  assertString $ addnewline $ intercalate "\n" $ filter (not . null)
       [if (maybe True (o_actual `matches`) o_expected')
         then "" 
         else showExpectedActual "stdout"    (fromJust o_expected') o_actual
@@ -262,7 +262,7 @@ showExpectedActual field e a =
 showMatcher :: Matcher -> String
 showMatcher (PositiveRegex r) = " /"++r++"/\n"
 showMatcher (NegativeRegex r) = " !/"++r++"/\n"
-showMatcher (Numeric s)       = "\n"++s
+showMatcher (Numeric s)       = "\n"++s++"\n"
 showMatcher (Exact s)         = "\n"++s
 
 
