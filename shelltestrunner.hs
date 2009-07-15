@@ -15,7 +15,7 @@ import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when)
 import Data.List (partition, intercalate)
-import Data.Maybe (fromJust,isJust,maybe)
+import Data.Maybe (fromJust,isJust,maybe,isNothing,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.ParseArgs hiding (args)
 import System.Environment (withArgs)
@@ -88,7 +88,7 @@ data ShellTest = ShellTest {
 
 type Regex = String
 
-data Matcher = Exact String
+data Matcher = Lines String
              | Numeric String
              | PositiveRegex Regex
              | NegativeRegex Regex
@@ -105,7 +105,7 @@ main = do
          putStrLn $ "testing executable: " ++ (show $ fromJust $ getArgString args ExecutableArg)
          putStrLn $ "unprocessed options: " ++ show unprocessedopts
          putStrLn $ "test files: " ++ show testfiles
-  shelltests <- mapM (parseShellTest args) testfiles
+  shelltests <- liftM concat $ mapM (parseShellTestFile args) testfiles
   withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests
 
 printVersion :: IO ()
@@ -116,13 +116,14 @@ printHelp args = putStrLn (argsUsage args) >> exitWith ExitSuccess
 
 -- parsing
 
-parseShellTest :: Args ArgId -> FilePath -> IO ShellTest
-parseShellTest args f = do
-  t <- liftM (either (error.show) id) $ parseFromFile shelltestp f
-  when (args `gotArg` DebugFlag) $ do
-    putStrLn $ "parsing file: " ++ f
-    putStrLn $ "parsed test: " ++ show t
-  return t
+parseShellTestFile :: Args ArgId -> FilePath -> IO [ShellTest]
+parseShellTestFile args f = do
+  when (args `gotArg` DebugFlag) $ putStrLn $ "parsing file: " ++ f
+  ts <- liftM (either (error.show) id) $ parseFromFile (many shelltestp) f
+  let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip [1..] ts]
+          | otherwise     = ts
+  when (args `gotArg` DebugFlag) $ putStrLn $ "parsed tests: " ++ show ts'
+  return ts'
 
 shelltestp :: Parser ShellTest
 shelltestp = do
@@ -134,6 +135,7 @@ shelltestp = do
   o <- optionMaybe expectedoutputp
   e <- optionMaybe expectederrorp
   x <- optionMaybe expectedexitcodep
+  when (null c && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail "empty test file"
   return ShellTest{testname=f,commandargs=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
 linep,commentlinep,commandargsp,delimiterp,inputp,whitespacep :: Parser String
@@ -146,25 +148,25 @@ commandargsp = linep
 
 delimiterp = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
 
-inputp = string "<<<\n" >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
+inputp = string "<<<" >> newline >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
 expectedoutputp :: Parser Matcher
 expectedoutputp = try $ do
-                    string ">>>" >> optional (char '1')
-                    whitespacep
-                    choice [positiveregexmatcherp, negativeregexmatcherp, datalinesp]
+  string ">>>" >> optional (char '1')
+  whitespacep
+  choice [positiveregexmatcherp, negativeregexmatcherp, linesmatcherp]
 
 expectederrorp :: Parser Matcher
 expectederrorp = try $ do
-                    string ">>>2"
-                    whitespacep
-                    choice [positiveregexmatcherp, negativeregexmatcherp, datalinesp]
+  string ">>>2"
+  whitespacep
+  choice [positiveregexmatcherp, negativeregexmatcherp, linesmatcherp]
 
 expectedexitcodep :: Parser Matcher
 expectedexitcodep = do
-                      string ">>>="
-                      whitespacep
-                      choice [positiveregexmatcherp, negativeregexmatcherp, numericdatalinesp]
+  string ">>>="
+  whitespacep
+  choice [positiveregexmatcherp, negativeregexmatcherp, numericmatcherp]
 
 negativeregexmatcherp :: Parser Matcher
 negativeregexmatcherp = do
@@ -181,18 +183,16 @@ positiveregexmatcherp = do
   newline
   return $ PositiveRegex r
 
-datalinesp :: Parser Matcher
-datalinesp = do
+linesmatcherp :: Parser Matcher
+linesmatcherp = do
   whitespacep
   newline
-  (liftM $ Exact . unlines) (linep `manyTill` (lookAhead delimiterp))
+  (liftM $ Lines . unlines) (linep `manyTill` (lookAhead delimiterp))
 
-numericdatalinesp :: Parser Matcher
-numericdatalinesp = do
-  whitespacep
-  newline
-  whitespacep
+numericmatcherp :: Parser Matcher
+numericmatcherp = do
   s <- many1 $ oneOf "0123456789"
+  whitespacep
   newline
   return $ Numeric s
 
@@ -210,9 +210,9 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
           case (args `gotArg` ImplicitTestsFlag) of
             True  -> (case o_expected of
                        Just m -> Just m
-                       _ -> Just $ Exact ""
+                       _ -> Just $ Lines ""
                     ,case e_expected of Just m -> Just m
-                                        _      -> Just $ Exact  ""
+                                        _      -> Just $ Lines  ""
                     ,case x_expected of Just m -> Just m
                                         _      -> Just $ Numeric "0")
             False -> (o_expected,e_expected,x_expected)
@@ -228,21 +228,27 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
   e <- newEmptyMVar
   forkIO $ oh `hGetContentsStrictlyAnd` putMVar o
   forkIO $ eh `hGetContentsStrictlyAnd` putMVar e
-  x_actual <- waitForProcess ph
+  x_actual <- waitForProcess ph >>= return.fromExitCode
   o_actual <- takeMVar o
   e_actual <- takeMVar e
 
-  assertString $ addnewline $ intercalate "\n" $ filter (not . null)
-      [if (maybe True (o_actual `matches`) o_expected')
-        then "" 
-        else showExpectedActual "stdout"    (fromJust o_expected') o_actual
-      ,if (maybe True (e_actual `matches`) e_expected')
-        then "" 
-        else showExpectedActual "stderr"    (fromJust e_expected') e_actual
-      ,if (maybe True ((show $ fromExitCode x_actual) `matches`) x_expected')
-        then ""
-        else showExpectedActual "exit code" (fromJust x_expected') (show $ fromExitCode x_actual)
-      ]
+  let failuremsg
+       -- when a bad exe is provided, we don't want to show all the test
+       -- failures. This should work on all posix systems at least.
+       -- Really we should report a test error here, not a failure.
+       | x_actual == 127 = cmd ++ ": command not found"
+       | otherwise = addnewline $ intercalate "\n" $ filter (not . null) [
+                   if (maybe True (o_actual `matches`) o_expected')
+                   then "" 
+                   else showExpectedActual "stdout"    (fromJust o_expected') o_actual
+                  ,if (maybe True (e_actual `matches`) e_expected')
+                   then "" 
+                   else showExpectedActual "stderr"    (fromJust e_expected') e_actual
+                  ,if (maybe True (show x_actual `matches`) x_expected')
+                   then ""
+                   else showExpectedActual "exit code" (fromJust x_expected') (show x_actual)
+                  ]
+  assertString failuremsg
       where addnewline "" = ""
             addnewline s  = "\n"++s
 
@@ -253,7 +259,7 @@ matches :: String -> Matcher -> Bool
 matches s (PositiveRegex r) = s `containsRegex` r
 matches s (NegativeRegex r) = not $ s `containsRegex` r
 matches s (Numeric p)       = s == p
-matches s (Exact p)         = s == p
+matches s (Lines p)         = s == p
 
 showExpectedActual :: String -> Matcher -> String -> String
 showExpectedActual field e a =
@@ -263,7 +269,7 @@ showMatcher :: Matcher -> String
 showMatcher (PositiveRegex r) = " /"++r++"/\n"
 showMatcher (NegativeRegex r) = " !/"++r++"/\n"
 showMatcher (Numeric s)       = "\n"++s++"\n"
-showMatcher (Exact s)         = "\n"++s
+showMatcher (Lines s)         = "\n"++s
 
 
 -- utils
