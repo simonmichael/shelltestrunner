@@ -1,10 +1,10 @@
 name:           shelltestrunner
-version:        0.6
+version:        0.6.98
 category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
  .
- Run a given program through \"shell\" tests specifed by one or more test
+ Run a given program through \"shell tests\" specifed by one or more test
  files, where each test can specify: command-line arguments, input, expected
  output, expected stderr output, and/or expected exit code.  This was
  extracted from the hledger project, inspired by the tests in John
@@ -12,7 +12,7 @@ description:
  .
  Usage: 
  .
- > shelltestrunner [opts] executable testfile1 [testfile2 ...] [-- <test-framework runner opts>]
+ > shelltestrunner [opts] executable testfile1 [testfile2 ...] [-- <test-framework opts>]
  .
  You can pass options through to test-framework's runner; they must go
  after -- at the end. You may be able to get a big speedup by running
@@ -49,8 +49,6 @@ description:
  .
  - can't use / in regexps
  .
- - option processing is weak
- .
  Wishlist:
  .
  - configurable delimiters
@@ -78,6 +76,6 @@ executable shelltestrunner
                 ,process
                 ,HUnit
                 ,test-framework
-                ,test-framework-hunit >= 0.2 && < 0.3
-                ,parseargs >= 0.1 && < 0.2
+                ,test-framework-hunit >= 0.2
+                ,cmdargs >= 0.1
                 ,regexpr >= 0.5.1

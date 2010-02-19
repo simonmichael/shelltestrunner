@@ -1,4 +1,5 @@
 #!/usr/bin/env runhaskell
+{-# LANGUAGE DeriveDataTypeable #-}
 {-
 
 shelltestrunner - a handy tool for testing command-line programs.
@@ -14,12 +15,13 @@ where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when)
-import Data.List (partition, intercalate)
+import Data.List (intercalate)
 import Data.Maybe (fromJust,isJust,maybe,isNothing,catMaybes)
 import qualified Test.HUnit (Test)
-import System.Console.ParseArgs hiding (args)
+import System.Console.CmdArgs hiding (args)
+import qualified System.Console.CmdArgs as CmdArgs (args)
 import System.Environment (withArgs)
-import System.Exit (ExitCode(..),exitWith)
+import System.Exit (ExitCode(..))
 import System.IO (Handle, hGetContents, hPutStr)
 import System.Process (runInteractiveCommand, waitForProcess)
 import Test.Framework (defaultMain)
@@ -33,49 +35,27 @@ strace :: Show a => a -> a
 strace a = trace (show a) a
 
 
-version :: String
-version = "0.6" -- keep synced with .cabal
+version, progname, prognameandversion :: String
+version = "0.6.98" -- keep synced with .cabal file
+progname = "shelltestrunner"
+prognameandversion = progname ++ " " ++ version
 
-data ArgId = HelpFlag
-           | VersionFlag
-           | DebugFlag
-           | ImplicitTestsFlag
-           | ExecutableArg
-             deriving (Ord, Eq, Show)
+data Args = Args {
+--     debug :: Bool
+     implicittests :: Bool
+    ,executable :: String
+    ,testfiles :: [String]
+    ,otheropts :: [String]
+    } deriving (Show, Data, Typeable)
 
-argspec :: [Arg ArgId]
-argspec = [
-  Arg {argIndex = HelpFlag,
-       argName  = Just "help",
-       argAbbr  = Just 'h',
-       argData  = Nothing,
-       argDesc  = "show help"
-      }
- ,Arg {argIndex = VersionFlag,
-       argName  = Just "version",
-       argAbbr  = Just 'V',
-       argData  = Nothing,
-       argDesc  = "show version"
-      }
- ,Arg {argIndex = DebugFlag,
-       argName  = Just "debug",
-       argAbbr  = Just 'd',
-       argData  = Nothing,
-       argDesc  = "show verbose debugging output"
-      }
- ,Arg {argIndex = ImplicitTestsFlag,
-       argName  = Just "implicit-tests",
-       argAbbr  = Just 'i',
-       argData  = Nothing,
-       argDesc  = "provide implicit tests for all omitted fields"
-      }
- ,Arg {argIndex = ExecutableArg,
-       argName  = Nothing,
-       argAbbr  = Nothing,
-       argData  = argDataRequired "executable" ArgtypeString,
-       argDesc  = "executable program or shell command to test"
-      }
- ]
+argsmode :: Mode Args
+argsmode = mode $ Args{
+--            debug=def &= explicit & flag "debug" & text "debug verbosity"
+            implicittests=def &= text "provide implicit tests for all omitted fields"
+           ,executable=def &= argPos 0 & typ "EXE" & text "executable under test"
+           ,testfiles=def &= CmdArgs.args & typ "TESTFILES" & text "test files"
+           ,otheropts=def &= unknownFlags & explicit & typ "FLAGS" & text "other flags are passed to test runner"
+           }
 
 data ShellTest = ShellTest {
      testname         :: String
@@ -96,33 +76,25 @@ data Matcher = Lines String
 
 main :: IO ()
 main = do
-  args <- parseArgsIO ArgsTrailing argspec
-  -- parseargs issue: exits at first gotArg if there's no exe argument
-  when (args `gotArg` VersionFlag) printVersion
-  when (args `gotArg` HelpFlag) $ printHelp args
-  let (unprocessedopts, testfiles) = partition ((=="-").take 1) $ argsRest args
-  when (args `gotArg` DebugFlag) $ do
-         putStrLn $ "testing executable: " ++ (show $ fromJust $ getArgString args ExecutableArg)
-         putStrLn $ "unprocessed options: " ++ show unprocessedopts
-         putStrLn $ "test files: " ++ show testfiles
-  shelltests <- liftM concat $ mapM (parseShellTestFile args) testfiles
-  withArgs unprocessedopts $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests
-
-printVersion :: IO ()
-printVersion = putStrLn version >> exitWith ExitSuccess
-
-printHelp :: Args ArgId -> IO ()
-printHelp args = putStrLn (argsUsage args) >> exitWith ExitSuccess
+  args <- cmdArgs prognameandversion [argsmode]
+  loud <- isLoud
+  when loud $ do
+         putStrLn $ "testing executable: " ++ (show $ executable args)
+         putStrLn $ "test files: " ++ (show $ testfiles args)
+         putStrLn $ "test runner options: " ++ (show $ otheropts args)
+  shelltests <- liftM concat $ mapM parseShellTestFile (testfiles args)
+  withArgs (otheropts args) $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests
 
 -- parsing
 
-parseShellTestFile :: Args ArgId -> FilePath -> IO [ShellTest]
-parseShellTestFile args f = do
-  when (args `gotArg` DebugFlag) $ putStrLn $ "parsing file: " ++ f
+parseShellTestFile :: FilePath -> IO [ShellTest]
+parseShellTestFile f = do
+  loud <- isLoud
+  when loud $ putStrLn $ "parsing file: " ++ f
   ts <- liftM (either (error.show) id) $ parseFromFile (many shelltestp) f
   let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
           | otherwise     = ts
-  when (args `gotArg` DebugFlag) $ putStrLn $ "parsed tests: " ++ show ts'
+  when loud $ putStrLn $ "parsed tests: " ++ show ts'
   return ts'
 
 shelltestp :: Parser ShellTest
@@ -200,14 +172,15 @@ whitespacep = many $ oneOf " \t"
 
 -- running
 
-shellTestToHUnitTest :: Args ArgId -> ShellTest -> Test.HUnit.Test
+shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_expected,
                                     stderrExpected=e_expected,exitCodeExpected=x_expected} = 
  n ~: do
-  let exe = fromJust $ getArgString args ExecutableArg
+  let exe = executable args
       cmd = unwords [exe,c]
       (o_expected',e_expected',x_expected') =
-          case (args `gotArg` ImplicitTestsFlag) of
+          case (implicittests args)
+          of
             True  -> (case o_expected of
                        Just m -> Just m
                        _ -> Just $ Lines ""
@@ -216,7 +189,8 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
                     ,case x_expected of Just m -> Just m
                                         _      -> Just $ Numeric "0")
             False -> (o_expected,e_expected,x_expected)
-  when (args `gotArg` DebugFlag) $ do
+  loud <- isLoud
+  when loud $ do
     putStrLn $ "running test: " ++ n
     putStrLn $ "running command: " ++ cmd
 
