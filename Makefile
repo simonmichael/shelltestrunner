@@ -3,8 +3,8 @@
 build:
 	ghc --make -threaded -Wall shelltestrunner.hs
 
-test:
-	shelltestrunner.hs shelltestrunner.hs *.test -- -j8
+test: build
+	./shelltestrunner ./shelltestrunner tests/*.test -j8
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
 VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)

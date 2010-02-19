@@ -1,4 +1,4 @@
 # with --help, output should contain usage
 # and exit code should be 0, but isn't
 --help
->>>2 /usage:/
+>>> /help\[=FORMAT\]/

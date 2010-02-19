@@ -1,4 +1,0 @@
-# -j8 at the beginning should not hang or complain about thread blocked,
-# just about unknown -j
--j8 shelltestrunner no-args.test -d
->>>2 /unknown argument -j/

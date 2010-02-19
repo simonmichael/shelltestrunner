@@ -1,0 +1,21 @@
+# test with various arguments
+#
+# 1. with no args, should complain and fail
+# XXX should be on stderr and show more help ?
+
+>>> /Not enough non-flag arguments/
+>>>= 1 
+#
+# 2. a bad executable with no testfiles is accepted. XXX should really error
+nosuchexe
+>>> /Total +0/
+#
+# 3. a bad executable with testfiles should fail
+nosuchexe tests/args.test
+>>> /user error/
+>>>= 1
+#
+# 4. a bad testfile should fail
+cat nosuchtestfile
+>>>2 /No such file/
+>>>= 1
