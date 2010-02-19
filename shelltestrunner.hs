@@ -237,16 +237,24 @@ matches s (Lines p)         = s == p
 
 showExpectedActual :: String -> Matcher -> String -> String
 showExpectedActual field e a =
-    printf "**Expected %s:%s**Got %s:\n%s" field (showMatcher e) field a
+    printf "**Expected %s:%s**Got %s:\n%s" field (showMatcher e) field (trim a)
 
 showMatcher :: Matcher -> String
-showMatcher (PositiveRegex r) = " /"++r++"/\n"
-showMatcher (NegativeRegex r) = " !/"++r++"/\n"
-showMatcher (Numeric s)       = "\n"++s++"\n"
-showMatcher (Lines s)         = "\n"++s
+showMatcher (PositiveRegex r) = " /"++(trim r)++"/\n"
+showMatcher (NegativeRegex r) = " !/"++(trim r)++"/\n"
+showMatcher (Numeric s)       = "\n"++(trim s)++"\n"
+showMatcher (Lines s)         = "\n"++(trim s)
 
 
 -- utils
+
+trim :: String -> String
+trim s | l <= limit = s
+       | otherwise = take limit s ++ suffix
+    where
+      limit = 500
+      l = length s
+      suffix = printf "...(%d more)" (l-limit)
 
 -- toExitCode :: Int -> ExitCode
 -- toExitCode 0 = ExitSuccess
