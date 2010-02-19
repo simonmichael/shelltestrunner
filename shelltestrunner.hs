@@ -41,20 +41,20 @@ progname = "shelltestrunner"
 prognameandversion = progname ++ " " ++ version
 
 data Args = Args {
---     debug :: Bool
-     implicittests :: Bool
+     debug      :: Bool
+    ,implicit   :: String
     ,executable :: String
-    ,testfiles :: [String]
-    ,otheropts :: [String]
+    ,testfiles  :: [String]
+    ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
 
 argsmode :: Mode Args
 argsmode = mode $ Args{
---            debug=def &= explicit & flag "debug" & text "debug verbosity"
-            implicittests=def &= text "provide implicit tests for all omitted fields"
-           ,executable=def &= argPos 0 & typ "EXE" & text "executable under test"
-           ,testfiles=def &= CmdArgs.args & typ "TESTFILES" & text "test files"
-           ,otheropts=def &= unknownFlags & explicit & typ "FLAGS" & text "other flags are passed to test runner"
+            debug      = def &= explicit & flag "debug" & text "debug verbosity"
+           ,implicit   = "exit" &= typ "none|exit|all" & empty "none" & text "provide implicit tests"
+           ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
+           ,testfiles  = def &= CmdArgs.args & typ "TESTFILES" & text "test files"
+           ,otheropts  = def &= unknownFlags & explicit & typ "FLAGS" & text "other flags are passed to test runner"
            }
 
 data ShellTest = ShellTest {
@@ -179,16 +179,18 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
   let exe = executable args
       cmd = unwords [exe,c]
       (o_expected',e_expected',x_expected') =
-          case (implicittests args)
-          of
-            True  -> (case o_expected of
-                       Just m -> Just m
-                       _ -> Just $ Lines ""
-                    ,case e_expected of Just m -> Just m
-                                        _      -> Just $ Lines  ""
-                    ,case x_expected of Just m -> Just m
-                                        _      -> Just $ Numeric "0")
-            False -> (o_expected,e_expected,x_expected)
+          case (implicit args) of
+            "all"    -> (case o_expected of
+                        Just m -> Just m
+                        _ -> Just $ Lines ""
+                     ,case e_expected of Just m -> Just m
+                                         _      -> Just $ Lines  ""
+                     ,case x_expected of Just m -> Just m
+                                         _      -> Just $ Numeric "0")
+            "exit" -> (o_expected,e_expected
+                     ,case x_expected of Just m -> Just m
+                                         _      -> Just $ Numeric "0")
+            _ -> (o_expected,e_expected,x_expected)
   loud <- isLoud
   when loud $ do
     putStrLn $ "running test: " ++ n

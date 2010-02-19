@@ -38,10 +38,10 @@ description:
  ! preceding a \/regexp\/ negates the match. The regular expression syntax
  is that supported by the pcre-light library.
  .
- Apart from the command line, all fields are optional. Only the fields you
- specify will be tested, unless you use the -i/--implicit-tests flag,
- which adds default tests (empty stdout, empty stderr, and 0 exit code)
- for omitted fields.
+ Apart from the command line, all fields are optional. There is an
+ implicit test for exit status = 0 if not specified, but no implicit test
+ for stdout or stderr. You can change this with the -i/--implicit-tests
+ flag,
  .
  Issues:
  .
