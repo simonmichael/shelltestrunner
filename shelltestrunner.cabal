@@ -4,21 +4,18 @@ category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
  .
- Run a given program through \"shell tests\" specifed by one or more test
- files, where each test can specify: command-line arguments, input, expected
- output, expected stderr output, and/or expected exit code.  This was
- extracted from the hledger project, inspired by the tests in John
- Wiegley's ledger project, and uses test-framework's test runner.
+ Run a command-line program through \"shell tests\" defined in one or
+ more test files, checking its output, stderr output and exit status.
+ It uses test-framework's test runner, so can run tests in parallel.
+ This was extracted from the hledger project, and inspired by the tests in
+ John Wiegley's ledger project.
  .
  Usage: 
  .
- > shelltestrunner [opts] executable testfile1 [testfile2 ...] [-- <test-framework opts>]
+ > shelltestrunner [OPTS] EXECUTABLE [TESTFILES ...] [TESTRUNNEROPTS]
  .
- You can pass options through to test-framework's runner; they must go
- after -- at the end. You may be able to get a big speedup by running
- tests in parallel: try -- -j8.
- .
- Test file format:
+ Any unrecognised options will be passed through to test-framework's runner.
+ You may be able to get a big speedup by running tests in parallel: try -j8.
  .
  A test file contains 0 or more shell tests, each of which looks like this: 
  .
@@ -30,7 +27,7 @@ description:
  > [..or 0 or more lines of expected output]
  > >>>2 [/regexp/]
  > [..or 0 or more lines of expected error output]
- > >>>= [expected numeric exit code or /regexp/]
+ > >>>= [expected numeric exit status or /regexp/]
  .
  Each expected field can have either a regular expression match
  expression, in which case the test passes if the output is matched, or 0
@@ -38,20 +35,17 @@ description:
  ! preceding a \/regexp\/ negates the match. The regular expression syntax
  is that supported by the pcre-light library.
  .
- Apart from the command line, all fields are optional. There is an
- implicit test for exit status = 0 if not specified, but no implicit test
- for stdout or stderr. You can change this with the -i/--implicit-tests
- flag,
+ Apart from the first (command line args), all fields are optional.
+ By default there is an implicit test for exit status = 0, but no implicit test for stdout or stderr.
+ You can change this with the -i/--implicit-tests flag.
  .
- Issues:
- .
- - can't test input/output which does not end with newline
+ Some issues:
  .
  - can't use / in regexps
  .
- Wishlist:
+ - can't test input/output which does not end with newline
  .
- - configurable delimiters
+ - can't test uncompiled haskell scripts, runghc loses stdout/stderr
  .
 license:        GPL
 license-file:   LICENSE

@@ -36,7 +36,7 @@ strace a = trace (show a) a
 
 
 version, progname, prognameandversion :: String
-version = "0.6.98" -- keep synced with .cabal file
+version = "0.6.98" -- keep synced with cabal file
 progname = "shelltestrunner"
 prognameandversion = progname ++ " " ++ version
 
@@ -82,6 +82,7 @@ main = do
          putStrLn $ "testing executable: " ++ (show $ executable args)
          putStrLn $ "test files: " ++ (show $ testfiles args)
          putStrLn $ "test runner options: " ++ (show $ otheropts args)
+         putStrLn $ "all args: " ++ (show args)
   shelltests <- liftM concat $ mapM parseShellTestFile (testfiles args)
   withArgs (otheropts args) $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests
 
@@ -196,6 +197,10 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
     putStrLn $ "running test: " ++ n
     putStrLn $ "running command: " ++ cmd
   (o_actual, e_actual, x_actual) <- runCommandWithInput cmd i
+  when loud $ do
+    putStrLn $ "stdout: " ++ o_actual
+    putStrLn $ "stderr: " ++ e_actual
+    putStrLn $ "exit:   " ++ (show x_actual)
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError e_actual -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
@@ -216,7 +221,7 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
 -- and return the standard output, standard error output and exit code.
 runCommandWithInput :: String -> Maybe String -> IO (String, String, Int)
 runCommandWithInput cmd input = do
-  -- this has to be done carefully.
+  -- this has to be done carefully
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
   when (isJust input) $ forkIO (hPutStr ih $ fromJust input) >> return ()
   o <- newEmptyMVar
@@ -229,7 +234,7 @@ runCommandWithInput cmd input = do
   return (o_actual, e_actual, x_actual)
 
 hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
-hGetContentsStrictlyAnd h f = hGetContents h >>= \c -> length c `seq` f c
+hGetContentsStrictlyAnd h f = hGetContents h >>= \s -> length s `seq` f s
 
 matches :: String -> Matcher -> Bool
 matches s (PositiveRegex r) = s `containsRegex` r
