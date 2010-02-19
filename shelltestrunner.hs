@@ -193,11 +193,30 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
   when loud $ do
     putStrLn $ "running test: " ++ n
     putStrLn $ "running command: " ++ cmd
+  (o_actual, e_actual, x_actual) <- runCommandWithInput cmd i
+  if (x_actual == 127) -- catch bad executable - should work on posix systems at least
+   then ioError $ userError e_actual -- XXX still a test failure; should be an error
+   else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
+             if (maybe True (o_actual `matches`) o_expected')
+              then ""
+              else showExpectedActual "stdout"    (fromJust o_expected') o_actual
+            ,if (maybe True (e_actual `matches`) e_expected')
+              then ""
+              else showExpectedActual "stderr"    (fromJust e_expected') e_actual
+            ,if (maybe True (show x_actual `matches`) x_expected')
+              then ""
+              else showExpectedActual "exit code" (fromJust x_expected') (show x_actual)
+            ]
+       where addnewline "" = ""
+             addnewline s  = "\n"++s
 
-  -- run the command, passing it the stdin if any, and reading the
-  -- stdout/stderr/exit code.  This has to be done carefully.
+-- | Run a shell command line, passing it standard input if provided,
+-- and return the standard output, standard error output and exit code.
+runCommandWithInput :: String -> Maybe String -> IO (String, String, Int)
+runCommandWithInput cmd input = do
+  -- this has to be done carefully.
   (ih,oh,eh,ph) <- runInteractiveCommand cmd
-  when (isJust i) $ forkIO (hPutStr ih $ fromJust i) >> return ()
+  when (isJust input) $ forkIO (hPutStr ih $ fromJust input) >> return ()
   o <- newEmptyMVar
   e <- newEmptyMVar
   forkIO $ oh `hGetContentsStrictlyAnd` putMVar o
@@ -205,26 +224,7 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
   x_actual <- waitForProcess ph >>= return.fromExitCode
   o_actual <- takeMVar o
   e_actual <- takeMVar e
-
-  let failuremsg
-       -- when a bad exe is provided, we don't want to show all the test
-       -- failures. This should work on all posix systems at least.
-       -- Really we should report a test error here, not a failure.
-       | x_actual == 127 = cmd ++ ": command not found"
-       | otherwise = addnewline $ intercalate "\n" $ filter (not . null) [
-                   if (maybe True (o_actual `matches`) o_expected')
-                   then "" 
-                   else showExpectedActual "stdout"    (fromJust o_expected') o_actual
-                  ,if (maybe True (e_actual `matches`) e_expected')
-                   then "" 
-                   else showExpectedActual "stderr"    (fromJust e_expected') e_actual
-                  ,if (maybe True (show x_actual `matches`) x_expected')
-                   then ""
-                   else showExpectedActual "exit code" (fromJust x_expected') (show x_actual)
-                  ]
-  assertString failuremsg
-      where addnewline "" = ""
-            addnewline s  = "\n"++s
+  return (o_actual, e_actual, x_actual)
 
 hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
 hGetContentsStrictlyAnd h f = hGetContents h >>= \c -> length c `seq` f c
