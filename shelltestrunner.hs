@@ -29,7 +29,7 @@ import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
 import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
-import Text.RegexPR
+import Text.Regex.PCRE.Light.Char8
 import Debug.Trace
 strace :: Show a => a -> a
 strace a = trace (show a) a
@@ -66,12 +66,12 @@ data ShellTest = ShellTest {
     ,exitCodeExpected :: Maybe Matcher
     } deriving (Show)
 
-type Regex = String
+type Regexp = String
 
 data Matcher = Lines String
              | Numeric String
-             | PositiveRegex Regex
-             | NegativeRegex Regex
+             | PositiveRegex Regexp
+             | NegativeRegex Regexp
                deriving (Show)
 
 main :: IO ()
@@ -262,7 +262,9 @@ lstrip = dropws
 rstrip = reverse . dropws . reverse
 dropws = dropWhile (`elem` " \t")
 
+-- | Does string contain this regular expression ? Hides regexp errors,
+-- returning False in that case.
 containsRegex :: String -> String -> Bool
-containsRegex s r = case matchRegexPR (""++r) s of
-                      Just _ -> True
+containsRegex s r = case compileM r [] of
+                      Right regex -> isJust $ match regex s []
                       _ -> False

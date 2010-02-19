@@ -36,7 +36,7 @@ description:
  expression, in which case the test passes if the output is matched, or 0
  or more data lines, in which case the output must match these exactly.  A
  ! preceding a \/regexp\/ negates the match. The regular expression syntax
- is that supported by the regexpr library.
+ is that supported by the pcre-light library.
  .
  Apart from the command line, all fields are optional. Only the fields you
  specify will be tested, unless you use the -i/--implicit-tests flag,
@@ -78,4 +78,4 @@ executable shelltestrunner
                 ,test-framework
                 ,test-framework-hunit >= 0.2
                 ,cmdargs >= 0.1
-                ,regexpr >= 0.5.1
+                ,pcre-light >= 0.3.1
