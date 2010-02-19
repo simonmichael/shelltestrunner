@@ -1,0 +1,112 @@
+
+* issues
+** can't test uncompiled haskell code because runhaskell loses stdout/stderr
+** parse failure shouldn't abort all tests
+** hang.. fixed ?
+  - can hang if: running on a mac and input is specified and executable does not read stdin ?
+   -- waitForProcess has been known to hang if: on a mac, and cmd did not read stdin, and/or the wind is against us ?
+   -- cf http://hackage.haskell.org/trac/ghc/ticket/3369
+   -- it may be that we need to force evaluation of stdout and stderr first, if it recurs try this:
+   --putStr $ printf "%d, %d " (length o_actual) (length e_actual)
+* wishlist
+** configurable delimiters
+>  Field delimiters other than the default <<<, >>>, >>>2 and >>>= may be
+>  specified with the --stdin-marker, --stdout-marker, --stderr-marker and
+>  --exitcode-marker options.
+>  .
+54,57d57
+<  Wishlist:
+<  .
+<  - configurable delimiters
+<  .
+diff -rN old-shelltestrunner2/shelltestrunner.hs new-shelltestrunner2/shelltestrunner.hs
+42a43,46
+>            | StdinMarkerOption
+>            | StdoutMarkerOption
+>            | StderrMarkerOption
+>            | ExitcodeMarkerOption
+71a76,99
+>  ,Arg {argIndex = StdinMarkerOption,
+>        argName  = Just "stdin-marker",
+>        argAbbr  = Nothing,
+>        argData  = argDataDefaulted "string" ArgtypeString "<<<",
+>        argDesc  = "marker for the stdin field (default: <<<)"
+>       }
+>  ,Arg {argIndex = StdoutMarkerOption,
+>        argName  = Just "stdout-marker",
+>        argAbbr  = Nothing,
+>        argData  = argDataDefaulted "string" ArgtypeString ">>>",
+>        argDesc  = "marker for the stdout field (default: >>>)"
+>       }
+>  ,Arg {argIndex = StderrMarkerOption,
+>        argName  = Just "stderr-marker",
+>        argAbbr  = Nothing,
+>        argData  = argDataDefaulted "string" ArgtypeString ">>>2",
+>        argDesc  = "marker for the stderr field (default: >>>2)"
+>       }
+>  ,Arg {argIndex = ExitcodeMarkerOption,
+>        argName  = Just "exitcode-marker",
+>        argAbbr  = Nothing,
+>        argData  = argDataDefaulted "string" ArgtypeString ">>>=",
+>        argDesc  = "marker for the exit code field (default: >>>=)"
+>       }
+
+* snippets
+** getopts/hskeleton
+-- import System.Console.GetOpt              (OptDescr(..), getOpt', ArgOrder(..), ArgDescr(..), usageInfo)
+-- import System.Console.GetOpt.StandardOpts (printHelp, StandardFlag(..))
+-- import System.Environment                 (getProgName, getArgs)
+
+-- GETOPTS
+
+-- usagehdr = "" --bench [-f testsfile] [-n iterations] [-p precision] executable1 [executable2 ...]\n" ++
+--            -- "\n" ++
+--            -- "Run some functional tests with each of the specified executables,\n" ++
+--            -- "where a test is \"zero or more arguments supported by all executables\",\n" ++
+--            -- "and report the best execution times.\n"
+           
+-- options = [
+--   Option ['d'] ["debug"] (NoArg Debug) "show verbose debugging output"
+--  ,Option ['V'] ["version"] (NoArg Version) "show version"
+--  ,Option ['h'] ["help"] (NoArg Help) "show this help"
+--  ]             
+
+-- data Opt = Help
+--          | Version
+--          | Debug
+--            deriving (Eq,Show)
+
+-- usageftr = "" -- \n" ++
+--            -- "Tips:\n" ++
+--            -- "- executables may have arguments if enclosed in quotes\n" ++
+--            -- "- tests can be commented out with #\n" ++
+--            -- "- results are saved in benchresults.{html,txt}\n"
+
+-- usage = usageInfo usagehdr options ++ usageftr
+
+-- HSKELETON
+
+-- -- from Robin Green's hskeleton
+-- parseArgs :: [OptDescr a] -> ([a] -> b) -> (b -> Maybe StandardFlag) -> [String] -> IO (b,[String],[String])
+-- parseArgs globalOptions postProcess findStandard rawargs =
+--   do
+--       progName <- getProgName
+--       let pHelp = printHelp progName globalOptions
+--       case getOpt' Permute globalOptions rawargs of
+--           (opts, _, _, []) | isJust (findStandard $ postProcess opts) -> do
+--               case fromJust (findStandard $ postProcess opts) of
+--                   HelpFlag -> pHelp
+--                   VersionFlag -> printVersion
+--               exitWith ExitSuccess
+--           (opts, args, unprocessedopts, []) -> return (postProcess opts, unprocessedopts, args)
+--           (_, _, _, errs) -> do putStrLn "Errors when parsing command-line arguments:"
+--                                 mapM_ putStrLn errs
+--                                 pHelp
+--                                 exitWith $ ExitFailure 1
+
+-- findStandard :: [Opt] -> Maybe StandardFlag
+-- findStandard opts | Help `elem` opts = Just HelpFlag
+--                   | Version `elem` opts = Just VersionFlag
+--                   | otherwise = Nothing
+
+  -- (opts,uopts,args) <- getArgs >>= parseArgs options id findStandard
