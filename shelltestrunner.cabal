@@ -15,7 +15,7 @@ description:
  > shelltestrunner [OPTS] EXECUTABLE [TESTFILES ...] [TESTRUNNEROPTS]
  .
  Any unrecognised options will be passed through to test-framework's runner.
- You may be able to get a big speedup by running tests in parallel: try -j8.
+ You may be able to get a big speedup by running tests in parallel: try --threads=16.
  .
  A test file contains 0 or more shell tests, each of which looks like this: 
  .
@@ -46,6 +46,8 @@ description:
  - can't test input/output which does not end with newline
  .
  - can't test uncompiled haskell scripts, runghc loses stdout/stderr
+ .
+ - avoid spaces between flags and their values
  .
 license:        GPL
 license-file:   LICENSE
