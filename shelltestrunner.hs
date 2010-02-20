@@ -291,9 +291,9 @@ lstrip = dropws
 rstrip = reverse . dropws . reverse
 dropws = dropWhile (`elem` " \t")
 
--- | Does string contain this regular expression ? Hides regexp errors,
--- returning False in that case.
+-- | Does string contain this regular expression ?
+-- A malformed regexp will cause a runtime error.
 containsRegex :: String -> String -> Bool
 containsRegex s r = case compileM r [] of
                       Right regex -> isJust $ match regex s []
-                      _ -> False
+                      Left e -> error $ printf "%s: %s" e (trim $ r)
