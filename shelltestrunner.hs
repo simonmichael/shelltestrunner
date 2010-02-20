@@ -20,11 +20,10 @@ import Data.Maybe (fromJust,isJust,maybe,isNothing,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs hiding (args)
 import qualified System.Console.CmdArgs as CmdArgs (args)
-import System.Environment (withArgs)
-import System.Exit (ExitCode(..))
+import System.Exit (ExitCode(..), exitWith)
 import System.IO (Handle, hGetContents, hPutStr)
 import System.Process (runInteractiveCommand, waitForProcess)
-import Test.Framework (defaultMain)
+import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
 import Text.ParserCombinators.Parsec
@@ -35,10 +34,10 @@ strace :: Show a => a -> a
 strace a = trace (show a) a
 
 
-version, progname, prognameandversion :: String
 version = "0.6.98" -- keep synced with shelltestrunner.cabal
 progname = "shelltestrunner"
-prognameandversion = progname ++ " " ++ version
+progversion = progname ++ " " ++ version
+version, progname, progversion :: String
 
 data Args = Args {
      debug      :: Bool
@@ -48,14 +47,25 @@ data Args = Args {
     ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
 
-argsmode :: Mode Args
-argsmode = mode $ Args{
+argmodes :: [Mode Args]
+argmodes = [
+  mode $ Args{
             debug      = def &= explicit & flag "debug" & text "debug verbosity"
-           ,implicit   = "exit" &= typ "none|exit|all" & empty "none" & text "provide implicit tests"
+           ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
            ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
            ,testfiles  = def &= CmdArgs.args & typ "TESTFILES" & text "test files"
            ,otheropts  = def &= unknownFlags & explicit & typ "FLAGS" & text "other flags are passed to test runner"
            }
+ ]
+
+checkArgs :: Args -> IO Args
+checkArgs args = do
+  when (not $ i `elem` ["none","exit","all"]) $
+       warn $ printf "Bad -i/--implicit value %s, valid choices are: none, exit or all" $ show i
+  return args
+    where
+      i = implicit args
+      warn s = cmdArgsHelp s argmodes Text >>= putStrLn >> exitWith (ExitFailure 1)
 
 data ShellTest = ShellTest {
      testname         :: String
@@ -76,15 +86,15 @@ data Matcher = Lines String
 
 main :: IO ()
 main = do
-  args <- cmdArgs prognameandversion [argsmode]
+  args <- cmdArgs progversion argmodes >>= checkArgs
   loud <- isLoud
   when loud $ do
-         putStrLn $ "testing executable: " ++ (show $ executable args)
-         putStrLn $ "test files: " ++ (show $ testfiles args)
-         putStrLn $ "test runner options: " ++ (show $ otheropts args)
          putStrLn $ "all args: " ++ (show args)
+         putStrLn $ "executable: " ++ (show $ executable args)
+         putStrLn $ "testfiles: " ++ (show $ testfiles args)
+         putStrLn $ "testrunner opts: " ++ (show $ otheropts args)
   shelltests <- liftM concat $ mapM parseShellTestFile (testfiles args)
-  withArgs (otheropts args) $ defaultMain $ concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests
+  defaultMainWithArgs (concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests) (otheropts args)
 
 -- parsing
 
