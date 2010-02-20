@@ -294,6 +294,6 @@ dropws = dropWhile (`elem` " \t")
 -- | Does string contain this regular expression ?
 -- A malformed regexp will cause a runtime error.
 containsRegex :: String -> String -> Bool
-containsRegex s r = case compileM r [] of
+containsRegex s r = case compileM r [dotall] of
                       Right regex -> isJust $ match regex s []
                       Left e -> error $ printf "%s: %s" e (trim $ r)
