@@ -50,7 +50,7 @@ data Args = Args {
 argmodes :: [Mode Args]
 argmodes = [
   mode $ Args{
-            debug      = def &= explicit & flag "debug" & text "debug verbosity"
+            debug      = def &= flag "debug" & text "show debug messages"
            ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
            ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
            ,testfiles  = def &= CmdArgs.args & typ "TESTFILES" & text "test files"
@@ -74,7 +74,7 @@ data ShellTest = ShellTest {
     ,stdoutExpected   :: Maybe Matcher
     ,stderrExpected   :: Maybe Matcher
     ,exitCodeExpected :: Maybe Matcher
-    } deriving (Show)
+    }
 
 type Regexp = String
 
@@ -82,30 +82,27 @@ data Matcher = Lines String
              | Numeric String
              | PositiveRegex Regexp
              | NegativeRegex Regexp
-               deriving (Show)
 
 main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
+  when (debug args) $ printf "args: %s\n" (show args)
   loud <- isLoud
   when loud $ do
-         putStrLn $ "all args: " ++ (show args)
-         putStrLn $ "executable: " ++ (show $ executable args)
-         putStrLn $ "testfiles: " ++ (show $ testfiles args)
-         putStrLn $ "testrunner opts: " ++ (show $ otheropts args)
-  shelltests <- liftM concat $ mapM parseShellTestFile (testfiles args)
+         printf "executable: %s\n" (executable args)
+         printf "test files: %s\n" (intercalate ", " $ testfiles args)
+  shelltests <- liftM concat $ mapM (parseShellTestFile args) (testfiles args)
   defaultMainWithArgs (concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests) (otheropts args)
 
 -- parsing
 
-parseShellTestFile :: FilePath -> IO [ShellTest]
-parseShellTestFile f = do
-  loud <- isLoud
-  when loud $ putStrLn $ "parsing file: " ++ f
+parseShellTestFile :: Args -> FilePath -> IO [ShellTest]
+parseShellTestFile args f = do
+  when (debug args) $ printf "parsing: %s\n" f
   ts <- liftM (either (error.show) id) $ parseFromFile (many shelltestp) f
   let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
           | otherwise     = ts
-  when loud $ putStrLn $ "parsed tests: " ++ show ts'
+  when (debug args) $ printf "parsed: %s\n" (show ts')
   return ts'
 
 shelltestp :: Parser ShellTest
@@ -202,15 +199,12 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
                      ,case x_expected of Just m -> Just m
                                          _      -> Just $ Numeric "0")
             _ -> (o_expected,e_expected,x_expected)
-  loud <- isLoud
-  when loud $ do
-    putStrLn $ "running test: " ++ n
-    putStrLn $ "running command: " ++ cmd
+  when (debug args) $ printf "command: %s\n" cmd
   (o_actual, e_actual, x_actual) <- runCommandWithInput cmd i
-  when loud $ do
-    putStrLn $ "stdout: " ++ o_actual
-    putStrLn $ "stderr: " ++ e_actual
-    putStrLn $ "exit:   " ++ (show x_actual)
+  when (debug args) $ do
+    printf "stdout: %s\n" (trim o_actual)
+    printf "stderr: %s\n" (trim e_actual)
+    printf "exit:   %s\n" (trim $ show x_actual)
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError e_actual -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
@@ -254,13 +248,23 @@ matches s (Lines p)         = s == p
 
 showExpectedActual :: String -> Matcher -> String -> String
 showExpectedActual field e a =
-    printf "**Expected %s:%s**Got %s:\n%s" field (showMatcher e) field (trim a)
+    printf "**Expected %s:%s**Got %s:\n%s" field (show e) field (trim a)
 
-showMatcher :: Matcher -> String
-showMatcher (PositiveRegex r) = " /"++(trim r)++"/\n"
-showMatcher (NegativeRegex r) = " !/"++(trim r)++"/\n"
-showMatcher (Numeric s)       = "\n"++(trim s)++"\n"
-showMatcher (Lines s)         = "\n"++(trim s)
+instance Show Matcher where
+    show (PositiveRegex r) = "/"++(trim r)++"/"
+    show (NegativeRegex r) = "!/"++(trim r)++"/"
+    show (Numeric s)       = show $ trim s
+    show (Lines s)         = show $ trim s
+
+instance Show ShellTest where
+    show ShellTest{testname=n,commandargs=a,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} = 
+        printf "ShellTest {testname = %s, commandargs = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
+                   (show $ trim n)
+                   (show $ trim a)
+                   (maybe "Nothing" (show.trim) i)
+                   (show o)
+                   (show e)
+                   (show x)
 
 
 -- utils
