@@ -248,7 +248,7 @@ matches s (Lines p)         = s == p
 
 showExpectedActual :: String -> Matcher -> String -> String
 showExpectedActual field e a =
-    printf "**Expected %s:%s**Got %s:\n%s" field (show e) field (trim a)
+    printf "**Expected %s:%s\n**Got %s:\n%s" field (show e) field (trim a)
 
 instance Show Matcher where
     show (PositiveRegex r) = "/"++(trim r)++"/"
