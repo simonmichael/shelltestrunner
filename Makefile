@@ -27,10 +27,13 @@ release: test tagrepo push
 docs haddock:
 	cabal configure && cabal haddock --executables
 
+# site: push docs
+# 	rsync -avz dist/doc/html/shelltestrunner/shelltestrunner/ joyful.com:/repos/shelltestrunner/html/
+
 tag: emacstags
 
 emacstags:
-	rm -f TAGS; hasktags -e *hs *.cabal
+	rm -f TAGS; hasktags -e *hs *.cabal tests/*.test
 
 clean:
 	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`

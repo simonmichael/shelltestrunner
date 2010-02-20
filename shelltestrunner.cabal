@@ -7,17 +7,23 @@ description:
  Run a command-line program through \"shell tests\" defined in one or
  more test files, checking its output, stderr output and exit status.
  It uses test-framework's test runner, so can run tests in parallel.
- This was extracted from the hledger project, and inspired by the tests in
- John Wiegley's ledger project.
+ This was inspired by the tests in John Wiegley's ledger project.
  .
  Usage: 
  .
- > shelltestrunner [OPTS] EXECUTABLE [TESTFILES ...] [TESTRUNNEROPTS]
+ > shelltestrunner [FLAGS] EXECUTABLE [TESTFILES ...]
+ > 
+ >   -? --help[=FORMAT]           Show usage information (optional format)
+ >   -V --version                 Show version information
+ >   -v --verbose                 Higher verbosity
+ >   -q --quiet                   Lower verbosity
+ >   -d --debug                   show debug messages
+ >   -i --implicit=none|exit|all  provide implicit tests (default=exit)
  .
  Any unrecognised options will be passed through to test-framework's runner.
  You may be able to get a big speedup by running tests in parallel: try --threads=16.
  .
- A test file contains 0 or more shell tests, each of which looks like this: 
+ A test file contains one or more shell tests, each of which looks like this:
  .
  > # 0 or more comment lines beginning with #
  > -opt1 -opt2 arg1 arg2 # one line of command line args, executable will be prepended
@@ -33,21 +39,25 @@ description:
  expression, in which case the test passes if the output is matched, or 0
  or more data lines, in which case the output must match these exactly.  A
  ! preceding a \/regexp\/ negates the match. The regular expression syntax
- is that supported by the pcre-light library.
+ is that of the pcre-light library with the dotall flag.
  .
- Apart from the first (command line args), all fields are optional.
- By default there is an implicit test for exit status = 0, but no implicit test for stdout or stderr.
- You can change this with the -i/--implicit-tests flag.
+ Except for the command line args field, all fields are optional.  By default
+ there is an implicit test for exit status = 0, but no implicit test for
+ stdout or stderr.  You can change this with the -i/--implicit-tests flag.
  .
  Some issues:
  .
- - can't use / in regexps
+ - can't match / with regexps
  .
  - can't test input/output which does not end with newline
  .
- - can't test uncompiled haskell scripts, runghc loses stdout/stderr
+ - can't test uncompiled haskell scripts (http://hackage.haskell.org/trac/ghc/ticket/3890)
  .
- - avoid spaces between flags and their values
+ - a regexp compilation failure will terminate
+ .
+ - a test file parse failure will terminate
+ .
+ - parser fragility (need a >>>= between multiple tests in a file, can't end a file with a comment)
  .
 license:        GPL
 license-file:   LICENSE
