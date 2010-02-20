@@ -1,12 +1,13 @@
 # test with various arguments
 #
 # 1. with no args, should complain and fail
-# XXX should be on stderr and show more help ?
+# XXX inconsistently terse, this warning
 
 >>> /Not enough non-flag arguments/
 >>>= 1 
 #
-# 2. a bad executable with no testfiles is accepted. XXX should really error
+# 2. a bad executable with no testfiles is accepted
+# XXX should really error
 nosuchexe
 >>> /Total +0/
 #

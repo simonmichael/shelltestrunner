@@ -1,4 +1,4 @@
-# test fix for "on mac, will hang if input is specified and executable does not read stdin"
+# test "mac will hang if input is specified and stdin is not read" fix
 nosuchexe
 <<<
 dummy input
