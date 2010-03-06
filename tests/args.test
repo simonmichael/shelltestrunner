@@ -20,3 +20,4 @@ nosuchexe tests/args.test
 cat nosuchtestfile
 >>>2 /No such file/
 >>>= 1
+# a final comment

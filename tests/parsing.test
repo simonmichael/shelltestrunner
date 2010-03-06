@@ -1,14 +1,13 @@
 # misc. testfile parsing tests
-# 1. can we match a / ?
+# 1. can we match / ?
 | echo /
->>> //
-# 2. blank regexp ? with whitespace after ?
+>>> /\//
+# 2. can we handle a blank regexp ? with whitespace after ?
 | echo
 >>> //    
-# 3. with a comment after ?
+# 3. how about a comment after ?
 | echo
 >>> // # comment
 # 4. no trailing newline after regexp ?
 | printf ""
->>> 
-# final comment
+>>> //
