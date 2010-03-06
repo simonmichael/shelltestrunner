@@ -51,11 +51,11 @@ description:
  test for stdout or stderr.  You can change this with the
  -i/--implicit-tests flag.
  .
- Some issues:
+ Some issues to be aware of:
  .
- - can't test uncompiled haskell scripts due to http://hackage.haskell.org/trac/ghc/ticket/3890
+ - uncompiled haskell scripts can't be tested due to http://hackage.haskell.org/trac/ghc/ticket/3890
  .
- - a bad regexp is counted as a test failure, should be an error
+ - unparseable test files and uncompilable regexps are counted as test failures
  .
 license:        GPL
 license-file:   LICENSE

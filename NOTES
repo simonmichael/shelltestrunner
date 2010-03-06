@@ -1,7 +1,5 @@
 
 * issues
-** regexp compilation failure shouldn't terminate
-** test file parse failure shouldn't terminate
 ** can't test uncompiled haskell code because runhaskell/runghc loses stdout/stderr
     http://hackage.haskell.org/trac/ghc/ticket/3890
 * wishlist
