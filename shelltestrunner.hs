@@ -55,7 +55,7 @@ argmodes :: [Mode Args]
 argmodes = [
   mode $ Args{
             debug      = def &= flag "debug" & text "show debug messages"
-           ,debugparse = def &= flag "debug-parse" & explicit & text "show debug messages and stop after parsing"
+           ,debugparse = def &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
            ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
            ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
            ,testfiles  = def &= CmdArgs.args & typ "TESTFILES" & text "test files"
