@@ -1,0 +1,4 @@
+# indented input should not break the parser
+|echo
+<<<
+ x

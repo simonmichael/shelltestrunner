@@ -147,7 +147,7 @@ whitespacelinep = try (newline >> return "") <|> (whitespacecharp >> whitespacec
 commentlinep = whitespacep >> char '#' >> lineoreofp <?> "comments"
 whitespaceorcommentlinep = choice [try commentlinep, whitespacelinep]
 whitespaceorcommentlineoreofp = choice [(eof >> return ""), try commentlinep, whitespacelinep]
-delimiterp = choice [try $ string "<<<", try $ string ">>>", commentlinep >> return "", eof >> return ""]
+delimiterp = choice [try $ string "<<<", try $ string ">>>", try commentlinep >> return "", eof >> return ""]
 
 commandargsp = linep
 
