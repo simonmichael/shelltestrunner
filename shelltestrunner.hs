@@ -17,6 +17,7 @@ import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
 import Data.List (intercalate)
 import Data.Maybe (isNothing,isJust,fromJust,maybe,catMaybes)
+import Data.Either (partitionEithers)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs hiding (args)
 import qualified System.Console.CmdArgs as CmdArgs (args)
@@ -97,21 +98,26 @@ main = do
   when loud $ do
          printf "executable: %s\n" (executable args)
          printf "test files: %s\n" (intercalate ", " $ testfiles args)
-  shelltests <- liftM concat $ mapM (parseShellTestFile args) (testfiles args)
+  (parsefailures, shelltests) <- liftM partitionEithers $ mapM (parseShellTestFile args) $ testfiles args
+  mapM (printf "failed to parse %s\n") parsefailures
   unless (debugparse args) $
-    defaultMainWithArgs (concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests) (otheropts args)
+    defaultMainWithArgs (concatMap (hUnitTestToTests.shellTestToHUnitTest args) (concat shelltests)) (otheropts args)
 
 -- parsing
 
-parseShellTestFile :: Args -> FilePath -> IO [ShellTest]
+parseShellTestFile :: Args -> FilePath -> IO (Either String [ShellTest])
 parseShellTestFile args f = do
-  ts <- liftM (either (error.show) id) $ parseFromFile shelltestfilep f
-  let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
-          | otherwise     = ts
-  when (debug args || debugparse args) $ do
-    printf "parsed %s:\n" f
-    mapM_ (putStrLn.(' ':).show) ts'
-  return ts'
+  p <- parseFromFile shelltestfilep f
+  case p of
+    Right ts -> do
+           let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
+                   | otherwise     = ts
+           when (debug args || debugparse args) $ do
+                               printf "parsed %s:\n" f
+                               mapM_ (putStrLn.(' ':).show) ts'
+           return $ Right ts'
+    Left e -> do
+           return $ Left $ show e
 
 shelltestfilep :: Parser [ShellTest]
 shelltestfilep = do
@@ -130,7 +136,7 @@ shelltestp = do
   o <- optionMaybe expectedoutputp <?> "expected output"
   e <- optionMaybe expectederrorp <?> "expected error output"
   x <- optionMaybe expectedexitcodep <?> "expected exit status"
-  when (null c && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail "empty test file"
+  when (null c && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail ""
   return $ ShellTest{testname=f,commandargs=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
 newlineoreofp, whitespacecharp :: Parser Char
