@@ -20,7 +20,7 @@ push:
 
 release: test tagrepo push
 	cabal sdist
-	(cabal upload $(TARBALL) --check | grep '^OK$$') \
+	(cabal upload $(TARBALL) --check | grep '^Ok$$') \
 		&& cabal upload $(TARBALL) \
 		|| (cabal upload $(TARBALL) --check -v3; false)
 
