@@ -5,9 +5,10 @@ synopsis:       A tool for testing command-line programs.
 description:
  .
  Run a command-line program through \"shell tests\" defined in one or
- more test files, checking its output, stderr output and exit status.
- It uses test-framework's test runner, so can run tests in parallel.
- This was inspired by the tests in John Wiegley's ledger project.
+ more test files. Each test specifies command-line arguments, some input,
+ and expected output, stderr output and/or exit status.
+ We use test-framework's test runner, so can run tests in parallel.
+ shelltestrunner was inspired by the tests in John Wiegley's ledger project.
  .
  Usage: 
  .
@@ -18,46 +19,43 @@ description:
  >   -v --verbose                 Higher verbosity
  >   -q --quiet                   Lower verbosity
  >   -d --debug                   show debug messages
+ >      --debug-parse             show parsing debug messages and stop
  >   -i --implicit=none|exit|all  provide implicit tests (default=exit)
  .
  Any unrecognised options will be passed through to test-framework's runner.
- You may be able to get a big speedup by running tests in parallel: try --threads=16.
+ You may be able to get a big speedup by running tests in parallel: try -j16.
  .
  A test file contains one or more shell tests, each of which looks like this:
  .
- > # 0 or more comment lines beginning with #
+ > # optional comment lines beginning with #
  > -opt1 -opt2 arg1 arg2 # one line of command line args, executable will be prepended
  > <<<
  > 0 or more lines of input
- > >>> [/regexp/]
+ > >>> [/regexp/] [optional comment beginning with #]
  > [..or 0 or more lines of expected output]
- > >>>2 [/regexp/]
+ > >>>2 [/regexp/] [optional comment]
  > [..or 0 or more lines of expected error output]
- > >>>= [expected numeric exit status or /regexp/]
+ > >>>= [expected exit status or /regexp/] [optional comment]
+ > # optional comment lines
  .
- Each expected field can have either a regular expression match
- expression, in which case the test passes if the output is matched, or 0
- or more data lines, in which case the output must match these exactly.  A
- ! preceding a \/regexp\/ negates the match. The regular expression syntax
- is that of the pcre-light library with the dotall flag.
+ The expected output and expected error output fields can have either a
+ regular expression match expression, in which case the test passes if the
+ output is matched, or 0 or more following data lines, in which case the
+ output must match these exactly. The expected exit status field can have
+ either a numeric exit code or a regular expression match expression. A !
+ preceding a an exit code or \/regexp\/ negates the match. The regular
+ expression syntax is that of the pcre-light library with the dotall flag.
  .
- Except for the command line args field, all fields are optional.  By default
- there is an implicit test for exit status = 0, but no implicit test for
- stdout or stderr.  You can change this with the -i/--implicit-tests flag.
+ The command line args field is required, all others are optional.  By
+ default there is an implicit test for exit status = 0, but no implicit
+ test for stdout or stderr.  You can change this with the
+ -i/--implicit-tests flag.
  .
  Some issues:
  .
- - can't match / with regexps
+ - can't test uncompiled haskell scripts due to http://hackage.haskell.org/trac/ghc/ticket/3890
  .
- - can't test input/output which does not end with newline
- .
- - can't test uncompiled haskell scripts (http://hackage.haskell.org/trac/ghc/ticket/3890)
- .
- - a regexp compilation failure will terminate
- .
- - a test file parse failure will terminate
- .
- - parser fragility (need a >>>= between multiple tests in a file, can't end a file with a comment)
+ - a bad regexp is counted as a test failure, should be an error
  .
 license:        GPL
 license-file:   LICENSE
@@ -65,7 +63,7 @@ author:         Simon Michael <simon@joyful.com>
 maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner
 bug-reports:    mailto:simon@joyful.com
-stability:      experimental
+stability:      beta
 tested-with:    GHC==6.10
 cabal-version:  >= 1.6
 build-type:     Simple
