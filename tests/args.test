@@ -1,10 +1,10 @@
 # test with various arguments
 #
 # 1. with no args, should complain and fail
-# XXX inconsistently terse, this warning
+# XXX this warning is inconsistently terse
 
 >>> /Not enough non-flag arguments/
->>>= 1 
+>>>= !0
 #
 # 2. a bad executable with no testfiles is accepted
 # XXX should really error

@@ -1,0 +1,14 @@
+# misc. testfile parsing testsa
+# 1. can we match a / ?
+| echo /
+>>> //
+# 2. blank regexp ? with whitespace after ?
+| echo
+>>> //    
+# 3. with a comment after ?
+| echo
+>>> // # comment
+# 4. no trailing newline after regexp ?
+| printf ""
+>>> 
+# final comment

@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-
 
-shelltestrunner - a handy tool for testing command-line programs.
+shelltestrunner - a tool for testing command-line programs.
 
 See shelltestrunner.cabal.
 
@@ -14,9 +14,9 @@ module Main
 where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
-import Control.Monad (liftM,when)
+import Control.Monad (liftM,when,unless)
 import Data.List (intercalate)
-import Data.Maybe (fromJust,isJust,maybe,isNothing,catMaybes)
+import Data.Maybe (isNothing,isJust,fromJust,maybe,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs hiding (args)
 import qualified System.Console.CmdArgs as CmdArgs (args)
@@ -41,16 +41,21 @@ version, progname, progversion :: String
 
 data Args = Args {
      debug      :: Bool
+    ,debugparse :: Bool
     ,implicit   :: String
     ,executable :: String
     ,testfiles  :: [String]
     ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
 
+nullargs :: Args
+nullargs = Args False False "" "" [] []
+
 argmodes :: [Mode Args]
 argmodes = [
   mode $ Args{
             debug      = def &= flag "debug" & text "show debug messages"
+           ,debugparse = def &= flag "debug-parse" & explicit & text "show debug messages and stop after parsing"
            ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
            ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
            ,testfiles  = def &= CmdArgs.args & typ "TESTFILES" & text "test files"
@@ -80,6 +85,7 @@ type Regexp = String
 
 data Matcher = Lines String
              | Numeric String
+             | NegativeNumeric String
              | PositiveRegex Regexp
              | NegativeRegex Regexp
 
@@ -92,91 +98,112 @@ main = do
          printf "executable: %s\n" (executable args)
          printf "test files: %s\n" (intercalate ", " $ testfiles args)
   shelltests <- liftM concat $ mapM (parseShellTestFile args) (testfiles args)
-  defaultMainWithArgs (concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests) (otheropts args)
+  unless (debugparse args) $
+    defaultMainWithArgs (concatMap (hUnitTestToTests.shellTestToHUnitTest args) shelltests) (otheropts args)
 
 -- parsing
 
 parseShellTestFile :: Args -> FilePath -> IO [ShellTest]
 parseShellTestFile args f = do
-  when (debug args) $ printf "parsing: %s\n" f
-  ts <- liftM (either (error.show) id) $ parseFromFile (many shelltestp) f
+  ts <- liftM (either (error.show) id) $ parseFromFile shelltestfilep f
   let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
           | otherwise     = ts
-  when (debug args) $ printf "parsed: %s\n" (show ts')
+  when (debug args || debugparse args) $ do
+    printf "parsed %s:\n" f
+    mapM_ (putStrLn.(' ':).show) ts'
   return ts'
+
+shelltestfilep :: Parser [ShellTest]
+shelltestfilep = do
+  ts <- many (try shelltestp)
+  many commentlinep
+  eof
+  return ts
 
 shelltestp :: Parser ShellTest
 shelltestp = do
   st <- getParserState
   let f = sourceName $ statePos st
   many commentlinep
-  c <- commandargsp
-  i <- optionMaybe inputp
-  o <- optionMaybe expectedoutputp
-  e <- optionMaybe expectederrorp
-  x <- optionMaybe expectedexitcodep
+  c <- commandargsp <?> "command arguments"
+  i <- optionMaybe inputp <?> "input"
+  o <- optionMaybe expectedoutputp <?> "expected output"
+  e <- optionMaybe expectederrorp <?> "expected error output"
+  x <- optionMaybe expectedexitcodep <?> "expected exit status"
   when (null c && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail "empty test file"
-  return ShellTest{testname=f,commandargs=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  return $ ShellTest{testname=f,commandargs=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
-linep,commentlinep,commandargsp,delimiterp,inputp,whitespacep :: Parser String
-
-linep = anyChar `manyTill` newline
-
-commentlinep = char '#' >> anyChar `manyTill` newline
+newlineoreofp, whitespacecharp :: Parser Char
+linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,commandargsp,delimiterp,inputp :: Parser String
+linep = (anyChar `manyTill` newline) <?> "rest of line"
+newlineoreofp = newline <|> (eof >> return '\n') <?> "newline or end of file"
+lineoreofp = (anyChar `manyTill` newlineoreofp)
+whitespacecharp = oneOf " \t"
+whitespacep = many whitespacecharp
+whitespacelinep = try (newline >> return "") <|> (whitespacecharp >> whitespacecharp `manyTill` newlineoreofp)
+commentlinep = whitespacep >> char '#' >> lineoreofp <?> "comments"
+whitespaceorcommentlinep = choice [try commentlinep, whitespacelinep]
+whitespaceorcommentlineoreofp = choice [(eof >> return ""), try commentlinep, whitespacelinep]
+delimiterp = choice [try $ string "<<<", try $ string ">>>", commentlinep >> return "", eof >> return ""]
 
 commandargsp = linep
 
-delimiterp = choice [try $ string "<<<", try $ string ">>>", (eof >> return "")]
-
-inputp = string "<<<" >> newline >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
+inputp = string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
 expectedoutputp :: Parser Matcher
-expectedoutputp = try $ do
+expectedoutputp = (try $ do
   string ">>>" >> optional (char '1')
   whitespacep
-  choice [positiveregexmatcherp, negativeregexmatcherp, linesmatcherp]
+  choice [positiveregexmatcherp, negativeregexmatcherp, whitespaceorcommentlineoreofp >> linesmatcherp]
+ ) <?> "expected output"
 
 expectederrorp :: Parser Matcher
-expectederrorp = try $ do
+expectederrorp = (try $ do
   string ">>>2"
   whitespacep
-  choice [positiveregexmatcherp, negativeregexmatcherp, linesmatcherp]
+  choice [positiveregexmatcherp, negativeregexmatcherp, (whitespaceorcommentlineoreofp >> linesmatcherp)]
+ ) <?> "expected error output"
 
 expectedexitcodep :: Parser Matcher
-expectedexitcodep = do
+expectedexitcodep = (try $ do
   string ">>>="
   whitespacep
-  choice [positiveregexmatcherp, negativeregexmatcherp, numericmatcherp]
-
-negativeregexmatcherp :: Parser Matcher
-negativeregexmatcherp = do
-  char '!'
-  PositiveRegex r <- positiveregexmatcherp
-  return $ NegativeRegex r
-
-positiveregexmatcherp :: Parser Matcher
-positiveregexmatcherp = do
-  char '/'
-  r <- many $ noneOf "/"
-  char '/'
-  whitespacep
-  newline
-  return $ PositiveRegex r
+  choice [positiveregexmatcherp, try negativeregexmatcherp, numericmatcherp, negativenumericmatcherp]
+ ) <?> "expected exit status"
 
 linesmatcherp :: Parser Matcher
 linesmatcherp = do
-  whitespacep
-  newline
-  (liftM $ Lines . unlines) (linep `manyTill` (lookAhead delimiterp))
+  (liftM $ Lines . unlines) (linep `manyTill` (lookAhead delimiterp)) <?> "lines of output"
+
+negativeregexmatcherp :: Parser Matcher
+negativeregexmatcherp = (do
+  char '!'
+  PositiveRegex r <- positiveregexmatcherp
+  return $ NegativeRegex r) <?> "non-matched regexp pattern"
+
+positiveregexmatcherp :: Parser Matcher
+positiveregexmatcherp = (do
+  char '/'
+  r <- (try escapedslashp <|> noneOf "/") `manyTill` (char '/')
+  whitespaceorcommentlineoreofp
+  return $ PositiveRegex r) <?> "regexp pattern"
+
+negativenumericmatcherp :: Parser Matcher
+negativenumericmatcherp = (do
+  char '!'
+  Numeric s <- numericmatcherp
+  return $ NegativeNumeric s
+  ) <?> "non-matched number"
 
 numericmatcherp :: Parser Matcher
-numericmatcherp = do
+numericmatcherp = (do
   s <- many1 $ oneOf "0123456789"
-  whitespacep
-  newline
+  whitespaceorcommentlineoreofp
   return $ Numeric s
+  ) <?> "number"
 
-whitespacep = many $ oneOf " \t"
+escapedslashp :: Parser Char
+escapedslashp = char '\\' >> char '/'
 
 -- running
 
@@ -199,12 +226,12 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
                      ,case x_expected of Just m -> Just m
                                          _      -> Just $ Numeric "0")
             _ -> (o_expected,e_expected,x_expected)
-  when (debug args) $ printf "command: %s\n" cmd
+  when (debug args) $ printf "command: %s\n" (show cmd)
   (o_actual, e_actual, x_actual) <- runCommandWithInput cmd i
   when (debug args) $ do
-    printf "stdout: %s\n" (trim o_actual)
-    printf "stderr: %s\n" (trim e_actual)
-    printf "exit:   %s\n" (trim $ show x_actual)
+    printf "stdout: %s\n" (show $ trim o_actual)
+    printf "stderr: %s\n" (show $ trim e_actual)
+    printf "exit:   %s\n" (show $ trim $ show x_actual)
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError e_actual -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
@@ -241,20 +268,22 @@ hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
 hGetContentsStrictlyAnd h f = hGetContents h >>= \s -> length s `seq` f s
 
 matches :: String -> Matcher -> Bool
-matches s (PositiveRegex r) = s `containsRegex` r
-matches s (NegativeRegex r) = not $ s `containsRegex` r
-matches s (Numeric p)       = s == p
-matches s (Lines p)         = s == p
+matches s (PositiveRegex r)   = s `containsRegex` r
+matches s (NegativeRegex r)   = not $ s `containsRegex` r
+matches s (Numeric p)         = s == p
+matches s (NegativeNumeric p) = not $ s == p
+matches s (Lines p)           = s == p
 
 showExpectedActual :: String -> Matcher -> String -> String
 showExpectedActual field e a =
-    printf "**Expected %s:%s\n**Got %s:\n%s" field (show e) field (trim a)
+    printf "**Expected %s: %s\n**Got %s: %s" field (show e) field (show $ trim a)
 
 instance Show Matcher where
-    show (PositiveRegex r) = "/"++(trim r)++"/"
-    show (NegativeRegex r) = "!/"++(trim r)++"/"
-    show (Numeric s)       = show $ trim s
-    show (Lines s)         = show $ trim s
+    show (PositiveRegex r)   = "/"++(trim r)++"/"
+    show (NegativeRegex r)   = "!/"++(trim r)++"/"
+    show (Numeric s)         = show $ trim s
+    show (NegativeNumeric s) = "!"++ show (trim s)
+    show (Lines s)           = show $ trim s
 
 instance Show ShellTest where
     show ShellTest{testname=n,commandargs=a,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} = 
@@ -300,4 +329,4 @@ containsRegex s r =
              -- ,utf8  -- shows no obvious benefit with 6.10, review situation with 6.12
              ] of
       Right regex -> isJust $ match regex s []
-      Left e -> error $ printf "%s: %s" e (trim $ r)
+      Left e -> error $ printf "bad regexp, %s: %s" e (trim $ r)
