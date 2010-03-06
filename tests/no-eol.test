@@ -1,0 +1,4 @@
+# test output which does not end with a newline
+>/dev/null | cat
+<<<
+>>> //
