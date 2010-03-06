@@ -1,12 +1,7 @@
 
 * issues
-** test file parse failure shouldn't terminate
 ** regexp compilation failure shouldn't terminate
-** regexps should support \/
-** general parser fragility
-*** need a >>>= between multiple tests
-*** can't end the file with a comment
-*** allow blank lines after >>>= for separation
+** test file parse failure shouldn't terminate
 ** can't test uncompiled haskell code because runhaskell/runghc loses stdout/stderr
     http://hackage.haskell.org/trac/ghc/ticket/3890
 * wishlist
