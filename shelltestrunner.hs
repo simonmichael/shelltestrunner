@@ -17,7 +17,6 @@ import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
 import Data.List (intercalate)
 import Data.Maybe (isNothing,isJust,fromJust,maybe,catMaybes)
-import Data.Either (partitionEithers)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs hiding (args)
 import qualified System.Console.CmdArgs as CmdArgs (args)
@@ -98,14 +97,13 @@ main = do
   when loud $ do
          printf "executable: %s\n" (executable args)
          printf "test files: %s\n" (intercalate ", " $ testfiles args)
-  (parsefailures, shelltests) <- liftM partitionEithers $ mapM (parseShellTestFile args) $ testfiles args
-  mapM (printf "failed to parse %s\n") parsefailures
+  parseresults <- mapM (parseShellTestFile args) $ testfiles args
   unless (debugparse args) $
-    defaultMainWithArgs (concatMap (hUnitTestToTests.shellTestToHUnitTest args) (concat shelltests)) (otheropts args)
+    defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) (otheropts args)
 
 -- parsing
 
-parseShellTestFile :: Args -> FilePath -> IO (Either String [ShellTest])
+parseShellTestFile :: Args -> FilePath -> IO (Either ParseError [ShellTest])
 parseShellTestFile args f = do
   p <- parseFromFile shelltestfilep f
   case p of
@@ -116,8 +114,7 @@ parseShellTestFile args f = do
                                printf "parsed %s:\n" f
                                mapM_ (putStrLn.(' ':).show) ts'
            return $ Right ts'
-    Left e -> do
-           return $ Left $ show e
+    Left _ -> return p
 
 shelltestfilep :: Parser [ShellTest]
 shelltestfilep = do
@@ -212,6 +209,10 @@ escapedslashp :: Parser Char
 escapedslashp = char '\\' >> char '/'
 
 -- running
+
+testFileParseToHUnitTest :: Args -> Either ParseError [ShellTest] -> Test.HUnit.Test
+testFileParseToHUnitTest args (Right ts) = TestList $ map (shellTestToHUnitTest args) ts
+testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: assertFailure $ show e
 
 shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_expected,
