@@ -27,24 +27,24 @@ description:
  .
  A test file contains one or more shell tests, each of which looks like this:
  .
- > # optional comment lines beginning with #
+ > # optional comment lines
  > -opt1 -opt2 arg1 arg2 # one line of command line args, executable will be prepended
  > <<<
  > 0 or more lines of input
- > >>> [/regexp/] [optional comment beginning with #]
+ > >>> [/regexp/]
  > [..or 0 or more lines of expected output]
- > >>>2 [/regexp/] [optional comment]
+ > >>>2 [/regexp/]
  > [..or 0 or more lines of expected error output]
- > >>>= [expected exit status or /regexp/] [optional comment]
+ > >>>=
  > # optional comment lines
  .
  The expected output and expected error output fields can have either a
  regular expression match expression, in which case the test passes if the
  output is matched, or 0 or more following data lines, in which case the
  output must match these exactly. The expected exit status field can have
- either a numeric exit code or a regular expression match expression. A !
- preceding a an exit code or \/regexp\/ negates the match. The regular
- expression syntax is that of the pcre-light library with the dotall flag.
+ either a numeric exit code or a \/regexp\/. A !  preceding a an exit code
+ or \/regexp\/ negates the match. The regular expression syntax is that of
+ the pcre-light library with the dotall flag.
  .
  The command line args field is required, all others are optional.  By
  default there is an implicit test for exit status = 0, but no implicit
@@ -53,7 +53,7 @@ description:
  .
  Some issues to be aware of:
  .
- - uncompiled haskell scripts can't be tested due to http://hackage.haskell.org/trac/ghc/ticket/3890
+ - uncompiled haskell scripts can't be tested due to http:\/\/hackage.haskell.org\/trac\/ghc\/ticket\/3890
  .
  - unparseable test files and uncompilable regexps are counted as test failures
  .
