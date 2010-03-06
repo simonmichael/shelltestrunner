@@ -1,4 +1,4 @@
-# misc. testfile parsing testsa
+# misc. testfile parsing tests
 # 1. can we match a / ?
 | echo /
 >>> //
