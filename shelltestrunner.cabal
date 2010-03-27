@@ -53,7 +53,7 @@ description:
  .
  Some issues to be aware of:
  .
- - uncompiled haskell scripts can't be tested due to http:\/\/hackage.haskell.org\/trac\/ghc\/ticket\/3890
+ - uncompiled haskell scripts sometimes can't be tested due to http:\/\/hackage.haskell.org\/trac\/ghc\/ticket\/3890
  .
  - unparseable test files and uncompilable regexps are counted as test failures
  .
