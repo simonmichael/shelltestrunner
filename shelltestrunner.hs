@@ -22,7 +22,7 @@ import System.Console.CmdArgs hiding (args)
 import qualified System.Console.CmdArgs as CmdArgs (args)
 import System.Exit (ExitCode(..), exitWith)
 import System.IO (Handle, hGetContents, hPutStr)
-import System.Process (runInteractiveCommand, waitForProcess)
+import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProcess (..), waitForProcess, ProcessHandle)
 import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
@@ -30,6 +30,9 @@ import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
 import Text.Regex.PCRE.Light.Char8
 import Debug.Trace
+import System.FilePath (takeDirectory)
+import System.FilePath.FindCompat (find, extension, (==?), always)
+import Control.Applicative ((<$>))
 strace :: Show a => a -> a
 strace a = trace (show a) a
 
@@ -42,23 +45,31 @@ version, progname, progversion :: String
 data Args = Args {
      debug      :: Bool
     ,debugparse :: Bool
+    ,recursive  :: Bool
+    ,execdir    :: Bool
+    ,testextension :: String
     ,implicit   :: String
     ,executable :: String
-    ,testfiles  :: [String]
+    ,inputfiles  :: [String]
     ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
 
+{-
 nullargs :: Args
-nullargs = Args False False "" "" [] []
+nullargs = Args False False False "" "" "" [] []
+-}
 
 argmodes :: [Mode Args]
 argmodes = [
   mode $ Args{
             debug      = def &= flag "debug" & text "show debug messages"
            ,debugparse = def &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
+           ,recursive  = def &= flag "recursive" & text "recursively run tests in directories"
+           ,execdir = def &= flag "execdir" & text "execute tested command in same directory as test file"
+           ,testextension = ".test" &= flag "extension" & text "file extension name of test file (used for recursive search)"
            ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
            ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
-           ,testfiles  = def &= CmdArgs.args & typ "TESTFILES" & text "test files"
+           ,inputfiles  = def &= CmdArgs.args & typ "INPUTFILES" & text "input files"
            ,otheropts  = def &= unknownFlags & explicit & typ "FLAGS" & text "other flags are passed to test runner"
            }
  ]
@@ -93,11 +104,16 @@ main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
   when (debug args) $ printf "args: %s\n" (show args)
+  testfiles <-
+     if recursive args
+        then concat <$> mapM (find always (extension ==? testextension args)) 
+                             (inputfiles args) 
+        else return $ inputfiles args 
   loud <- isLoud
   when loud $ do
          printf "executable: %s\n" (executable args)
-         printf "test files: %s\n" (intercalate ", " $ testfiles args)
-  parseresults <- mapM (parseShellTestFile args) $ testfiles args
+         printf "test files: %s\n" (intercalate ", " $ testfiles)
+  parseresults <- mapM (parseShellTestFile args) testfiles 
   unless (debugparse args) $
     defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) (otheropts args)
 
@@ -233,8 +249,9 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
                      ,case x_expected of Just m -> Just m
                                          _      -> Just $ Numeric "0")
             _ -> (o_expected,e_expected,x_expected)
+      dir = if execdir args then Just $ takeDirectory n else Nothing
   when (debug args) $ printf "command: %s\n" (show cmd)
-  (o_actual, e_actual, x_actual) <- runCommandWithInput cmd i
+  (o_actual, e_actual, x_actual) <- runCommandWithInput dir cmd i
   when (debug args) $ do
     printf "stdout: %s\n" (show $ trim o_actual)
     printf "stderr: %s\n" (show $ trim e_actual)
@@ -257,10 +274,10 @@ shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpec
 
 -- | Run a shell command line, passing it standard input if provided,
 -- and return the standard output, standard error output and exit code.
-runCommandWithInput :: String -> Maybe String -> IO (String, String, Int)
-runCommandWithInput cmd input = do
+runCommandWithInput :: Maybe FilePath -> String -> Maybe String -> IO (String, String, Int)
+runCommandWithInput wd cmd input = do
   -- this has to be done carefully
-  (ih,oh,eh,ph) <- runInteractiveCommand cmd
+  (ih,oh,eh,ph) <- runInteractiveCommandInDir wd cmd 
   when (isJust input) $ forkIO (hPutStr ih $ fromJust input) >> return ()
   o <- newEmptyMVar
   e <- newEmptyMVar
@@ -270,6 +287,16 @@ runCommandWithInput cmd input = do
   o_actual <- takeMVar o
   e_actual <- takeMVar e
   return (o_actual, e_actual, x_actual)
+
+runInteractiveCommandInDir :: Maybe FilePath -> String ->  IO (Handle, Handle, Handle, ProcessHandle)
+runInteractiveCommandInDir wd cmd = do
+   (mb_in, mb_out, mb_err, p) <- 
+      createProcess $ 
+         (shell cmd) { cwd = wd
+                     , std_in  = CreatePipe
+                     , std_out = CreatePipe
+                     , std_err = CreatePipe }
+   return (fromJust mb_in, fromJust mb_out, fromJust mb_err, p)
 
 hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
 hGetContentsStrictlyAnd h f = hGetContents h >>= \s -> length s `seq` f s

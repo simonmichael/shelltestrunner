@@ -83,6 +83,9 @@ executable shelltestrunner
                 ,test-framework-hunit >= 0.2
                 ,cmdargs >= 0.1
                 ,pcre-light >= 0.3.1
+                ,directory
+                ,filepath
+                ,FileManipCompat
 
 source-repository head
   type:     darcs
