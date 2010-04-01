@@ -31,7 +31,8 @@ import Text.Printf (printf)
 import Text.Regex.PCRE.Light.Char8
 import Debug.Trace
 import System.FilePath (takeDirectory)
-import System.FilePath.FindCompat (find, extension, (==?), always)
+import System.FilePath.FindCompat (find, (==?), always)
+import qualified System.FilePath.FindCompat as Find (extension)
 import Control.Applicative ((<$>))
 strace :: Show a => a -> a
 strace a = trace (show a) a
@@ -47,7 +48,7 @@ data Args = Args {
     ,debugparse :: Bool
     ,recursive  :: Bool
     ,execdir    :: Bool
-    ,testextension :: String
+    ,extension :: String
     ,implicit   :: String
     ,executable :: String
     ,inputfiles  :: [String]
@@ -66,7 +67,7 @@ argmodes = [
            ,debugparse = def &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
            ,recursive  = def &= flag "recursive" & text "recursively run tests in directories"
            ,execdir = def &= flag "execdir" & text "execute tested command in same directory as test file"
-           ,testextension = ".test" &= flag "extension" & text "file extension name of test file (used for recursive search)"
+           ,extension = ".test" &= flag "extension" & text "extension of test files, for recursive search"
            ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
            ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
            ,inputfiles  = def &= CmdArgs.args & typ "INPUTFILES" & text "input files"
@@ -106,7 +107,7 @@ main = do
   when (debug args) $ printf "args: %s\n" (show args)
   testfiles <-
      if recursive args
-        then concat <$> mapM (find always (extension ==? testextension args)) 
+        then concat <$> mapM (find always (Find.extension ==? extension args))
                              (inputfiles args) 
         else return $ inputfiles args 
   loud <- isLoud
