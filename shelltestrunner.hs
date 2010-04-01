@@ -31,7 +31,7 @@ import Text.Printf (printf)
 import Text.Regex.PCRE.Light.Char8
 import Debug.Trace
 import System.FilePath (takeDirectory)
-import System.FilePath.FindCompat (find, (==?), always)
+import System.FilePath.FindCompat (findWithHandler, (==?), always)
 import qualified System.FilePath.FindCompat as Find (extension)
 import Control.Applicative ((<$>))
 strace :: Show a => a -> a
@@ -46,12 +46,11 @@ version, progname, progversion :: String
 data Args = Args {
      debug      :: Bool
     ,debugparse :: Bool
-    ,recursive  :: Bool
     ,execdir    :: Bool
     ,extension :: String
     ,implicit   :: String
     ,executable :: String
-    ,inputfiles  :: [String]
+    ,testpaths  :: [FilePath]
     ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
 
@@ -65,13 +64,12 @@ argmodes = [
   mode $ Args{
             debug      = def &= flag "debug" & text "show debug messages"
            ,debugparse = def &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
-           ,recursive  = def &= flag "recursive" & text "recursively run tests in directories"
-           ,execdir = def &= flag "execdir" & text "execute tested command in same directory as test file"
-           ,extension = ".test" &= flag "extension" & text "extension of test files, for recursive search"
+           ,execdir = def &= flag "execdir" & text "run tests in same directory as test file"
+           ,extension = ".test" &= flag "extension" & typ "EXT" & text "extension of test files when dirs specified"
            ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
            ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
-           ,inputfiles  = def &= CmdArgs.args & typ "INPUTFILES" & text "input files"
-           ,otheropts  = def &= unknownFlags & explicit & typ "FLAGS" & text "other flags are passed to test runner"
+           ,testpaths  = def &= CmdArgs.args & typ "TESTFILES|TESTDIRS" & text "test files or directories"
+           ,otheropts  = def &= unknownFlags & explicit & typ "FLAGS" & text "any other flags are passed to test runner"
            }
  ]
 
@@ -105,11 +103,8 @@ main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
   when (debug args) $ printf "args: %s\n" (show args)
-  testfiles <-
-     if recursive args
-        then concat <$> mapM (find always (Find.extension ==? extension args))
-                             (inputfiles args) 
-        else return $ inputfiles args 
+  testfiles <- concat <$> mapM (findWithHandler (\_ e -> fail $ show e)
+                                               always (Find.extension ==? extension args)) (testpaths args)
   loud <- isLoud
   when loud $ do
          printf "executable: %s\n" (executable args)
