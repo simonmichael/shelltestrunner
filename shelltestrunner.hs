@@ -103,8 +103,10 @@ main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
   when (debug args) $ printf "args: %s\n" (show args)
+  let paths = case testpaths args of [] -> ["."]
+                                     ps -> ps
   testfiles <- concat <$> mapM (findWithHandler (\_ e -> fail $ show e)
-                                               always (Find.extension ==? extension args)) (testpaths args)
+                                               always (Find.extension ==? extension args)) paths
   loud <- isLoud
   when loud $ do
          printf "executable: %s\n" (executable args)
