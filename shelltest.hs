@@ -54,10 +54,9 @@ data Args = Args {
     ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
 
-{-
+
 nullargs :: Args
 nullargs = Args False False False "" "" "" [] []
--}
 
 argmodes :: [Mode Args]
 argmodes = [
@@ -84,7 +83,7 @@ checkArgs args = do
 
 data ShellTest = ShellTest {
      testname         :: String
-    ,commandargs      :: String
+    ,command          :: String
     ,stdin            :: Maybe String
     ,stdoutExpected   :: Maybe Matcher
     ,stderrExpected   :: Maybe Matcher
@@ -142,16 +141,16 @@ shelltestp = do
   st <- getParserState
   let f = sourceName $ statePos st
   many commentlinep
-  c <- commandargsp <?> "command arguments"
+  c <- commandp <?> "command line"
   i <- optionMaybe inputp <?> "input"
   o <- optionMaybe expectedoutputp <?> "expected output"
   e <- optionMaybe expectederrorp <?> "expected error output"
   x <- optionMaybe expectedexitcodep <?> "expected exit status"
   when (null c && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail ""
-  return $ ShellTest{testname=f,commandargs=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  return $ ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
 newlineoreofp, whitespacecharp :: Parser Char
-linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,commandargsp,delimiterp,inputp :: Parser String
+linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,commandp,delimiterp,inputp :: Parser String
 linep = (anyChar `manyTill` newline) <?> "rest of line"
 newlineoreofp = newline <|> (eof >> return '\n') <?> "newline or end of file"
 lineoreofp = (anyChar `manyTill` newlineoreofp)
@@ -163,7 +162,7 @@ whitespaceorcommentlinep = choice [try commentlinep, whitespacelinep]
 whitespaceorcommentlineoreofp = choice [(eof >> return ""), try commentlinep, whitespacelinep]
 delimiterp = choice [try $ string "<<<", try $ string ">>>", try commentlinep >> return "", eof >> return ""]
 
-commandargsp = linep
+commandp = linep
 
 inputp = string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
@@ -229,7 +228,7 @@ testFileParseToHUnitTest args (Right ts) = TestList $ map (shellTestToHUnitTest 
 testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: assertFailure $ show e
 
 shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
-shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_expected,
+shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
                                     stderrExpected=e_expected,exitCodeExpected=x_expected} = 
  n ~: do
   let e = with args
@@ -318,8 +317,8 @@ instance Show Matcher where
     show (Lines s)           = show $ trim s
 
 instance Show ShellTest where
-    show ShellTest{testname=n,commandargs=a,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} = 
-        printf "ShellTest {testname = %s, commandargs = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
+    show ShellTest{testname=n,command=a,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
+        printf "ShellTest {testname = %s, command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
                    (show $ trim n)
                    (show $ trim a)
                    (maybe "Nothing" (show.trim) i)
