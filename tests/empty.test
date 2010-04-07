@@ -1,2 +1,3 @@
 # handle a totally empty test file
-| ./shelltestrunner ./shelltestrunner /dev/null
+./shelltest /dev/null
+>>> /Total +0/

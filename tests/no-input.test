@@ -1,5 +1,5 @@
 # test "mac will hang if input is specified and stdin is not read" fix
-nosuchexe
+./shelltest /dev/null
 <<<
 dummy input
 >>>= 0

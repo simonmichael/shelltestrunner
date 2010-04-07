@@ -1,4 +1,4 @@
 # indented input should not break the parser
-|echo
+./shelltest /dev/null >/dev/null; echo "HERE"
 <<<
  x

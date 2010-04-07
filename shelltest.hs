@@ -49,7 +49,7 @@ data Args = Args {
     ,execdir    :: Bool
     ,extension :: String
     ,implicit   :: String
-    ,executable :: String
+    ,with       :: String
     ,testpaths  :: [FilePath]
     ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
@@ -67,7 +67,7 @@ argmodes = [
            ,execdir = def &= flag "execdir" & text "run tests in same directory as test file"
            ,extension = ".test" &= flag "extension" & typ "EXT" & text "extension of test files when dirs specified"
            ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
-           ,executable = def &= argPos 0 & typ "EXECUTABLE" & text "executable under test"
+           ,with = def &= flag "with" & typ "EXECUTABLE" & text "alternate executable, replaces the first word of test commands"
            ,testpaths  = def &= CmdArgs.args & typ "TESTFILES|TESTDIRS" & text "test files or directories"
            ,otheropts  = def &= unknownFlags & explicit & typ "FLAGS" & text "any other flags are passed to test runner"
            }
@@ -109,7 +109,7 @@ main = do
                                                always (Find.extension ==? extension args)) paths
   loud <- isLoud
   when loud $ do
-         printf "executable: %s\n" (executable args)
+         printf "executable: %s\n" (with args)
          printf "test files: %s\n" (intercalate ", " $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles 
   unless (debugparse args) $
@@ -232,8 +232,8 @@ shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args ShellTest{testname=n,commandargs=c,stdin=i,stdoutExpected=o_expected,
                                     stderrExpected=e_expected,exitCodeExpected=x_expected} = 
  n ~: do
-  let exe = executable args
-      cmd = unwords [exe,c]
+  let e = with args
+      cmd = if null e then c else e ++ " " ++ dropWhile (/=' ') c
       (o_expected',e_expected',x_expected') =
           case (implicit args) of
             "all"    -> (case o_expected of
