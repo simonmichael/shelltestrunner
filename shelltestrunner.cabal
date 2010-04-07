@@ -12,7 +12,7 @@ description:
  .
  Usage: 
  .
- > shelltest [FLAGS] EXECUTABLE [TESTFILES ...]
+ > shelltest [FLAG] [TESTFILES|TESTDIRS]
  > 
  >   -? --help[=FORMAT]           Show usage information (optional format)
  >   -V --version                 Show version information
@@ -20,7 +20,11 @@ description:
  >   -q --quiet                   Lower verbosity
  >   -d --debug                   show debug messages
  >      --debug-parse             show parsing debug messages and stop
+ >      --execdir                 run tests in same directory as test file
+ >      --extension=EXT           extension of test files when dirs specified (default=.test)
  >   -i --implicit=none|exit|all  provide implicit tests (default=exit)
+ >   -w --with=EXECUTABLE         alternate executable, replaces the first word of test commands
+ >      =FLAGS                    any other flags are passed to test runner
  .
  Any unrecognised options will be passed through to test-framework's runner.
  You may be able to get a big speedup by running tests in parallel: try -j16.
@@ -28,7 +32,7 @@ description:
  A test file contains one or more shell tests, each of which looks like this:
  .
  > # optional comment lines
- > -opt1 -opt2 arg1 arg2 # one line of command line args, executable will be prepended
+ > somecommand -opt1 -opt2 arg1 arg2  # a one-line shell command to be tested
  > <<<
  > 0 or more lines of input
  > >>> [/regexp/]
@@ -46,10 +50,15 @@ description:
  or \/regexp\/ negates the match. The regular expression syntax is that of
  the pcre-light library with the dotall flag.
  .
- The command line args field is required, all others are optional.  By
- default there is an implicit test for exit status = 0, but no implicit
- test for stdout or stderr.  You can change this with the
- -i/--implicit-tests flag.
+ The test command line is required. When running tests, you can use
+ --with/-w to replace the first word of all test commands with an
+ alternate executable, eg to test different versions of a program. When
+ this is not desirable, prefix the command with a space; this indicates a
+ fixed command which should never change.
+ .
+ All other fields are optional.  By default there is an implicit test for
+ exit status = 0, but no implicit test for stdout or stderr.  You can
+ change this with the -i/--implicit-tests flag.
  .
  Some issues to be aware of:
  .

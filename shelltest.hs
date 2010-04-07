@@ -6,7 +6,7 @@ shelltestrunner - a tool for testing command-line programs.
 
 See shelltestrunner.cabal.
 
-(c) Simon Michael 2009, released under GNU GPLv3
+(c) Simon Michael 2009-2010, released under GNU GPLv3
 
 -}
 
