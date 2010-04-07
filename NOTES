@@ -1,7 +1,9 @@
 
 * issues
+** we should ignore the extension of test files specified on the command line
 ** can't test uncompiled haskell code because runhaskell/runghc loses stdout/stderr
     http://hackage.haskell.org/trac/ghc/ticket/3890
+** replace pcre-light with something that doesn't require extra libs ?
 * wishlist
 ** test runner issues
 *** no way to turn off colour codes
