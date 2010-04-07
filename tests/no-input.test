@@ -1,5 +1,5 @@
 # test "mac will hang if input is specified and stdin is not read" fix
-./shelltest /dev/null
+ echo
 <<<
 dummy input
 >>>= 0

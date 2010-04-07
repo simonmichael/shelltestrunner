@@ -1,4 +1,4 @@
 # test output which does not end with a newline
-./shelltest /dev/null >/dev/null | cat
+ cat
 <<<
->>> //
+>>> /^$/

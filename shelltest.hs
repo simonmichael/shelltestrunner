@@ -47,7 +47,7 @@ data Args = Args {
      debug      :: Bool
     ,debugparse :: Bool
     ,execdir    :: Bool
-    ,extension :: String
+    ,extension  :: String
     ,implicit   :: String
     ,with       :: String
     ,testpaths  :: [FilePath]
@@ -83,12 +83,19 @@ checkArgs args = do
 
 data ShellTest = ShellTest {
      testname         :: String
-    ,command          :: String
+    ,command          :: TestCommand
     ,stdin            :: Maybe String
     ,stdoutExpected   :: Maybe Matcher
     ,stderrExpected   :: Maybe Matcher
     ,exitCodeExpected :: Maybe Matcher
     }
+
+data TestCommand = ReplaceableCommand String
+                 | FixedCommand String
+
+instance Show TestCommand where
+    show (ReplaceableCommand s) = s
+    show (FixedCommand s) = " " ++ s
 
 type Regexp = String
 
@@ -146,11 +153,11 @@ shelltestp = do
   o <- optionMaybe expectedoutputp <?> "expected output"
   e <- optionMaybe expectederrorp <?> "expected error output"
   x <- optionMaybe expectedexitcodep <?> "expected exit status"
-  when (null c && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail ""
+  when (null (show c) && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail ""
   return $ ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
 newlineoreofp, whitespacecharp :: Parser Char
-linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,commandp,delimiterp,inputp :: Parser String
+linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,delimiterp,inputp :: Parser String
 linep = (anyChar `manyTill` newline) <?> "rest of line"
 newlineoreofp = newline <|> (eof >> return '\n') <?> "newline or end of file"
 lineoreofp = (anyChar `manyTill` newlineoreofp)
@@ -162,7 +169,10 @@ whitespaceorcommentlinep = choice [try commentlinep, whitespacelinep]
 whitespaceorcommentlineoreofp = choice [(eof >> return ""), try commentlinep, whitespacelinep]
 delimiterp = choice [try $ string "<<<", try $ string ">>>", try commentlinep >> return "", eof >> return ""]
 
-commandp = linep
+commandp,fixedcommandp,replaceablecommandp :: Parser TestCommand
+commandp = fixedcommandp <|> replaceablecommandp
+fixedcommandp = space >> linep >>= return . FixedCommand
+replaceablecommandp = linep >>= return . ReplaceableCommand
 
 inputp = string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
@@ -232,7 +242,8 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
                                     stderrExpected=e_expected,exitCodeExpected=x_expected} = 
  n ~: do
   let e = with args
-      cmd = if null e then c else e ++ " " ++ dropWhile (/=' ') c
+      cmd = case (e,c) of (_:_, ReplaceableCommand s) -> e ++ " " ++ dropWhile (/=' ') s
+                          _ -> show c
       (o_expected',e_expected',x_expected') =
           case (implicit args) of
             "all"    -> (case o_expected of
@@ -317,10 +328,10 @@ instance Show Matcher where
     show (Lines s)           = show $ trim s
 
 instance Show ShellTest where
-    show ShellTest{testname=n,command=a,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
+    show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
         printf "ShellTest {testname = %s, command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
                    (show $ trim n)
-                   (show $ trim a)
+                   (show c)
                    (maybe "Nothing" (show.trim) i)
                    (show o)
                    (show e)

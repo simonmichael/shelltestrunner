@@ -1,9 +1,9 @@
 # 1. test utf8-encoded unicode text in command & output
-./shelltest /dev/null >/dev/null | echo проверка
+ echo проверка
 >>>
 проверка
 >>>= 0
 #
 # 2. and in regexp
-./shelltest /dev/null >/dev/null | echo проверка
+ echo проверка
 >>> /проверка/
