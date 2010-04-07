@@ -12,7 +12,7 @@ description:
  .
  Usage: 
  .
- > shelltestrunner [FLAGS] EXECUTABLE [TESTFILES ...]
+ > shelltest [FLAGS] EXECUTABLE [TESTFILES ...]
  > 
  >   -? --help[=FORMAT]           Show usage information (optional format)
  >   -V --version                 Show version information
@@ -71,8 +71,8 @@ build-type:     Simple
 extra-tmp-files:
 extra-source-files:
 
-executable shelltestrunner
-  main-is:        shelltestrunner.hs
+executable shelltest
+  main-is:        shelltest.hs
   ghc-options:    -Wall -threaded
   build-depends:
                  base >= 3 && < 5

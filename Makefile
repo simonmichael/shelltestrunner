@@ -1,10 +1,10 @@
 # shelltestrunner project makefile
 
 build:
-	ghc --make -threaded -Wall shelltestrunner.hs
+	ghc --make -threaded -Wall shelltest.hs
 
 test: build
-	./shelltestrunner ./shelltestrunner tests/*.test -j8
+	./shelltest ./shelltest tests/*.test -j8
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
 VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-3)
