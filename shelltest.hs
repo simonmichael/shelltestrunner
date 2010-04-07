@@ -140,7 +140,7 @@ shelltestp :: Parser ShellTest
 shelltestp = do
   st <- getParserState
   let f = sourceName $ statePos st
-  many commentlinep
+  many $ try commentlinep
   c <- commandp <?> "command line"
   i <- optionMaybe inputp <?> "input"
   o <- optionMaybe expectedoutputp <?> "expected output"
