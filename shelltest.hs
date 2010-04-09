@@ -62,14 +62,14 @@ nullargs = Args False False False "" "" "" [] []
 argmodes :: [Mode Args]
 argmodes = [
   mode $ Args{
-            debug      = def &= flag "debug" & text "show debug messages"
-           ,debugparse = def &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
-           ,execdir = def &= flag "execdir" & text "run tests in same directory as test file"
-           ,extension = ".test" &= flag "extension" & typ "EXT" & text "extension of test files when dirs specified"
-           ,implicit   = "exit" &= typ "none|exit|all" & text "provide implicit tests"
-           ,with = def &= flag "with" & typ "EXECUTABLE" & text "alternate executable, replaces the first word of test commands"
-           ,testpaths  = def &= CmdArgs.args & typ "TESTFILES|TESTDIRS" & text "test files or directories"
-           ,otheropts  = def &= unknownFlags & explicit & typ "FLAGS" & text "any other flags are passed to test runner"
+            debug      = def     &= text "show debug messages"
+           ,debugparse = def     &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
+           ,execdir    = def     &= text "run tests in same directory as test file"
+           ,extension  = ".test" &= typ "EXT" & text "extension of test files when dirs specified"
+           ,implicit   = "exit"  &= typ "none|exit|all" & text "provide implicit tests"
+           ,with       = def     &= typ "EXECUTABLE" & text "alternate executable, replaces the first word of test commands"
+           ,testpaths  = def     &= CmdArgs.args & typ "TESTFILES|TESTDIRS" & text "test files or directories"
+           ,otheropts  = def     &= unknownFlags & explicit & typ "OTHER FLAGS" & text "any other flags are passed to test runner"
            }
  ]
 
