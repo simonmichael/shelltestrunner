@@ -4,6 +4,7 @@
 ** can't test uncompiled haskell code because runhaskell/runghc loses stdout/stderr
     http://hackage.haskell.org/trac/ghc/ticket/3890
 ** replace pcre-light with something that doesn't require extra libs ?
+** unparseable test files and uncompilable regexps are counted as test failures.. ok ?
 * wishlist
 ** test runner issues
 *** no way to turn off colour codes
