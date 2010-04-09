@@ -1,6 +1,5 @@
 
 * issues
-** we should ignore the extension of test files specified on the command line
 ** unknown args give test-framework's usage, we should integrate more clearly
 ** can't test uncompiled haskell code because runhaskell/runghc loses stdout/stderr
     http://hackage.haskell.org/trac/ghc/ticket/3890

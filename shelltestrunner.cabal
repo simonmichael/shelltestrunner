@@ -50,15 +50,15 @@ description:
  or \/regexp\/ negates the match. The regular expression syntax is that of
  the pcre-light library with the dotall flag.
  .
- The test command line is required. When running tests, you can use
- --with/-w to replace the first word of all test commands with an
- alternate executable, eg to test different versions of a program. When
- this is not desirable, prefix the command with a space; this indicates a
- fixed command which should never change.
+ The test command line is required; all other fields are optional.  By
+ default there is an implicit test for exit status = 0, but no implicit
+ test for stdout or stderr.  You can change this with the
+ -i/--implicit-tests flag.
  .
- All other fields are optional.  By default there is an implicit test for
- exit status = 0, but no implicit test for stdout or stderr.  You can
- change this with the -i/--implicit-tests flag.
+ You can use --with/-w to replace the first word of test commands
+ (everything up to the first space) with something else, eg to test a
+ different version of your program. In tests where this is not
+ appropriate, prevent this by beginning the command line with a space.
  .
  Some issues to be aware of:
  .

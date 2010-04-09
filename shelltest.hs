@@ -2,7 +2,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-
 
-shelltestrunner - a tool for testing command-line programs.
+shelltest - a tool for testing command-line programs.
 
 See shelltestrunner.cabal.
 
