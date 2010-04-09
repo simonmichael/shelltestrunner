@@ -15,7 +15,7 @@ where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
-import Data.List (intercalate, nub)
+import Data.List (intercalate, nub, isPrefixOf)
 import Data.Maybe (isNothing,isJust,fromJust,maybe,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs hiding (args)
@@ -61,7 +61,7 @@ nullargs = Args False False False "" "" "" [] []
 
 argmodes :: [Mode Args]
 argmodes = [
-  mode $ Args{
+  mode (Args{
             debug      = def     &= text "show debug messages"
            ,debugparse = def     &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
            ,execdir    = def     &= text "run tests in same directory as test file"
@@ -70,17 +70,56 @@ argmodes = [
            ,with       = def     &= typ "EXECUTABLE" & text "alternate executable, replaces the first word of test commands"
            ,testpaths  = def     &= CmdArgs.args & typ "TESTFILES|TESTDIRS" & text "test files or directories"
            ,otheropts  = def     &= unknownFlags & explicit & typ "OTHER FLAGS" & text "any other flags are passed to test runner"
-           }
+           }) &= helpSuffix [
+   "A test file contains one or more shell tests, which look like this:"
+  ,""
+  ," # optional comment lines"
+  ," a one-line shell command to be tested"
+  ," <<<"
+  ," stdin lines"
+  ," >>> [/regexp to match in stdout/]"
+  ," [or expected stdout lines"
+  ," >>>2 [/regexp to match in stderr/]"
+  ," [or expected stderr lines]"
+  ," >>>= expected exit status or /regexp/"
+  ,""
+  ,"The command line is required; all other fields are optional."
+  ,"The expected stdout (>>>) and expected stderr (>>>2) fields can have either"
+  ,"a regular expression match pattern, in which case the test passes if the"
+  ,"output is matched, or 0 or more data lines, in which case the output"
+  ,"must match these exactly. The expected exit status (>>>=) field can have"
+  ,"either a numeric exit code or a /regexp/. A ! preceding a /regexp/ or exit"
+  ,"code negates the match. The regular expression syntax is that of the"
+  ,"pcre-light library with the dotall flag."
+  ,""
+  ,"By default there is an implicit test for exit status=0, but no implicit test"
+  ,"for stdout or stderr.  You can change this with -i/--implicit-tests."
+  ,""
+  ,"The command runs in your current directory unless you use --execdir."
+  ,"You can use --with/-w to replace the first word of command lines"
+  ,"(everything up to the first space) with something else, eg to test a"
+  ,"different version of your program. To prevent this, start the command line"
+  ,"with a space."
+  ,""
+  ,"Any unrecognised options will be passed through to test-framework's runner."
+  ,"You may be able to get a big speedup by running tests in parallel: try -j8."
+  ]
  ]
 
 checkArgs :: Args -> IO Args
 checkArgs args = do
   when (not $ i `elem` ["none","exit","all"]) $
        warn $ printf "Bad -i/--implicit value %s, valid choices are: none, exit or all" $ show i
+  when (null ps) $
+       warn $ printf "Please specify at least one file or directory, eg: %s ." progname
   return args
     where
       i = implicit args
-      warn s = cmdArgsHelp s argmodes Text >>= putStrLn >> exitWith (ExitFailure 1)
+      ps = testpaths args
+
+-- | Show a message, usage string, and terminate with exit status 1.
+warn :: String -> IO ()
+warn s = cmdArgsHelp s argmodes Text >>= putStrLn >> exitWith (ExitFailure 1)
 
 data ShellTest = ShellTest {
      testname         :: String
@@ -110,8 +149,7 @@ main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
   when (debug args) $ printf "args: %s\n" (show args)
-  let paths = case testpaths args of [] -> ["."]
-                                     ps -> ps
+  let paths = testpaths args
   testfiles <- nub . concat <$> mapM (\p -> do
                                        isdir <- doesDirectoryExist p
                                        if isdir
@@ -376,3 +414,14 @@ containsRegex s r =
              ] of
       Right regex -> isJust $ match regex s []
       Left e -> error $ printf "bad regexp, %s: %s" e (trim $ r)
+
+-- | Replace occurrences of old list with new list within a larger list.
+replace::(Eq a) => [a] -> [a] -> [a] -> [a]
+replace [] _ = id
+replace old new = replace'
+    where
+     replace' [] = []
+     replace' l@(h:ts) = if old `isPrefixOf` l
+                          then new ++ replace' (drop len l)
+                          else h : replace' ts
+     len = length old
