@@ -15,7 +15,7 @@ where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
-import Data.List (intercalate)
+import Data.List (intercalate, nub)
 import Data.Maybe (isNothing,isJust,fromJust,maybe,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs hiding (args)
@@ -30,6 +30,7 @@ import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
 import Text.Regex.PCRE.Light.Char8
 import Debug.Trace
+import System.Directory (doesDirectoryExist)
 import System.FilePath (takeDirectory)
 import System.FilePath.FindCompat (findWithHandler, (==?), always)
 import qualified System.FilePath.FindCompat as Find (extension)
@@ -111,8 +112,11 @@ main = do
   when (debug args) $ printf "args: %s\n" (show args)
   let paths = case testpaths args of [] -> ["."]
                                      ps -> ps
-  testfiles <- concat <$> mapM (findWithHandler (\_ e -> fail $ show e)
-                                               always (Find.extension ==? extension args)) paths
+  testfiles <- nub . concat <$> mapM (\p -> do
+                                       isdir <- doesDirectoryExist p
+                                       if isdir
+                                        then findWithHandler (\_ e->fail (show e)) always (Find.extension ==? extension args) p
+                                        else return [p]) paths
   loud <- isLoud
   when loud $ do
          printf "executable: %s\n" (with args)
