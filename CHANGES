@@ -1,0 +1,79 @@
+2010/4/9 0.8
+
+  * rename executable to shelltest. The package might also be renamed at some point.
+
+  * better built-in help
+
+  * shell tests now include a full command line, making them more readable
+    and self-contained. The --with option can be used to replace the first
+    word with something else, unless the test command line begins with a
+    space.
+
+  * we also accept directory arguments, searching for test files below
+    them, with two new options:
+      --execdir        execute tested command in same directory as test file
+      --extension=EXT  file extension of test files (default=.test)
+
+2010/3/5 0.7
+
+  * more robust parsing
+    - --debug-parse parses test files and stops
+    - regexps now support escaped forward slash (\/)
+    - bad regexps now fail at startup
+    - command-line arguments are required in a test, and may be blank
+    - a >>>= is no longer required to separate multiple tests in a file
+    - comments can be appended to delimiter lines
+    - comments can appear at end of file
+    - files need not have a final newline
+    - files containing nothing, all comments, or valid tests are allowed; anything else is rejected
+    - somewhat better errors
+    - allow indented input
+
+  * support negative (-) and negatively-matched (!) numeric exit codes
+
+  * let . in regexps match newline
+
+  * warn but continue when a test file fails to parse
+
+  * output cleanups, trim large output
+
+  * more flexible --implicit flag
+
+  * switch to the more robust and faster pcre-light regexp lib
+
+2009/7/15 0.6
+
+  * allow multiple tests per file, handle bad executable better
+
+2009/7/14 0.5
+
+  * show failure output in proper order
+
+2009/7/14 0.4
+
+  * run commands in a more robust way to avoid hangs
+    This fixes hanging when a command generates large output, and hopefully
+    all other deadlocks. The output is consumed strictly. Thanks to Ganesh
+    Sittampalam for his help with this.
+
+  * --implicit-tests flag providing implicit tests for omitted fields
+
+  * --debug flag
+
+  * regular expression matching
+
+  * disallow interspersed foreign options which confused parseargs
+
+  * change comment character to #
+
+2009/7/11 0.3
+
+  * misc. bugfixes/improvements
+
+2009/7/10 0.2
+
+  * bugfix, build with -threaded
+
+2009/7/10 0.1
+
+  * shelltestrunner, a generic shell command stdout/stderr/exit status tester
