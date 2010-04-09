@@ -4,7 +4,7 @@ build:
 	ghc --make -threaded -Wall shelltest.hs
 
 test: build
-	./shelltest -j8
+	./shelltest tests -j8
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
 VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-3)
@@ -19,7 +19,6 @@ push:
 	darcs push -a joyful.com:/repos/shelltestrunner
 
 release: test tagrepo push
-	cabal sdist
 	(cabal upload $(TARBALL) --check | grep '^Ok$$') \
 		&& cabal upload $(TARBALL) \
 		|| (cabal upload $(TARBALL) --check -v3; false)
