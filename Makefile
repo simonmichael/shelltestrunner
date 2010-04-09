@@ -7,7 +7,7 @@ test: build
 	./shelltest tests -j8
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
-VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-3)
+VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)
 
 showversion:
 	@echo $(VERSION)
