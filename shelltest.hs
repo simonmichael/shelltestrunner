@@ -360,7 +360,7 @@ matches s (Lines p)           = s == p
 
 showExpectedActual :: String -> Matcher -> String -> String
 showExpectedActual field e a =
-    printf "**Expected %s: %s\n**Got %s: %s" field (show e) field (show $ trim a)
+    printf "**Expected %s: %s\n**Got %s:      %s" field (show e) field (show $ trim a)
 
 instance Show Matcher where
     show (PositiveRegex r)   = "/"++(trim r)++"/"
