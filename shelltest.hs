@@ -47,6 +47,7 @@ version, progname, progversion :: String
 data Args = Args {
      debug      :: Bool
     ,debugparse :: Bool
+    ,color      :: Bool
     ,execdir    :: Bool
     ,extension  :: String
     ,implicit   :: String
@@ -57,13 +58,14 @@ data Args = Args {
 
 
 nullargs :: Args
-nullargs = Args False False False "" "" "" [] []
+nullargs = Args False False False False "" "" "" [] []
 
 argmodes :: [Mode Args]
 argmodes = [
   mode (Args{
             debug      = def     &= text "show debug messages"
            ,debugparse = def     &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
+           ,color      = def     &= text "display with ANSI color codes"
            ,execdir    = def     &= text "run tests in same directory as test file"
            ,extension  = ".test" &= typ "EXT" & text "extension of test files when dirs specified"
            ,implicit   = "exit"  &= typ "none|exit|all" & text "provide implicit tests"
@@ -161,7 +163,7 @@ main = do
          printf "test files: %s\n" (intercalate ", " $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles 
   unless (debugparse args) $
-    defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) (otheropts args)
+    defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) (otheropts args ++ if color args then [] else ["--plain"])
 
 -- parsing
 

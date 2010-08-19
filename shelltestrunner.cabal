@@ -57,10 +57,12 @@ description:
  > different version of your program. To prevent this, start the command line
  > with a space.
  > 
+ > To see test results in green and red, use --color.
+ >
  > Any unrecognised options will be passed through to test-framework's runner.
  > You may be able to get a big speedup by running tests in parallel: try -j8.
- > To turn off ansi terminal codes, use --plain. To see other test-framework
- > options, add an invalid flag to an otherwise valid command line, eg:
+ > To see other test-framework options,
+ > add an invalid flag to an otherwise valid command line, eg:
  > shelltest /dev/null -X
  .
 license:        GPL
@@ -85,7 +87,7 @@ executable shelltest
                 ,parsec
                 ,process
                 ,HUnit
-                ,test-framework >= 0.3.1 && < 0.4
+                ,test-framework >= 0.3.2 && < 0.4
                 ,test-framework-hunit >= 0.2 && < 0.3
                 ,cmdargs >= 0.1 && < 0.2
                 ,pcre-light >= 0.3.1 && < 0.4
