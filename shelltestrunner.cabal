@@ -79,7 +79,7 @@ extra-source-files:
 
 executable shelltest
   main-is:        shelltest.hs
-  ghc-options:    -Wall -threaded
+  ghc-options:    -threaded -W -fwarn-tabs
   build-depends:
                  base >= 3 && < 5
                 ,parsec
