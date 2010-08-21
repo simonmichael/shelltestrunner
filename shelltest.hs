@@ -12,6 +12,7 @@ See shelltestrunner.cabal.
 
 module Main
 where
+import Codec.Binary.UTF8.String (decodeString, encodeString, isUTF8Encoded)
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
@@ -144,6 +145,13 @@ data Matcher = Lines String
              | PositiveRegex Regexp
              | NegativeRegex Regexp
 
+-- I believe that as of ghc 6.12, file paths and arguments are utf-8 (or
+-- any local encoding ?) on unix and unicode on windows. Hopefully this
+-- decode function is safe to use on any string and will be helpful on
+-- utf-8 unix systems.
+decodeIfUTF8 :: String -> String
+decodeIfUTF8 s = if isUTF8Encoded s then decodeString s else s
+
 main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
@@ -154,11 +162,11 @@ main = do
                                        if isdir
                                         then findWithHandler (\_ e->fail (show e)) always (Find.extension ==? extension args) p
                                         else return [p]) paths
-  loud <- isLoud
-  when loud $ do
-         printf "executable: %s\n" (with args)
-         printf "test files: %s\n" (intercalate ", " $ testfiles)
-  parseresults <- mapM (parseShellTestFile args) testfiles 
+  verbose <- isLoud
+  when verbose $ do
+         printf "executable: %s\n" (decodeIfUTF8 $ with args)
+         printf "test files: %s\n" (intercalate ", " $ map decodeIfUTF8 $ testfiles)
+  parseresults <- mapM (parseShellTestFile args) testfiles
   unless (debugparse args) $
     defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) (otheropts args ++ if color args then [] else ["--plain"])
 
@@ -172,7 +180,7 @@ parseShellTestFile args f = do
            let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
                    | otherwise     = ts
            when (debug args || debugparse args) $ do
-                               printf "parsed %s:\n" f
+                               printf "parsed %s:\n" $ decodeIfUTF8 f
                                mapM_ (putStrLn.(' ':).show) ts'
            return $ Right ts'
     Left _ -> return p
@@ -187,7 +195,7 @@ shelltestfilep = do
 shelltestp :: Parser ShellTest
 shelltestp = do
   st <- getParserState
-  let f = sourceName $ statePos st
+  let f = decodeIfUTF8 $ sourceName $ statePos st
   many $ try commentlinep
   c <- commandp <?> "command line"
   i <- optionMaybe inputp <?> "input"
@@ -303,9 +311,9 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
   when (debug args) $ printf "command: %s\n" (show cmd)
   (o_actual, e_actual, x_actual) <- runCommandWithInput dir cmd i
   when (debug args) $ do
-    printf "stdout: %s\n" (show $ trim o_actual)
-    printf "stderr: %s\n" (show $ trim e_actual)
-    printf "exit:   %s\n" (show $ trim $ show x_actual)
+    printf "stdout was : %s\n" (show $ trim o_actual)
+    printf "stderr was : %s\n" (show $ trim e_actual)
+    printf "exit was   : %s\n" (show $ trim $ show x_actual)
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError e_actual -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
