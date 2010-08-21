@@ -98,4 +98,4 @@ executable shelltest
 
 source-repository head
   type:     darcs
-  location: http://joyful.com/repos/hledger
+  location: http://joyful.com/repos/shelltestrunner
