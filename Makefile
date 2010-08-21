@@ -1,10 +1,17 @@
 # shelltestrunner project makefile
 
+BUILDFLAGS=-threaded -W -fwarn-tabs -Werror -L/usr/lib
+EXE=shelltest
+
 build:
-	ghc --make -threaded -Wall shelltest.hs
+	ghc --make $(BUILDFLAGS) $(EXE).hs
+
+AUTOBUILDCMDARGS=tests
+autobuild auto:
+	sp --no-exts --no-default-map -o $(EXE) ghc --make $(BUILDFLAGS) $(EXE).hs --run $(AUTOBUILDCMDARGS)
 
 test: build
-	./shelltest tests -j8
+	./$(EXE) tests -j8
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
 VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)
@@ -38,4 +45,4 @@ clean:
 	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`
 
 Clean: clean
-	rm -f TAGS shelltestrunner
+	rm -f TAGS $(EXE)
