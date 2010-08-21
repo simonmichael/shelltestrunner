@@ -308,8 +308,8 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
                                          _      -> Just $ Numeric "0")
             _ -> (o_expected,e_expected,x_expected)
       dir = if execdir args then Just $ takeDirectory n else Nothing
-  when (debug args) $ printf "command: %s\n" (show cmd)
-  (o_actual, e_actual, x_actual) <- runCommandWithInput dir cmd i
+  when (debug args) $ printf "command was: %s\n" (show cmd)
+  (o_actual, e_actual, x_actual) <- runCommandWithInput dir (encodeString cmd) i
   when (debug args) $ do
     printf "stdout was : %s\n" (show $ trim o_actual)
     printf "stderr was : %s\n" (show $ trim e_actual)
@@ -332,6 +332,7 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
 
 -- | Run a shell command line, passing it standard input if provided,
 -- and return the standard output, standard error output and exit code.
+-- Note on unix, at least with ghc 6.12, command (and filepath) are assumed to be utf8-encoded.
 runCommandWithInput :: Maybe FilePath -> String -> Maybe String -> IO (String, String, Int)
 runCommandWithInput wd cmd input = do
   -- this has to be done carefully
