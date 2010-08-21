@@ -72,7 +72,7 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      beta
-tested-with:    GHC==6.10
+tested-with:    GHC==6.12
 cabal-version:  >= 1.6
 build-type:     Simple
 
@@ -83,17 +83,18 @@ executable shelltest
   main-is:        shelltest.hs
   ghc-options:    -threaded -W -fwarn-tabs
   build-depends:
-                 base >= 3 && < 5
-                ,parsec
-                ,process
-                ,HUnit
-                ,test-framework >= 0.3.2 && < 0.4
-                ,test-framework-hunit >= 0.2 && < 0.3
-                ,cmdargs >= 0.1 && < 0.2
-                ,pcre-light >= 0.3.1 && < 0.4
-                ,directory
-                ,filepath
-                ,FileManipCompat
+                 base                 >= 3     && < 5
+                ,FileManipCompat      >= 0.15  && < 0.16
+                ,HUnit                            < 1.3
+                ,cmdargs              >= 0.1   && < 0.2
+                ,directory            == 1.0.*
+                ,filepath             >= 1.0   && < 1.2
+                ,parsec                           < 3.2
+                ,pcre-light           >= 0.3.1 && < 0.4
+                ,process                          < 1.1
+                ,test-framework       >= 0.3.2 && < 0.4
+                ,test-framework-hunit >= 0.2   && < 0.3
+                ,utf8-string          >= 0.3.5 && < 0.4
 
 source-repository head
   type:     darcs
