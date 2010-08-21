@@ -413,16 +413,14 @@ lstrip = dropws
 rstrip = reverse . dropws . reverse
 dropws = dropWhile (`elem` " \t")
 
--- | Does string contain this regular expression ?
--- A malformed regexp will cause a runtime error.
+-- | Test if a string contains a regular expression.  A malformed regexp
+-- will cause a runtime error.  Note since pcre-light doesn't support
+-- unicode, both strings are first utf8-encoded, and pcre-light's utf8
+-- awareness is enabled. I don't know if this ensures correct behaviour.
 containsRegex :: String -> String -> Bool
-containsRegex s r =
-    case compileM r [
-              dotall
-             -- ,utf8  -- shows no obvious benefit with 6.10, review situation with 6.12
-             ] of
-      Right regex -> isJust $ match regex s []
-      Left e -> error $ printf "bad regexp, %s: %s" e (trim $ r)
+containsRegex s r = case compileM (encodeString r) [dotall, utf8] of
+                      Right regex -> isJust $ match regex (encodeString s) []
+                      Left e      -> error $ printf "bad regexp, %s: %s" e (trim $ r)
 
 -- | Replace occurrences of old list with new list within a larger list.
 replace::(Eq a) => [a] -> [a] -> [a] -> [a]
