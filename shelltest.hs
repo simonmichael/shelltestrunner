@@ -134,10 +134,7 @@ data ShellTest = ShellTest {
 
 data TestCommand = ReplaceableCommand String
                  | FixedCommand String
-
-instance Show TestCommand where
-    show (ReplaceableCommand s) = s
-    show (FixedCommand s) = " " ++ s
+                   deriving Show
 
 type Regexp = String
 
@@ -287,7 +284,8 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
  n ~: do
   let e = with args
       cmd = case (e,c) of (_:_, ReplaceableCommand s) -> e ++ " " ++ dropWhile (/=' ') s
-                          _ -> show c
+                          (_, ReplaceableCommand s)   -> s
+                          (_, FixedCommand s)         -> s
       (o_expected',e_expected',x_expected') =
           case (implicit args) of
             "all"    -> (case o_expected of
