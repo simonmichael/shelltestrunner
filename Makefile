@@ -1,5 +1,8 @@
 # shelltestrunner project makefile
 
+# ghc 6.12 executables need a locale
+export LANG=en_US.UTF-8
+
 BUILDFLAGS=-threaded -W -fwarn-tabs -Werror -L/usr/lib
 EXE=shelltest
 
