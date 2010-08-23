@@ -1,6 +1,6 @@
 #!/usr/bin/env runhaskell
 {-# LANGUAGE DeriveDataTypeable #-}
-{-
+{- |
 
 shelltest - a tool for testing command-line programs.
 
@@ -8,11 +8,16 @@ See shelltestrunner.cabal.
 
 (c) Simon Michael 2009-2010, released under GNU GPLv3
 
+We try to handle non-ascii content in test file paths, test commands, and
+expected test results.  For this we assume:
+- ghc 6.12
+- on unix, all file names, arguments, environment variables etc. are utf-8 encoded
+
 -}
 
 module Main
 where
-import Codec.Binary.UTF8.String (decodeString, encodeString, isUTF8Encoded)
+import Codec.Binary.UTF8.String as UTF8 (decodeString, encodeString, isUTF8Encoded)
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
@@ -22,6 +27,7 @@ import qualified Test.HUnit (Test)
 import System.Console.CmdArgs hiding (args)
 import qualified System.Console.CmdArgs as CmdArgs (args)
 import System.Exit (ExitCode(..), exitWith)
+import System.Info (os)
 import System.IO (Handle, hGetContents, hPutStr)
 import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProcess (..), waitForProcess, ProcessHandle)
 import Test.Framework (defaultMainWithArgs)
@@ -145,13 +151,6 @@ data Matcher = Lines String
              | PositiveRegex Regexp
              | NegativeRegex Regexp
 
--- I believe that as of ghc 6.12, file paths and arguments are utf-8 (or
--- any local encoding ?) on unix and unicode on windows. Hopefully this
--- decode function is safe to use on any string and will be helpful on
--- utf-8 unix systems.
-decodeIfUTF8 :: String -> String
-decodeIfUTF8 s = if isUTF8Encoded s then decodeString s else s
-
 main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
@@ -164,8 +163,8 @@ main = do
                                         else return [p]) paths
   verbose <- isLoud
   when verbose $ do
-         printf "executable: %s\n" (decodeIfUTF8 $ with args)
-         printf "test files: %s\n" (intercalate ", " $ map decodeIfUTF8 $ testfiles)
+         printf "executable: %s\n" (fromPlatformString $ with args)
+         printf "test files: %s\n" (intercalate ", " $ map fromPlatformString $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles
   unless (debugparse args) $
     defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) (otheropts args ++ if color args then [] else ["--plain"])
@@ -180,7 +179,7 @@ parseShellTestFile args f = do
            let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
                    | otherwise     = ts
            when (debug args || debugparse args) $ do
-                               printf "parsed %s:\n" $ decodeIfUTF8 f
+                               printf "parsed %s:\n" $ fromPlatformString f
                                mapM_ (putStrLn.(' ':).show) ts'
            return $ Right ts'
     Left _ -> return p
@@ -195,7 +194,7 @@ shelltestfilep = do
 shelltestp :: Parser ShellTest
 shelltestp = do
   st <- getParserState
-  let f = decodeIfUTF8 $ sourceName $ statePos st
+  let f = fromPlatformString $ sourceName $ statePos st
   many $ try commentlinep
   c <- commandp <?> "command line"
   i <- optionMaybe inputp <?> "input"
@@ -309,7 +308,7 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
             _ -> (o_expected,e_expected,x_expected)
       dir = if execdir args then Just $ takeDirectory n else Nothing
   when (debug args) $ printf "command was: %s\n" (show cmd)
-  (o_actual, e_actual, x_actual) <- runCommandWithInput dir (encodeString cmd) i
+  (o_actual, e_actual, x_actual) <- runCommandWithInput dir (toPlatformString cmd) i
   when (debug args) $ do
     printf "stdout was : %s\n" (show $ trim o_actual)
     printf "stderr was : %s\n" (show $ trim e_actual)
@@ -418,8 +417,8 @@ dropws = dropWhile (`elem` " \t")
 -- unicode, both strings are first utf8-encoded, and pcre-light's utf8
 -- awareness is enabled. I don't know if this ensures correct behaviour.
 containsRegex :: String -> String -> Bool
-containsRegex s r = case compileM (encodeString r) [dotall, utf8] of
-                      Right regex -> isJust $ match regex (encodeString s) []
+containsRegex s r = case compileM (UTF8.encodeString r) [dotall, utf8] of
+                      Right regex -> isJust $ match regex (UTF8.encodeString s) []
                       Left e      -> error $ printf "bad regexp, %s: %s" e (trim $ r)
 
 -- | Replace occurrences of old list with new list within a larger list.
@@ -432,3 +431,28 @@ replace old new = replace'
                           then new ++ replace' (drop len l)
                           else h : replace' ts
      len = length old
+
+-- | A platform string is a string value from or for the operating system,
+-- such as a file path or command-line argument (or environment variable's
+-- name or value ?). On some platforms (such as unix) these are not real
+-- unicode strings but have some encoding such as UTF-8. This alias does
+-- no type enforcement but aids code clarity.
+type PlatformString = String
+
+-- | Convert a possibly encoded platform string to a real unicode string.
+-- We decode the UTF-8 encoding recommended for unix systems
+-- (cf http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html)
+-- and leave anything else unchanged.
+fromPlatformString :: PlatformString -> String
+fromPlatformString s = if UTF8.isUTF8Encoded s then UTF8.decodeString s else s
+
+-- | Convert a unicode string to a possibly encoded platform string.
+-- On unix we encode with the recommended UTF-8
+-- (cf http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html)
+-- and elsewhere we leave it unchanged.
+toPlatformString :: String -> PlatformString
+toPlatformString = case os of
+                     "unix" -> UTF8.encodeString
+                     "linux" -> UTF8.encodeString
+                     "darwin" -> UTF8.encodeString
+                     _ -> id
