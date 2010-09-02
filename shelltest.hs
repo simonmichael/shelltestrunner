@@ -35,7 +35,7 @@ import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit hiding (Test)
 import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
-import Text.Regex.PCRE.Light.Char8
+import Text.Regex.TDFA ((=~))
 import Debug.Trace
 import System.Directory (doesDirectoryExist)
 import System.FilePath (takeDirectory)
@@ -98,8 +98,7 @@ argmodes = [
   ,"output is matched, or 0 or more data lines, in which case the output"
   ,"must match these exactly. The expected exit status (>>>=) field can have"
   ,"either a numeric exit code or a /regexp/. A ! preceding a /regexp/ or exit"
-  ,"code negates the match. The regular expression syntax is that of the"
-  ,"pcre-light library with the dotall flag."
+  ,"code negates the match."
   ,""
   ,"By default there is an implicit test for exit status=0, but no implicit test"
   ,"for stdout or stderr.  You can change this with -i/--implicit-tests."
@@ -413,13 +412,14 @@ rstrip = reverse . dropws . reverse
 dropws = dropWhile (`elem` " \t")
 
 -- | Test if a string contains a regular expression.  A malformed regexp
--- will cause a runtime error.  Note since pcre-light doesn't support
--- unicode, both strings are first utf8-encoded, and pcre-light's utf8
--- awareness is enabled. I don't know if this ensures correct behaviour.
+-- (or a regexp larger than 300 characters, to avoid a regex-tdfa memory leak)
+-- will cause a runtime error.  This version uses regex-tdfa and no regexp
+-- options.
 containsRegex :: String -> String -> Bool
-containsRegex s r = case compileM (UTF8.encodeString r) [dotall, utf8] of
-                      Right regex -> isJust $ match regex (UTF8.encodeString s) []
-                      Left e      -> error $ printf "bad regexp, %s: %s" e (trim $ r)
+containsRegex s "" = containsRegex s "^"
+containsRegex s r
+    | length r <= 300 = s =~ r
+    | otherwise      =  error "please avoid regexps larger than 300 characters, they are currently problematic"
 
 -- | Replace occurrences of old list with new list within a larger list.
 replace::(Eq a) => [a] -> [a] -> [a] -> [a]

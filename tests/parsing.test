@@ -4,7 +4,7 @@
 >>> /\//
 # 2. can we handle a blank regexp ? with whitespace after ?
  echo
->>> //    
+>>> //
 # 3. how about a comment after ?
  echo
 >>> // # comment
