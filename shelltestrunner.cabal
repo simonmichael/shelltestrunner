@@ -5,8 +5,8 @@ synopsis:       A tool for testing command-line programs.
 description:
  .
  Run a command-line program through \"shell tests\" defined in one or
- more test files. Each test specifies command-line arguments, some input,
- and expected output, stderr output and/or exit status.
+ more test files. Each test specifies a command line, optional standard input,
+ and expected standard output, error output and/or exit status.
  We use test-framework's test runner, so can run tests in parallel.
  shelltestrunner was inspired by the tests in John Wiegley's ledger project.
  .
