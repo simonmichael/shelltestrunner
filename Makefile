@@ -3,8 +3,14 @@
 # ghc 6.12 executables need a locale
 export LANG=en_US.UTF-8
 
-BUILDFLAGS=-threaded -W -fwarn-tabs -Werror -L/usr/lib
+# flag(s) to work around ghc vs. macports issue on mac, if needed
+PREFERMACUSRLIBFLAGS=-L/usr/lib
+
+BUILDFLAGS=-threaded -W -fwarn-tabs -Werror $(PREFERMACUSRLIBFLAGS)
 EXE=shelltest
+
+######################################################################
+# BUILD
 
 build:
 	ghc --make $(BUILDFLAGS) $(EXE).hs
@@ -16,8 +22,44 @@ autobuild auto:
 test: build
 	./$(EXE) tests -j8
 
+######################################################################
+# DOC
+
+# build project website
+# Requires hakyll (cabal install hakyll)
+.PHONY: site
+site: site/hakyll site/_site/index.html
+	cd site; ./hakyll build
+
+site/_site/index.html:
+	cd site/_site; ln -sf README.html index.html
+
+site/hakyll: site/hakyll.hs
+	cd site; ghc --make hakyll.hs $(PREFERMACUSRLIBFLAGS)
+
+cleansite: site/hakyll
+	cd site; ./hakyll clean
+
+previewsite: site/hakyll site/_site/index.html
+	cd site; ./hakyll preview
+
+autobuildsite: site/_site/index.html
+	cd site; sp --no-exts --no-default-map -o hakyll ghc --make hakyll.hs $(PREFERMACUSRLIBFLAGS) --run preview
+
+viewsite: site site/_site/index.html
+	$(VIEWHTML) site/_site/index.html
+
+docs haddock:
+	cabal configure && cabal haddock --executables
+
+######################################################################
+# RELEASE
+
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
 VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)
+
+# called on each darcs commit, if configured in this repo's posthook
+commithook: site
 
 showversion:
 	@echo $(VERSION)
@@ -33,11 +75,8 @@ release: test tagrepo push
 		&& cabal upload $(TARBALL) \
 		|| (cabal upload $(TARBALL) --check -v3; false)
 
-docs haddock:
-	cabal configure && cabal haddock --executables
-
-# site: push docs
-# 	rsync -avz dist/doc/html/shelltestrunner/shelltestrunner/ joyful.com:/repos/shelltestrunner/html/
+######################################################################
+# MISC
 
 tag: emacstags
 
