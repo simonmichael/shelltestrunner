@@ -1,15 +1,19 @@
 
 * issues
 ** unknown args give test-framework's usage, we should integrate more clearly
-** can't test uncompiled haskell code because runhaskell/runghc loses stdout/stderr
-    http://hackage.haskell.org/trac/ghc/ticket/3890
-** replace pcre-light with something that doesn't require extra libs ?
-** unparseable test files and uncompilable regexps are counted as test failures.. ok ?
+** unparseable test files and uncompilable regexps are counted as test failures - ok ?
+** error in one test stops all
+$ LANG= make test
+ghc --make -threaded -W -fwarn-tabs -Werror -L/usr/lib shelltest.hs
+./shelltest tests -j8
+shelltest: tests/unicode-проверка.test: hGetContents: invalid argument (Illegal byte sequence)
+make: *** [test] Error 1
+
 * wishlist
 ** test runner issues
-*** no way to turn off colour codes
 *** no way to turn off progress output & final summary
 *** no obvious way to see test runner help
+** timeout for commands
 ** configurable delimiters
 >  Field delimiters other than the default <<<, >>>, >>>2 and >>>= may be
 >  specified with the --stdin-marker, --stdout-marker, --stderr-marker and
@@ -40,4 +44,3 @@
 >        argDesc  = "marker for the exit code field (default: >>>=)"
 >       }
 
-** timeout for commands
