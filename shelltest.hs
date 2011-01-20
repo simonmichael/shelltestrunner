@@ -225,7 +225,7 @@ commandp = fixedcommandp <|> replaceablecommandp
 fixedcommandp = space >> linep >>= return . FixedCommand
 replaceablecommandp = linep >>= return . ReplaceableCommand
 
-inputp = string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
+inputp = try $ string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
 
 expectedoutputp :: Parser Matcher
 expectedoutputp = (try $ do
