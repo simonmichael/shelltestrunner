@@ -48,7 +48,7 @@ strace :: Show a => a -> a
 strace a = trace (show a) a
 
 
-version = "0.9" -- keep synced with cabal file
+version = "0.9.98" -- keep synced with cabal file
 progname = "shelltest"
 progversion = progname ++ " " ++ version
 version, progname, progversion :: String
@@ -134,7 +134,7 @@ warn :: String -> IO ()
 warn s = cmdArgsHelp s argmodes Text >>= putStrLn >> exitWith (ExitFailure 1)
 
 data ShellTest = ShellTest {
-     testname         :: String
+     name             :: String
     ,command          :: TestCommand
     ,stdin            :: Maybe String
     ,stdoutExpected   :: Maybe Matcher
@@ -179,7 +179,7 @@ parseShellTestFile args f = do
   p <- parseFromFile shelltestfilep f
   case p of
     Right ts -> do
-           let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
+           let ts' | length ts > 1 = [t{name=name t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
                    | otherwise     = ts
            when (debug args || debugparse args) $ do
                                printf "parsed %s:\n" $ fromPlatformString f
@@ -205,7 +205,7 @@ shelltestp = do
   e <- optionMaybe expectederrorp <?> "expected error output"
   x <- optionMaybe expectedexitcodep <?> "expected exit status"
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail ""
-  return $ ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  return $ ShellTest{name=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
 newlineoreofp, whitespacecharp :: Parser Char
 linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,delimiterp,inputp :: Parser String
@@ -290,7 +290,7 @@ testFileParseToHUnitTest args (Right ts) = TestList $ map (shellTestToHUnitTest 
 testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: assertFailure $ show e
 
 shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
-shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
+shellTestToHUnitTest args ShellTest{name=n,command=c,stdin=i,stdoutExpected=o_expected,
                                     stderrExpected=e_expected,exitCodeExpected=x_expected} = 
  n ~: do
   let e = with args
@@ -393,8 +393,8 @@ instance Show Matcher where
     show (Lines _ s)         = show $ trim s
 
 instance Show ShellTest where
-    show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
-        printf "ShellTest {testname = %s, command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
+    show ShellTest{name=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
+        printf "ShellTest {name = %s, command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
                    (show $ trim n)
                    (show c)
                    (maybe "Nothing" (show.trim) i)
