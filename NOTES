@@ -1,5 +1,25 @@
 
 * issues
+** don't nub test names ? (for testing $$ with multithreaded)
+$ shelltest tests/add-bad-date-fails.test tests/add-bad-date-fails.test 
+:tests/add-bad-date-fails.test: [OK]
+
+** regexp ignored (unquoted /)
+# simple add with no existing journal, no commodity entered
+ rm -f add-default-commodity-$$.j; bin/hledger -f add-default-commodity-$$.j add; rm -f add-default-commodity-$$.j
+<<<
+
+
+a
+1000
+b
+
+.
+>>> /lkdjsljdf^date [2010/11/16]: description []: account 1: amount  1: account 2: amount  2 [-1000]: account 3: date [2010/11/16]: $/
+
+$ shelltest tests/add-default-commodity.test 
+:tests/add-default-commodity.test:1: [OK]
+
 ** unknown args give test-framework's usage, we should integrate more clearly
 ** unparseable test files and uncompilable regexps are counted as test failures - ok ?
 ** error in one test stops all
