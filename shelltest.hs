@@ -218,7 +218,7 @@ whitespacelinep = try (newline >> return "") <|> try (whitespacecharp >> whitesp
 commentlinep = try (whitespacep >> char '#' >> lineoreofp) <?> "comments"
 whitespaceorcommentlinep = commentlinep <|> whitespacelinep
 whitespaceorcommentlineoreofp = choice [(eof >> return ""), commentlinep, whitespacelinep]
-delimiterp = choice [try $ string "<<<", try $ string ">>>", try commentlinep >> return "", eof >> return ""]
+delimiterp = choice [try $ string "<<<", try $ string ">>>", eof >> return ""]
 
 commandp,fixedcommandp,replaceablecommandp :: Parser TestCommand
 commandp = fixedcommandp <|> replaceablecommandp
