@@ -1,69 +1,22 @@
-# shelltestrunner
-
-This tool aims to help with repeatable testing of a command-line program
-(or any shell command), via declarative \"shell tests\" which are easier
-to write than procedural shell scripts.  Tests are defined in one or more
-test files, which typically have the .test suffix and live in a tests/
-subdirectory. Each test specifies a command line, optional standard input,
-and expected standard output, error output and/or exit status.  Tests can
-be run in parallel for greater speed. shelltestrunner was inspired by the
-tests in John Wiegley's ledger project.
-
-Compatibility: should work on microsoft windows as well as unix; not well
-tested on windows. Should build with ghc 6.10; for unicode support,
-requires ghc 6.12.
-
-# Usage
-
->     shelltest [FLAG] [TESTFILES|TESTDIRS]
->     
->       -? --help[=FORMAT]           Show usage information (optional format)
->       -V --version                 Show version information
->       -v --verbose                 Higher verbosity
->       -q --quiet                   Lower verbosity
->       -d --debug                   show debug messages
->          --debug-parse             show parsing debug messages and stop
->       -c --color                   display with ANSI color codes
->          --execdir                 run tests in same directory as test file
->          --extension=EXT           extension of test files when dirs specified (default=.test)
->       -i --implicit=none|exit|all  provide implicit tests (default=exit)
->       -w --with=EXECUTABLE         alternate executable, replaces the first word of test commands
->          =OTHER FLAGS              any other flags are passed to test runner
->     
->     A test file contains one or more shell tests, which look like this:
->     
->      # optional comment lines
->      a one-line shell command to be tested
->      <<<
->      stdin lines
->      >>> [/regexp to match in stdout/]
->      [or expected stdout lines
->      >>>2 [/regexp to match in stderr/]
->      [or expected stderr lines]
->      >>>= expected exit status or /regexp/
->     
->     The command line is required; all other fields are optional.
->     The expected stdout (>>>) and expected stderr (>>>2) fields can have either
->     a regular expression match pattern, in which case the test passes if the
->     output is matched, or 0 or more data lines, in which case the output
->     must match these exactly. The expected exit status (>>>=) field can have
->     either a numeric exit code or a /regexp/. A ! preceding a /regexp/ or exit
->     code negates the match. The regular expression syntax is that of the
->     pcre-light library with the dotall flag.
->     
->     By default there is an implicit test for exit status=0, but no implicit test
->     for stdout or stderr.  You can change this with -i/--implicit-tests.
->     
->     The command runs in your current directory unless you use --execdir.
->     You can use --with/-w to replace the first word of command lines
->     (everything up to the first space) with something else, eg to test a
->     different version of your program. To prevent this, start the command line
->     with a space.
->     
->     Any unrecognised options will be passed through to test-framework's runner.
->     You may be able to get a big speedup by running tests in parallel: try -j8.
+---
+title: shelltestrunner release notes
+---
 
 # Release notes
+
+  * When you have multiple tests in a file, the `>>>=` field is now
+    required as a delimiter. (You may need to add it to your existing
+    tests.)  Whitespace as well as comments is allowed between tests.
+
+  * Input and expected output can now contain lines beginning with `#`
+    (previously these were parsed as comments.)
+
+  * Fixed: parsing could fail when input contained left angle brackets
+  
+  * Fixed: some test files generated an extra blank test at the end.
+
+  * A new --diff option shows test failures as a unified diff when
+    possible, including line numbers to help locate the problem.
 
 **0.9 2010/9/3**
 
