@@ -42,6 +42,8 @@ import System.FilePath (takeDirectory)
 import System.FilePath.FindCompat (findWithHandler, (==?), always)
 import qualified System.FilePath.FindCompat as Find (extension)
 import Control.Applicative ((<$>))
+import Data.Algorithm.Diff
+
 strace :: Show a => a -> a
 strace a = trace (show a) a
 
@@ -54,6 +56,7 @@ version, progname, progversion :: String
 data Args = Args {
      debug      :: Bool
     ,debugparse :: Bool
+    ,diff       :: Bool
     ,color      :: Bool
     ,execdir    :: Bool
     ,extension  :: String
@@ -65,13 +68,14 @@ data Args = Args {
 
 
 nullargs :: Args
-nullargs = Args False False False False "" "" "" [] []
+nullargs = Args False False False False False "" "" "" [] []
 
 argmodes :: [Mode Args]
 argmodes = [
   mode (Args{
             debug      = def     &= text "show debug messages"
            ,debugparse = def     &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
+           ,diff       = def     &= flag "diff" & explicit & text "show diff on test failure"
            ,color      = def     &= text "display with ANSI color codes"
            ,execdir    = def     &= text "run tests in same directory as test file"
            ,extension  = ".test" &= typ "EXT" & text "extension of test files when dirs specified"
@@ -144,7 +148,7 @@ data TestCommand = ReplaceableCommand String
 
 type Regexp = String
 
-data Matcher = Lines String
+data Matcher = Lines Int String
              | Numeric String
              | NegativeNumeric String
              | PositiveRegex Regexp
@@ -246,7 +250,8 @@ expectedexitcodep = (try $ do
 
 linesmatcherp :: Parser Matcher
 linesmatcherp = do
-  (liftM $ Lines . unlines) (linep `manyTill` (lookAhead delimiterp)) <?> "lines of output"
+  ln <- liftM sourceLine getPosition
+  (liftM $ Lines ln . unlines) (linep `manyTill` (lookAhead delimiterp)) <?> "lines of output"
 
 negativeregexmatcherp :: Parser Matcher
 negativeregexmatcherp = (do
@@ -296,9 +301,9 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
           case (implicit args) of
             "all"    -> (case o_expected of
                         Just m -> Just m
-                        _ -> Just $ Lines ""
+                        _ -> Just $ Lines 0 ""
                      ,case e_expected of Just m -> Just m
-                                         _      -> Just $ Lines  ""
+                                         _      -> Just $ Lines  0 ""
                      ,case x_expected of Just m -> Just m
                                          _      -> Just $ Numeric "0")
             "exit" -> (o_expected,e_expected
@@ -317,13 +322,13 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
              if (maybe True (o_actual `matches`) o_expected')
               then ""
-              else showExpectedActual "stdout"    (fromJust o_expected') o_actual
+              else showExpectedActual (diff args) "stdout"    (fromJust o_expected') o_actual
             ,if (maybe True (e_actual `matches`) e_expected')
               then ""
-              else showExpectedActual "stderr"    (fromJust e_expected') e_actual
+              else showExpectedActual (diff args) "stderr"    (fromJust e_expected') e_actual
             ,if (maybe True (show x_actual `matches`) x_expected')
               then ""
-              else showExpectedActual "exit code" (fromJust x_expected') (show x_actual)
+              else showExpectedActual False "exit code" (fromJust x_expected') (show x_actual)
             ]
        where addnewline "" = ""
              addnewline s  = "\n"++s
@@ -363,18 +368,29 @@ matches s (PositiveRegex r)   = s `containsRegex` r
 matches s (NegativeRegex r)   = not $ s `containsRegex` r
 matches s (Numeric p)         = s == p
 matches s (NegativeNumeric p) = not $ s == p
-matches s (Lines p)           = s == p
+matches s (Lines _ p)         = s == p
 
-showExpectedActual :: String -> Matcher -> String -> String
-showExpectedActual field e a =
+showExpectedActual :: Bool -> String -> Matcher -> String -> String
+showExpectedActual True field (Lines ln e) a =
+    printf "--- Expected\n+++ Got\n" ++ showDiff (1,ln) (getDiff (lines a) (lines e))
+showExpectedActual _ field e a =
     printf "**Expected %s: %s\n**Got %s:      %s" field (show e) field (show $ trim a)
+
+showDiff :: (Int,Int) -> [(DI, String)] -> String
+showDiff _ []             = ""
+showDiff (l,r) ((F, ln) : ds) =
+  printf "+%4d " l ++ ln ++ "\n" ++ showDiff (l+1,r) ds
+showDiff (l,r) ((S, ln) : ds) =
+  printf "-%4d " r ++ ln ++ "\n" ++ showDiff (l,r+1) ds
+showDiff (l,r) ((B, _ ) : ds) =
+  showDiff (l+1,r+1) ds
 
 instance Show Matcher where
     show (PositiveRegex r)   = "/"++(trim r)++"/"
     show (NegativeRegex r)   = "!/"++(trim r)++"/"
     show (Numeric s)         = show $ trim s
     show (NegativeNumeric s) = "!"++ show (trim s)
-    show (Lines s)           = show $ trim s
+    show (Lines _ s)         = show $ trim s
 
 instance Show ShellTest where
     show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
