@@ -157,7 +157,7 @@ data Matcher = Lines Int String
 main :: IO ()
 main = do
   args <- cmdArgs progversion argmodes >>= checkArgs
-  when (debug args) $ printf "args: %s\n" (show args)
+  when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (show args)
   let paths = testpaths args
   testfiles <- nub . concat <$> mapM (\p -> do
                                        isdir <- doesDirectoryExist p
