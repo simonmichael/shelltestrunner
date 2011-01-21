@@ -371,7 +371,7 @@ matches s (NegativeNumeric p) = not $ s == p
 matches s (Lines _ p)         = s == p
 
 showExpectedActual :: Bool -> String -> Matcher -> String -> String
-showExpectedActual True field (Lines ln e) a =
+showExpectedActual True _ (Lines ln e) a =
     printf "--- Expected\n+++ Got\n" ++ showDiff (1,ln) (getDiff (lines a) (lines e))
 showExpectedActual _ field e a =
     printf "**Expected %s: %s\n**Got %s:      %s" field (show e) field (show $ trim a)
