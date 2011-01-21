@@ -1,7 +1,7 @@
 !!!
 %html
  %head
-  %title shelltestrunner $title$
+  %title $title$
  %body
-  %h1 shelltestrunner $title$
+  %h1 $title$
   $body$

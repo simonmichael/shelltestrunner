@@ -1,6 +1,31 @@
 ---
-title: release notes
+title: shelltestrunner docs
 ---
+
+Home page: [http://hackage.haskell.org/package/shelltestrunner](http://hackage.haskell.org/package/shelltestrunner) -
+[browse code](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner;a=headblob;f=/shelltest.hs) -
+[browse changes](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner)
+
+## Example
+
+    $ cat sample.test
+    # let's test cat
+    cat
+    <<<
+    A
+    >>>
+    A
+    >>>2
+    >>>= 0
+    $ shelltest sample.test
+    :sample.test: [OK]
+
+             Test Cases  Total      
+     Passed  1           1          
+     Failed  0           0          
+     Total   1           1          
+
+## Release notes
 
   * When you have multiple tests in a file, the `>>>=` field is now
     required as a delimiter. (You may need to add it to your existing

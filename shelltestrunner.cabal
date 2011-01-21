@@ -4,8 +4,8 @@ version:        0.9.98
 category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
- A tool for doing repeatable testing of command-line programs (or any shell command),
- using declarative \"shell tests\" which specify
+ A tool (@shelltest@) for doing repeatable testing of command-line programs or shell commands,
+ using declarative tests which specify:
  a command, optional standard input, and expected standard output, error output and/or exit status.
  .
  Tests are defined in one or more test files, which typically have the @.test@ suffix
@@ -30,7 +30,8 @@ description:
  \>>>= expected numeric exit status or a \/regexp\/
  @
  .
- See @shelltest --help@ for more details.
+ Run @shelltest --help@ for more details.
+ More docs at: <http://joyful.com/repos/shelltestrunner>
 
 license:        GPL
 license-file:   LICENSE
