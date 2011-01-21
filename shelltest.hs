@@ -190,7 +190,7 @@ parseShellTestFile args f = do
 shelltestfilep :: Parser [ShellTest]
 shelltestfilep = do
   ts <- many (try shelltestp)
-  many commentlinep
+  skipMany whitespaceorcommentlinep
   eof
   return ts
 
@@ -198,7 +198,7 @@ shelltestp :: Parser ShellTest
 shelltestp = do
   st <- getParserState
   let f = fromPlatformString $ sourceName $ statePos st
-  many $ try commentlinep
+  skipMany whitespaceorcommentlinep
   c <- commandp <?> "command line"
   i <- optionMaybe inputp <?> "input"
   o <- optionMaybe expectedoutputp <?> "expected output"
@@ -214,10 +214,10 @@ newlineoreofp = newline <|> (eof >> return '\n') <?> "newline or end of file"
 lineoreofp = (anyChar `manyTill` newlineoreofp)
 whitespacecharp = oneOf " \t"
 whitespacep = many whitespacecharp
-whitespacelinep = try (newline >> return "") <|> (whitespacecharp >> whitespacecharp `manyTill` newlineoreofp)
-commentlinep = whitespacep >> char '#' >> lineoreofp <?> "comments"
-whitespaceorcommentlinep = choice [try commentlinep, whitespacelinep]
-whitespaceorcommentlineoreofp = choice [(eof >> return ""), try commentlinep, whitespacelinep]
+whitespacelinep = try (newline >> return "") <|> try (whitespacecharp >> whitespacecharp `manyTill` newlineoreofp)
+commentlinep = try (whitespacep >> char '#' >> lineoreofp) <?> "comments"
+whitespaceorcommentlinep = commentlinep <|> whitespacelinep
+whitespaceorcommentlineoreofp = choice [(eof >> return ""), commentlinep, whitespacelinep]
 delimiterp = choice [try $ string "<<<", try $ string ">>>", try commentlinep >> return "", eof >> return ""]
 
 commandp,fixedcommandp,replaceablecommandp :: Parser TestCommand
