@@ -1,0 +1,7 @@
+!!!
+%html
+ %head
+  %title shelltestrunner $title$
+ %body
+  %h1 shelltestrunner $title$
+  $body$

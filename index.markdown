@@ -1,8 +1,6 @@
 ---
-title: shelltestrunner release notes
+title: release notes
 ---
-
-# Release notes
 
   * When you have multiple tests in a file, the `>>>=` field is now
     required as a delimiter. (You may need to add it to your existing

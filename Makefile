@@ -25,31 +25,37 @@ test: build
 ######################################################################
 # DOC
 
-# build project website
-# Requires hakyll (cabal install hakyll)
-.PHONY: site
-site: site/hakyll site/_site/index.html
-	cd site; ./hakyll build
+# called on each darcs commit
+commithook: site
 
-site/_site/index.html:
-	cd site/_site; ln -sf README.html index.html
+docs: site haddock
 
-site/hakyll: site/hakyll.hs
-	cd site; ghc --make hakyll.hs $(PREFERMACUSRLIBFLAGS)
+#VIEWHTML=google-chrome
+VIEWHTML=open
 
-cleansite: site/hakyll
-	cd site; ./hakyll clean
+viewsite: site
+	$(VIEWHTML) index.html
 
-previewsite: site/hakyll site/_site/index.html
-	cd site; ./hakyll preview
+viewhaddock: docs
+	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html 
 
-autobuildsite: site/_site/index.html
-	cd site; sp --no-exts --no-default-map -o hakyll ghc --make hakyll.hs $(PREFERMACUSRLIBFLAGS) --run preview
+# build website
+site: sitebuild
 
-viewsite: site site/_site/index.html
-	$(VIEWHTML) site/_site/index.html
+sitebuild: hakyll
+	./hakyll build
 
-docs haddock:
+siteclean: hakyll
+	./hakyll clean
+
+sitepreview: hakyll
+	./hakyll preview 8002
+
+hakyll: hakyll.hs
+	ghc --make -Wall hakyll.hs
+
+# build haddock docs
+haddock:
 	cabal configure && cabal haddock --executables
 
 ######################################################################
@@ -57,9 +63,6 @@ docs haddock:
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
 VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)
-
-# called on each darcs commit, if configured in this repo's posthook
-commithook: site
 
 showversion:
 	@echo $(VERSION)
@@ -78,13 +81,17 @@ release: test tagrepo push
 ######################################################################
 # MISC
 
-tag: emacstags
+# tag: emacstags
+# emacstags:
+# 	rm -f TAGS; hasktags -e *hs *.cabal tests/*.test
 
-emacstags:
-	rm -f TAGS; hasktags -e *hs *.cabal tests/*.test
+tag: TAGS
+
+TAGS: *.el *.hs *.markdown Makefile
+	etags *.el *.hs *.markdown Makefile
 
 clean:
 	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`
 
 Clean: clean
-	rm -f TAGS $(EXE)
+	rm -f TAGS _cache #_site $(EXE)
