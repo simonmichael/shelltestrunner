@@ -1,4 +1,13 @@
 
+* todo
+** review/update all deps & cabal fields
+** fix unknown flags pass-through
+** review/update docs
+*** site/hackage description
+*** command-line help
+*** release notes
+*** announcement
+** release 1.0
 * issues
 ** don't nub test names ? (for testing $$ with multithreaded)
 $ shelltest tests/add-bad-date-fails.test tests/add-bad-date-fails.test 
