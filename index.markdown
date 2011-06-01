@@ -29,10 +29,9 @@ Home page: [http://hackage.haskell.org/package/shelltestrunner](http://hackage.h
 
   * When you have multiple tests in a file, the `>>>=` field is now
     required as a delimiter. (You may need to add it to your existing
-    tests.)  Whitespace as well as comments is allowed between tests.
-
-  * Input and expected output can now contain lines beginning with `#`
-    (previously these were parsed as comments.)
+    tests.)  This means input and expected output can now contain lines
+    beginning with `#`. Also tests may be separated by whitespace as well
+    as comments.
 
   * Fixed: parsing could fail when input contained left angle brackets
   
