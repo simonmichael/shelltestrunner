@@ -1,5 +1,8 @@
 #!/usr/bin/env runhaskell
 {-# LANGUAGE DeriveDataTypeable #-}
+-- cmdargs: the impure method of writing annotations is susceptible to
+-- over-optimisation by GHC - sometimes {-# OPTIONS_GHC -fno-cse #-} will
+-- be required.
 {- |
 
 shelltest - a tool for testing command-line programs.
@@ -24,8 +27,7 @@ import Control.Monad (liftM,when,unless)
 import Data.List (intercalate, nub, isPrefixOf)
 import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
 import qualified Test.HUnit (Test)
-import System.Console.CmdArgs hiding (args)
-import qualified System.Console.CmdArgs as CmdArgs (args)
+import System.Console.CmdArgs
 import System.Exit (ExitCode(..), exitWith)
 import System.Info (os)
 import System.IO (Handle, hGetContents, hPutStr)
@@ -47,43 +49,11 @@ import Data.Algorithm.Diff
 strace :: Show a => a -> a
 strace a = trace (show a) a
 
-
+version, progname, progversion :: String
 version = "0.9.98" -- keep synced with cabal file
 progname = "shelltest"
 progversion = progname ++ " " ++ version
-version, progname, progversion :: String
-
-data Args = Args {
-     debug      :: Bool
-    ,debugparse :: Bool
-    ,diff       :: Bool
-    ,color      :: Bool
-    ,execdir    :: Bool
-    ,extension  :: String
-    ,implicit   :: String
-    ,with       :: String
-    ,testpaths  :: [FilePath]
-    ,otheropts  :: [String]
-    } deriving (Show, Data, Typeable)
-
-
-nullargs :: Args
-nullargs = Args False False False False False "" "" "" [] []
-
-argmodes :: [Mode Args]
-argmodes = [
-  mode (Args{
-            debug      = def     &= text "show debug messages"
-           ,debugparse = def     &= flag "debug-parse" & explicit & text "show parsing debug messages and stop"
-           ,diff       = def     &= flag "diff" & explicit & text "show diff on test failure"
-           ,color      = def     &= text "display with ANSI color codes"
-           ,execdir    = def     &= text "run tests in same directory as test file"
-           ,extension  = ".test" &= typ "EXT" & text "extension of test files when dirs specified"
-           ,implicit   = "exit"  &= typ "none|exit|all" & text "provide implicit tests"
-           ,with       = def     &= typ "EXECUTABLE" & text "alternate executable, replaces the first word of test commands"
-           ,testpaths  = def     &= CmdArgs.args & typ "TESTFILES|TESTDIRS" & text "test files or directories"
-           ,otheropts  = def     &= unknownFlags & explicit & typ "OTHER FLAGS" & text "any other flags are passed to test runner"
-           }) &= helpSuffix [
+proghelpsuffix = [
    "Test file format:"
   ,""
   ," # optional comment"
@@ -110,6 +80,8 @@ argmodes = [
   ,"the test passes if the command's exit status is matched. A preceding ! negates"
   ,"the match."
   ,""
+  ,"Flag details:"
+  ,""
   ,"-i/--implicit-tests controls which fields should have default tests applied"
   ,"when omitted. By default there is an implicit test for exit status=0 but"
   ,"none for stdout or stderr."
@@ -118,30 +90,46 @@ argmodes = [
   ,"space) with something else - useful to test different versions of a program."
   ,"Command lines beginning with a space are left alone."
   ,""
-  ,"Unrecognised options are passed to test-framework (use no space between"
-  ,"flags and values.) To run just the third test, try -t3."
-  ,"To run tests in parallel for a big speedup, try -j8."
+  ,"CURRENTLY DISABLED:"
+  ," Unrecognised options are passed to test-framework (use no space between"
+  ," flags and values.) To run just the third test, try -t3."
+  ," To run tests in parallel for a big speedup, try -j8."
   ,""
   ]
- ]
 
-checkArgs :: Args -> IO Args
-checkArgs args = do
-  when (not $ i `elem` ["none","exit","all"]) $
-       warn $ printf "Bad -i/--implicit value %s, valid choices are: none, exit or all" $ show i
-  when (null ps) $
-       warn $ printf "Please specify at least one file or directory, eg: %s ." progname
-  return args
-    where
-      i = implicit args
-      ps = testpaths args
+data Args = Args {
+     debug      :: Bool
+    ,debugparse :: Bool
+    ,diff       :: Bool
+    ,color      :: Bool
+    ,execdir    :: Bool
+    ,extension  :: String
+    ,implicit   :: ImplicitTests
+    ,with       :: String
+    ,testpaths  :: [FilePath]
+--    ,otheropts  :: [String]
+    } deriving (Show, Data, Typeable)
 
--- | Show a message, usage string, and terminate with exit status 1.
-warn :: String -> IO ()
-warn s = cmdArgsHelp s argmodes Text >>= putStrLn >> exitWith (ExitFailure 1)
+data ImplicitTests = None | Exit | All deriving (Show, Data, Typeable)
+
+argdefs = Args {
+     debug      = def     &= help "show debug messages"
+    ,debugparse = def     &= explicit &= name "debug-parse" &= help "show parsing debug messages and stop"
+    ,diff       = def     &= help "show diff on test failure"
+    ,color      = def     &= help "display with ANSI color codes"
+    ,execdir    = def     &= help "run tests in same directory as test file"
+    ,extension  = ".test" &= typ "EXT" &= help "extension of test files when dirs specified"
+    ,implicit   = Exit    &= typ "none|exit|all" &= help "provide implicit tests for all fields or just exit code"
+    ,with       = def     &= typ "EXECUTABLE" &= help "alternate executable, replaces the first word of test commands"
+    ,testpaths  = def     &= args &= typ "TESTFILES|TESTDIRS"
+--    ,otheropts  = def &= explicit &= typ "OTHER FLAGS" &= help "any other flags are passed to test runner"
+    }
+    &= program progname
+    &= summary progversion
+    &= details proghelpsuffix
 
 data ShellTest = ShellTest {
-     name             :: String
+     testname         :: String
     ,command          :: TestCommand
     ,stdin            :: Maybe String
     ,stdoutExpected   :: Maybe Matcher
@@ -163,7 +151,7 @@ data Matcher = Lines Int String
 
 main :: IO ()
 main = do
-  args <- cmdArgs progversion argmodes >>= checkArgs
+  args <- cmdArgs argdefs >>= checkArgs
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (show args)
   let paths = testpaths args
   testfiles <- nub . concat <$> mapM (\p -> do
@@ -177,7 +165,18 @@ main = do
          printf "test files: %s\n" (intercalate ", " $ map fromPlatformString $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles
   unless (debugparse args) $
-    defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) (otheropts args ++ if color args then [] else ["--plain"])
+    defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) ({-otheropts args ++ -} if color args then [] else ["--plain"])
+
+-- | Additional argument checking.
+checkArgs :: Args -> IO Args
+checkArgs args = do
+  when (null $ testpaths args) $
+       warn $ printf "Please specify at least one file or directory, eg: %s tests" progname
+  return args
+
+-- | Show a message, usage string, and terminate with exit status 1.
+warn :: String -> IO ()
+warn s = putStrLn s >> exitWith (ExitFailure 1)
 
 -- parsing
 
@@ -186,7 +185,7 @@ parseShellTestFile args f = do
   p <- parseFromFile shelltestfilep f
   case p of
     Right ts -> do
-           let ts' | length ts > 1 = [t{name=name t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
+           let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
                    | otherwise     = ts
            when (debug args || debugparse args) $ do
                                printf "parsed %s:\n" $ fromPlatformString f
@@ -212,7 +211,7 @@ shelltestp = do
   e <- optionMaybe expectederrorp <?> "expected error output"
   x <- optionMaybe expectedexitcodep <?> "expected exit status"
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail ""
-  return $ ShellTest{name=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  return $ ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
 newlineoreofp, whitespacecharp :: Parser Char
 linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,delimiterp,inputp :: Parser String
@@ -297,7 +296,7 @@ testFileParseToHUnitTest args (Right ts) = TestList $ map (shellTestToHUnitTest 
 testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: assertFailure $ show e
 
 shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
-shellTestToHUnitTest args ShellTest{name=n,command=c,stdin=i,stdoutExpected=o_expected,
+shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
                                     stderrExpected=e_expected,exitCodeExpected=x_expected} = 
  n ~: do
   let e = with args
@@ -306,14 +305,14 @@ shellTestToHUnitTest args ShellTest{name=n,command=c,stdin=i,stdoutExpected=o_ex
                           (_, FixedCommand s)         -> s
       (o_expected',e_expected',x_expected') =
           case (implicit args) of
-            "all"    -> (case o_expected of
+            All    -> (case o_expected of
                         Just m -> Just m
                         _ -> Just $ Lines 0 ""
                      ,case e_expected of Just m -> Just m
                                          _      -> Just $ Lines  0 ""
                      ,case x_expected of Just m -> Just m
                                          _      -> Just $ Numeric "0")
-            "exit" -> (o_expected,e_expected
+            Exit -> (o_expected,e_expected
                      ,case x_expected of Just m -> Just m
                                          _      -> Just $ Numeric "0")
             _ -> (o_expected,e_expected,x_expected)
@@ -400,8 +399,8 @@ instance Show Matcher where
     show (Lines _ s)         = show $ trim s
 
 instance Show ShellTest where
-    show ShellTest{name=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
-        printf "ShellTest {name = %s, command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
+    show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
+        printf "ShellTest {testname = %s, command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
                    (show $ trim n)
                    (show c)
                    (maybe "Nothing" (show.trim) i)
