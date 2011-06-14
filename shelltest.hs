@@ -24,7 +24,7 @@ import Codec.Binary.UTF8.String as UTF8 (decodeString, encodeString, isUTF8Encod
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
-import Data.List (intercalate, nub, isPrefixOf)
+import Data.List
 import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs
@@ -90,10 +90,9 @@ proghelpsuffix = [
   ,"space) with something else - useful to test different versions of a program."
   ,"Command lines beginning with a space are left alone."
   ,""
-  ,"CURRENTLY DISABLED:"
-  ," Unrecognised options are passed to test-framework (use no space between"
-  ," flags and values.) To run just the third test, try -t3."
-  ," To run tests in parallel for a big speedup, try -j8."
+  ,"Flags following a -- are passed to test-framework's test runner (use no space"
+  ,"between flags and values.) Eg to run only the third test, try -- -t3."
+  ,"To run tests in parallel for a big speedup, try -- -j8."
   ,""
   ]
 
@@ -151,7 +150,9 @@ data Matcher = Lines Int String
 
 main :: IO ()
 main = do
-  args <- cmdArgs argdefs >>= checkArgs
+  args' <- cmdArgs argdefs >>= checkArgs
+  let (args,passthroughopts) = (args'{testpaths=realargs}, ptopts)
+          where (ptopts,realargs) = partition ("-" `isPrefixOf`) $ testpaths args'
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (show args)
   let paths = testpaths args
   testfiles <- nub . concat <$> mapM (\p -> do
@@ -164,8 +165,9 @@ main = do
          printf "executable: %s\n" (fromPlatformString $ with args)
          printf "test files: %s\n" (intercalate ", " $ map fromPlatformString $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles
-  unless (debugparse args) $
-    defaultMainWithArgs (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults) ({-otheropts args ++ -} if color args then [] else ["--plain"])
+  unless (debugparse args) $ defaultMainWithArgs
+                               (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults)
+                               (passthroughopts ++ if color args then [] else ["--plain"])
 
 -- | Additional argument checking.
 checkArgs :: Args -> IO Args
