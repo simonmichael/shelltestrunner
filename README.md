@@ -186,7 +186,3 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
 **0.1 2009/7/10**
 
   * shelltestrunner, a generic shell command stdout/stderr/exit status tester
-
-<style>
-body { padding:1em 10%; }
-</style>

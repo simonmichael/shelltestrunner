@@ -3,6 +3,25 @@
  <head
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>#{title}
+  <style
+   body { padding:1em 10%; background-color:white; color:black; }
+
+   pre { background-color:black; color:white; padding:0.5em; }
+
+   h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {color:black; text-decoration:none; }
+
+   #TOC {
+    float:right;
+    margin:0 0 1em 1em;
+    border:thin solid #ddd;
+    background-color:#f0f0f0;
+   }
+
+   #TOC ul {
+    list-style-type: none;
+    padding:0 1em 0 1em;
+   }
+
  <body
   <h1>#{title}
   #{body}
