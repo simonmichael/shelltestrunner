@@ -2,15 +2,32 @@
 title: shelltestrunner
 ---
 
-shelltestrunner is a handy tool for testing command-line programs or shell commands,
-inspired by John Wiegley's ledger tests.
+shelltestrunner is a handy tool for testing command-line programs or shell commands.
 It reads simple declarative tests specifying a command, some standard input, and
 the expected standard output, standard error output and exit status.
 Tests can be run selectively, in parallel, with color output, and/or with differences highlighted.
 
+shelltestrunner is licensed under GPLv3+. Simon Michael wrote and
+maintains it; I was inspired by John Wiegley's ledger tests.  John
+Macfarlane, Bernie Pope and Trygve Laugstøl have contributed code. The
+hackage page shows the libraries it relies on, in particular Max
+Bolingbroke's test-framework.
+
 [Hackage](http://hackage.haskell.org/package/shelltestrunner) -
 [recent changes](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner) -
 [browse code](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner;a=headblob;f=/shelltest.hs)
+
+## Getting started
+
+ Your machine's packaging system may provide shelltestrunner; if not,
+ get yourself a [cabal](http://www.haskell.org/haskellwiki/Cabal-Install)
+ and
+
+    $ cabal install shelltestrunner
+
+ shelltestrunner should build with ghc 6.10 or greater.
+ Unicode support requires ghc 6.12 or greater.
+ It is intended to work on all platforms; I test it on gnu/linux & mac.
 
 ## Usage
 
@@ -19,17 +36,17 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
  Tests are defined in test files (typically `tests/*.test`), one or more
  per file. Each test looks like this:
 
-    # optional test description
-    some command
+    # optional comments
+    a one-line shell command
     <<<
     0 or more lines of standard input
-    \>>>
-    0 or more lines of expected standard output (or \/regexp\/ on the previous line)
-    \>>>2
-    0 or more lines of expected standard error output (or \/regexp\/ on the previous line)
-    \>>>= expected numeric exit status (or \/regexp\/)
+    >>>
+    0 or more lines of expected standard output (or /regexp/ on the previous line)
+    >>>2
+    0 or more lines of expected standard error output (or /regexp/ on the previous line)
+    >>>= 0 (or other expected numeric exit status, or /regexp/)
 
- The command and exit status are required, other fields are optional.
+ The command and exit status lines are required, everything else is optional.
  Here are some [real-world tests](http://joyful.com/repos/hledger/tests).
 
 
@@ -47,7 +64,8 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
  be affected.
 
  Tests can be run selectively, or in parallel for a nice speed boost, by
- passing flags to the underlying test-framework runner.  Here's an example run:
+ passing flags to the underlying test-framework runner.  Here we run up to
+ 8 tests at once, but only the ones with "args" in their name:
 
     shelltestrunner$ shelltest tests -- -j8 -targs
     :tests/args.test:1: [OK]
@@ -58,15 +76,20 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
      Failed  0            0
      Total   2            2
 
-### Compatibility
+## Contributing
 
- shelltestrunner should build with ghc 6.10 or greater.
- It supports unicode with ghc 6.12 or greater.
- It aims to work on all platforms; it is tested on gnu/linux & mac.
+ You can get the latest development version here:
 
-## Release notes
+    $ darcs get http://joyful.com/repos/shelltestrunner
 
-**darcs version**
+ Patches are welcome. For discussion, use the haskell mail list,
+ #haskell channel (I'm `sm`) or [email me](mailto:simon@joyful.com).
+
+## Release history
+
+**1.0** (unreleased)
+
+  * Better home page/docs started
 
   * The `>>>=` field is now required; you may need to add it to your
     existing tests
@@ -75,16 +98,21 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
 
   * Multiple tests in a file  may now have whitespace between them
 
-  * The confusing `-i/--implicit` option has been dropped
+  * The error-prone `-i/--implicit` option has been dropped
+
+  * The new `--diff` option shows test failures as a unified diff when
+    possible, including line numbers to help locate the problem.
+
+  * Passing arguments through to test-framework is now more robust, using
+    the standard `--` idiom.
 
   * Fixed: parsing could fail when input contained left angle brackets
   
   * Fixed: some test files generated an extra blank test at the end.
 
-  * A new --diff option shows test failures as a unified diff when
-    possible, including line numbers to help locate the problem.
+  * Fixed: renamed a file to make getting the darcs repo easier on windows
 
-**0.9 2010/9/3**
+**0.9** (2010/9/3)
 
   * show plain non-ansi output by default, add --color option
 
@@ -107,7 +135,7 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
 
   * tighten up dependencies
 
-**0.8 2010/4/9**
+**0.8** (2010/4/9)
 
   * rename executable to shelltest. The package might also be renamed at some point.
 
@@ -123,11 +151,11 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
       --execdir        execute tested command in same directory as test file
       --extension=EXT  file extension of test files (default=.test)
 
-**0.7 2010/3/5**
+**0.7** (2010/3/5)
 
   * more robust parsing
     - --debug-parse parses test files and stops
-    - regexps now support escaped forward slash (\/)
+    - regexps now support escaped forward slash (`\/`)
     - bad regexps now fail at startup
     - command-line arguments are required in a test, and may be blank
     - a >>>= is no longer required to separate multiple tests in a file
@@ -150,15 +178,15 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
 
   * switch to the more robust and faster pcre-light regexp lib
 
-**0.6 2009/7/15**
+**0.6** (2009/7/15)
 
   * allow multiple tests per file, handle bad executable better
 
-**0.5 2009/7/14**
+**0.5** (2009/7/14)
 
   * show failure output in proper order
 
-**0.4 2009/7/14**
+**0.4** (2009/7/14)
 
   * run commands in a more robust way to avoid hangs
     This fixes hanging when a command generates large output, and hopefully
@@ -175,14 +203,14 @@ Tests can be run selectively, in parallel, with color output, and/or with differ
 
   * change comment character to #
 
-**0.3 2009/7/11**
+**0.3** (2009/7/11)
 
   * misc. bugfixes/improvements
 
-**0.2 2009/7/10**
+**0.2** (2009/7/10)
 
   * bugfix, build with -threaded
 
-**0.1 2009/7/10**
+**0.1** (2009/7/10)
 
   * shelltestrunner, a generic shell command stdout/stderr/exit status tester
