@@ -54,7 +54,9 @@ version = "0.9.98" -- keep synced with cabal file
 progname = "shelltest"
 progversion = progname ++ " " ++ version
 proghelpsuffix = [
-   "Test file format:"
+   "     -- TESTFRAMEWORKOPTIONS   pass options to test-framework (eg -- --help)" -- sync with options width
+  ,""
+  ,"Test file format:"
   ,""
   ," # optional comment"
   ," a shell command line"
