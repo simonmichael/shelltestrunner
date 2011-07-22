@@ -20,7 +20,7 @@ autobuild auto:
 	sp --no-exts --no-default-map -o $(EXE) ghc --make $(BUILDFLAGS) $(EXE).hs --run $(AUTOBUILDCMDARGS)
 
 test: build
-	./$(EXE) tests -j8
+	./$(EXE) tests -- -j8
 
 ######################################################################
 # DOC
