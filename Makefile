@@ -40,8 +40,11 @@ viewhaddock: docs
 	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html 
 
 # build website
-buildsite site: hakyll
+buildsite site: hakyll index.html
 	./hakyll build
+
+index.html:
+	ln -s README.html index.html
 
 cleansite: hakyll
 	./hakyll clean

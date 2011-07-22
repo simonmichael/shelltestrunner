@@ -18,12 +18,11 @@ siteurl = "http://joyful.com/repos/shelltestrunner"
 
 main:: IO ()
 main = hakyllWithConfiguration cfg $ do
-    mapM_ page
-      ["index.markdown"
-      ]
-    mapM_ static
-      [
-      ]
+    mapM_ page [
+                "README.md"
+               ]
+    mapM_ static [
+                 ]
     where
       -- Render a page and symlink it to the current directory.
       page p = do
