@@ -2,22 +2,21 @@
 title: shelltestrunner
 ---
 
-shelltestrunner is a handy tool for testing command-line programs or shell commands.
-It reads simple declarative tests specifying a command, some standard input, and
-the expected standard output, standard error output and exit status.
-Tests can be run selectively, in parallel, with color output, and/or with differences highlighted.
+shelltestrunner is a handy tool for testing command-line programs or
+arbitrary shell commands.  It reads simple declarative tests specifying a
+command, some input, and the expected output, error output and exit
+status.  Tests can be run selectively, in parallel, with color output,
+and/or with differences highlighted.
 
 shelltestrunner is licensed under GPLv3+. Simon Michael wrote and
 maintains it; I was inspired by John Wiegley's ledger tests.  John
 Macfarlane, Bernie Pope and Trygve Laugstøl have contributed code. The
-hackage page shows the libraries it relies on, in particular Max
-Bolingbroke's test-framework.
+[hackage page](http://hackage.haskell.org/package/shelltestrunner) shows
+the libraries it relies on, in particular Max Bolingbroke's test-framework.
 
-[Hackage](http://hackage.haskell.org/package/shelltestrunner) -
-[recent changes](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner) -
-[browse code](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner;a=headblob;f=/shelltest.hs)
+## Usage
 
-## Getting started
+### Getting started
 
  Your machine's packaging system may provide shelltestrunner; if not,
  get yourself a [cabal](http://www.haskell.org/haskellwiki/Cabal-Install)
@@ -25,11 +24,9 @@ Bolingbroke's test-framework.
 
     $ cabal install shelltestrunner
 
- shelltestrunner should build with ghc 6.10 or greater.
- Unicode support requires ghc 6.12 or greater.
- It is intended to work on all platforms; I test it on gnu/linux & mac.
-
-## Usage
+ shelltestrunner should build with ghc 6.10 or greater; unicode support
+ requires ghc 6.12 or greater.  It is intended to work on all platforms; I
+ test it on gnu/linux, mac and windows (actually wine, some tests failing currently.)
 
 ### Defining tests
 
@@ -37,35 +34,45 @@ Bolingbroke's test-framework.
  per file. Each test looks like this:
 
     # optional comments
-    a one-line shell command
+    a one-line shell command (required)
     <<<
     0 or more lines of standard input
     >>>
     0 or more lines of expected standard output (or /regexp/ on the previous line)
     >>>2
     0 or more lines of expected standard error output (or /regexp/ on the previous line)
-    >>>= 0 (or other expected numeric exit status, or /regexp/)
+    >>>= 0 (or other expected numeric exit status, or /regexp/; required))
 
- The command and exit status lines are required, everything else is optional.
- Here are some [real-world tests](http://joyful.com/repos/hledger/tests).
+ Only the command and exit status lines are required.
+ Here are some [real-world tests](http://joyful.com/repos/hledger/tests) to look at.
+
+ If a `/regexp/` pattern is used, a match anywhere in the output allows
+ the test to pass. The syntax supported is that of
+ [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa).  You can put
+ `!` before a /regexp/ or numeric exit status to negate the match.
 
 
 ### Running tests
 
- Run `shelltest` with one or more test file or directory paths. Eg:
+ Run `shelltest` with one or more test file or directory paths (a
+ directory means find all test files below it.) Eg:
 
     $ shelltest tests
 
- Run with `--help` to see the options.
+ Run with `--help` to see shelltestrunner's options. Here are some notes:
+
+ Test commands normally run within your current directory; the `--execdir`
+ option makes them run within the directory where they are defined.
 
  The `--with` option replaces the first word of all commands with
  something else, which can be useful for testing alternate versions of a
  program. Commands which have been indented by one or more spaces will not
  be affected.
 
- Tests can be run selectively, or in parallel for a nice speed boost, by
- passing flags to the underlying test-framework runner.  Here we run up to
- 8 tests at once, but only the ones with "args" in their name:
+ Run with `-- --help` to see some extra options affecting test-framework,
+ which underlies shelltestrunner. These options let you run tests
+ selectively, or in parallel for a nice speed boost. Here we allow up to 8
+ tests to run at once, but only the ones with "args" in their name:
 
     shelltestrunner$ shelltest tests -- -j8 -targs
     :tests/args.test:1: [OK]
@@ -78,16 +85,25 @@ Bolingbroke's test-framework.
 
 ## Contributing
 
- You can get the latest development version here:
+ You can get the latest code here:
 
     $ darcs get http://joyful.com/repos/shelltestrunner
 
- Patches are welcome. For discussion, use the haskell mail list,
- #haskell channel (I'm `sm`) or [email me](mailto:simon@joyful.com).
+ [recent changes](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner) -
+ [browse code](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner;a=headblob;f=/shelltest.hs)
+
+ <a href="https://www.wepay.com/donate/39988?ref=widget&utm_medium=widget&utm_campaign=donation"
+    target="_blank" style="float:right;margin:0 1em;"
+    ><img src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
+ Patches and feedback are welcome:
+ [chat me](irc://irc.freenode.net/#haskell) (`sm` on irc.freenode.net) or
+ [email me](mailto:simon@joyful.com?subject=shelltestrunner).\
+ I will provide "best effort" support, or you can [hire me](http://joyful.com/)
+ or [donate](https://www.wepay.com/donate/39988?utm_campaign=donation)!
 
 ## Release history
 
-**1.0** (unreleased)
+**1.0** (pending)
 
   * Better home page/docs started
 
@@ -109,8 +125,6 @@ Bolingbroke's test-framework.
   * Fixed: parsing could fail when input contained left angle brackets
   
   * Fixed: some test files generated an extra blank test at the end.
-
-  * Fixed: renamed a file to make getting the darcs repo easier on windows
 
 **0.9** (2010/9/3)
 

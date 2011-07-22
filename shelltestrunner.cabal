@@ -8,7 +8,7 @@ description:
  It reads simple declarative tests specifying a command, standard input, and
  the expected standard output, standard error output and exit status.
  Tests can be run selectively, in parallel, with color output, and/or with differences highlighted.
- See <http://joyful.com/repos/shelltestrunner> for documentation.
+ See <http://joyful.com/repos/shelltestrunner>.
  .
 license:        GPL
 license-file:   LICENSE
