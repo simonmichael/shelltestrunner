@@ -232,7 +232,7 @@ delimiterp = choice [try $ string "<<<", try $ string ">>>", eof >> return ""]
 
 commandp,fixedcommandp,replaceablecommandp :: Parser TestCommand
 commandp = fixedcommandp <|> replaceablecommandp
-fixedcommandp = space >> linep >>= return . FixedCommand
+fixedcommandp = many1 whitespacecharp >> linep >>= return . FixedCommand
 replaceablecommandp = linep >>= return . ReplaceableCommand
 
 inputp = try $ string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
