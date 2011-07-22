@@ -105,61 +105,46 @@ the libraries it relies on, in particular Max Bolingbroke's test-framework.
 
 **1.0** (pending)
 
-  * Better home page/docs started
-
   * The `>>>=` field is now required; you may need to add it to your
     existing tests
-
   * Input and expected output can now contain lines beginning with `#`
-
   * Multiple tests in a file  may now have whitespace between them
-
   * The error-prone `-i/--implicit` option has been dropped
-
   * The new `--diff` option shows test failures as a unified diff when
     possible, including line numbers to help locate the problem.
-
   * Passing arguments through to test-framework is now more robust, using
     the standard `--` idiom.
-
   * Fixed: parsing could fail when input contained left angle brackets
-  
   * Fixed: some test files generated an extra blank test at the end.
+  * Better home page/docs started
 
 **0.9** (2010/9/3)
 
   * show plain non-ansi output by default, add --color option
-
   * better handling of non-ascii test data. We assume that non-ascii file
     paths, command-line arguments etc. are UTF-8 encoded on unix systems
     (cf http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html),
     and that GHC 6.12 or greater is used. Then:
-
     - non-ascii test file paths should render correctly, eg in failure messages
     - non-ascii test commands should run correctly
     - non-ascii expected output should match correctly
     - non-ascii regular expressions should match correctly. (Caveat: not
       thoroughly tested, this may break certain regexps, )
-
   * use regex-tdfa instead of pcre-light for better windows compatibility
     To avoid a memory leak in current regex-tdfa, only regular expressions
     up to 300 characters in size are supported. Also, DOTALL is no longer
     enabled and probably fewer regexp constructs are supported.  There are
     still issues on windows/wine but in theory this will help.
-
   * tighten up dependencies
 
 **0.8** (2010/4/9)
 
   * rename executable to shelltest. The package might also be renamed at some point.
-
   * better built-in help
-
   * shell tests now include a full command line, making them more readable
     and self-contained. The --with option can be used to replace the first
     word with something else, unless the test command line begins with a
     space.
-
   * we also accept directory arguments, searching for test files below
     them, with two new options:
       --execdir        execute tested command in same directory as test file
@@ -179,17 +164,11 @@ the libraries it relies on, in particular Max Bolingbroke's test-framework.
     - files containing nothing, all comments, or valid tests are allowed; anything else is rejected
     - somewhat better errors
     - allow indented input
-
   * support negative (-) and negatively-matched (!) numeric exit codes
-
   * let . in regexps match newline
-
   * warn but continue when a test file fails to parse
-
   * output cleanups, trim large output
-
   * more flexible --implicit flag
-
   * switch to the more robust and faster pcre-light regexp lib
 
 **0.6** (2009/7/15)
@@ -206,15 +185,10 @@ the libraries it relies on, in particular Max Bolingbroke's test-framework.
     This fixes hanging when a command generates large output, and hopefully
     all other deadlocks. The output is consumed strictly. Thanks to Ganesh
     Sittampalam for his help with this.
-
   * --implicit-tests flag providing implicit tests for omitted fields
-
   * --debug flag
-
   * regular expression matching
-
   * disallow interspersed foreign options which confused parseargs
-
   * change comment character to #
 
 **0.3** (2009/7/11)
