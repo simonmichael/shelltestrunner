@@ -4,43 +4,20 @@ version:        0.9.98
 category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
- A tool (@shelltest@) for doing repeatable testing of command-line programs or shell commands,
- using declarative tests which specify:
- a command, optional standard input, and expected standard output, error output and/or exit status.
+ A tool for testing command-line programs or shell commands.
+ It reads simple declarative tests specifying a command, standard input, and
+ the expected standard output, standard error output and exit status.
+ Tests can be run selectively, in parallel, with color output, and/or with differences highlighted.
+ See <http://joyful.com/repos/shelltestrunner> for documentation.
  .
- Tests are defined in one or more test files, which typically have the @.test@ suffix
- and often live in a @tests/@ subdirectory.
- Tests can be run selectively or in parallel for greater speed.
- shelltestrunner uses test-framework and was inspired by the tests in John Wiegley's ledger project.
- . 
- Compatibility: tested on unix, should work on microsoft windows.
- Should build with ghc 6.10; supports unicode with ghc 6.12 or greater.
- .
- Here's the basic format of a shell test (one or more per file):
- .
- @
- # optional comment
- a shell command line
- <<<
- 0 or more lines of input
- \>>>
- 0 or more lines of expected output (or a \/regexp\/ on the above line)
- \>>>2
- 0 or more lines of expected stderr output (or a \/regexp\/ on the above line)
- \>>>= expected numeric exit status or a \/regexp\/
- @
- .
- Run @shelltest --help@ for more details.
- More docs at: <http://joyful.com/repos/shelltestrunner>
-
 license:        GPL
 license-file:   LICENSE
 author:         Simon Michael <simon@joyful.com>
 maintainer:     Simon Michael <simon@joyful.com>
-homepage:       http://hackage.haskell.org/package/shelltestrunner
+homepage:       http://joyful.com/repos/shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      beta
-tested-with:    GHC==6.12
+tested-with:    GHC==6.12, GHC==7.0
 cabal-version:  >= 1.6
 build-type:     Simple
 
