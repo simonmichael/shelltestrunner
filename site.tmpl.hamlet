@@ -4,7 +4,9 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
   <title>#{title}
   <style
-   body { padding:1em 10%; background-color:white; color:black; }
+   body { padding:1em 10% 1em 12%; background-color:white; color:black; }
+
+   h1, h2 { position:relative; left:-0.5em; margin-top:1.5em;}
 
    pre { background-color:black; color:white; padding:0.5em; }
 
