@@ -54,43 +54,19 @@ version = "0.9.98" -- keep synced with cabal file
 progname = "shelltest"
 progversion = progname ++ " " ++ version
 proghelpsuffix = [
-   "     -- TESTFRAMEWORKOPTIONS   pass options to test-framework (eg -- --help)" -- sync with options width
+   "     -- TFOPTIONS       Pass options to test-framework (try -- --help)" -- sync whitespace with options width
   ,""
   ,"Test file format:"
   ,""
-  ," # optional comment"
-  ," a shell command line"
+  ," # optional comments"
+  ," one-line shell command (required)"
   ," <<<"
-  ," 0 or more lines of input"
+  ," 0 or more lines of stdin input"
   ," >>>"
-  ," 0 or more lines of expected output (or a /regexp/ on the above line)"
+  ," 0 or more lines of expected stdout output (or /regexp/ on the previous line)"
   ," >>>2"
-  ," 0 or more lines of expected stderr output (or a /regexp/ on the above line)"
-  ," >>>= expected numeric exit status or a /regexp/"
-  ,""
-  ,"The command line is required. It runs in your current directory, or with"
-  ,"--execdir, in the test file's directory. The other fields are optional, except"
-  ,">>>= may be required as a delimiter if there are multiple tests in the file."
-  ,""
-  ,">>> and >>>2 can be followed by 0 or more lines of expected output,"
-  ,"in which case the test passes if the command's output matches exactly."
-  ,"Or, they can have a regular expression in forward slashes on the same line,"
-  ,"in which case the test passes if any part of the command's output is matched."
-  ,"Regexp syntax is regex-tdfa's. A preceding ! negates the match."
-  ,""
-  ,">>>= is followed by a numeric exit code or a /regexp/ on the same line;"
-  ,"the test passes if the command's exit status is matched. A preceding ! negates"
-  ,"the match."
-  ,""
-  ,"Notes:"
-  ,""
-  ,"--with/-w replaces the first word of each test's command line with something else,"
-  ,"useful for testing different versions of a program. To prevent this, indent the"
-  ,"command by one or more spaces."
-  ,""
-  ,"Flags following a -- are passed to test-framework's test runner; avoid spaces"
-  ,"between flags and values here. Eg: -- -t3 to run only the third test, -- -j8"
-  ,"to run tests in parallel for a big speedup."
+  ," 0 or more lines of expected stderr output (or a /regexp/ on the previous line)"
+  ," >>>= 0 (or other expected numeric exit status, or /regexp/; required)"
   ,""
   ]
 
@@ -107,15 +83,14 @@ data Args = Args {
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     debug      = def     &= help "show debug messages"
-    ,debugparse = def     &= explicit &= name "debug-parse" &= help "show parsing debug messages and stop"
-    ,diff       = def     &= help "show diff on test failure"
-    ,color      = def     &= help "display with ANSI color codes"
-    ,execdir    = def     &= help "run tests in same directory as test file"
-    ,extension  = ".test" &= typ "EXT" &= help "extension of test files when dirs specified"
-    ,with       = def     &= typ "EXECUTABLE" &= help "replace the first word of test commands (unless indented)"
+     debug      = def     &= explicit &= name "debug" &= help "Show debug info, for troubleshooting"
+    ,debugparse = def     &= explicit &= name "debug-parse" &= help "Show test file parsing debug info and stop"
+    ,diff       = def     &= help "Show diff of expected vs. actual when tests fail"
+    ,color      = def     &= help "Display colored output if your terminal supports it"
+    ,execdir    = def     &= help "Run tests from within the test file's directory"
+    ,extension  = ".test" &= typ "EXT" &= help "File suffix to look for under dirs (default: .test)"
+    ,with       = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
     ,testpaths  = def     &= args &= typ "TESTFILES|TESTDIRS"
---    ,otheropts  = def &= explicit &= typ "OTHER FLAGS" &= help "any other flags are passed to test runner"
     }
     &= program progname
     &= summary progversion
