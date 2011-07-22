@@ -82,19 +82,15 @@ proghelpsuffix = [
   ,"the test passes if the command's exit status is matched. A preceding ! negates"
   ,"the match."
   ,""
-  ,"Flag details:"
+  ,"Notes:"
   ,""
-  ,"-i/--implicit-tests controls which fields should have default tests applied"
-  ,"when omitted. By default there is an implicit test for exit status=0 but"
-  ,"none for stdout or stderr."
+  ,"--with/-w replaces the first word of each test's command line with something else,"
+  ,"useful for testing different versions of a program. To prevent this, indent the"
+  ,"command by one or more spaces."
   ,""
-  ,"--with/-w replaces the first word of each test's command line (up to the first"
-  ,"space) with something else - useful to test different versions of a program."
-  ,"Command lines beginning with a space are left alone."
-  ,""
-  ,"Flags following a -- are passed to test-framework's test runner (use no space"
-  ,"between flags and values.) Eg to run only the third test, try -- -t3."
-  ,"To run tests in parallel for a big speedup, try -- -j8."
+  ,"Flags following a -- are passed to test-framework's test runner; avoid spaces"
+  ,"between flags and values here. Eg: -- -t3 to run only the third test, -- -j8"
+  ,"to run tests in parallel for a big speedup."
   ,""
   ]
 
@@ -105,13 +101,10 @@ data Args = Args {
     ,color      :: Bool
     ,execdir    :: Bool
     ,extension  :: String
-    ,implicit   :: ImplicitTests
     ,with       :: String
     ,testpaths  :: [FilePath]
 --    ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
-
-data ImplicitTests = None | Exit | All deriving (Show, Data, Typeable)
 
 argdefs = Args {
      debug      = def     &= help "show debug messages"
@@ -120,8 +113,7 @@ argdefs = Args {
     ,color      = def     &= help "display with ANSI color codes"
     ,execdir    = def     &= help "run tests in same directory as test file"
     ,extension  = ".test" &= typ "EXT" &= help "extension of test files when dirs specified"
-    ,implicit   = Exit    &= typ "none|exit|all" &= help "provide implicit tests for all fields or just exit code"
-    ,with       = def     &= typ "EXECUTABLE" &= help "alternate executable, replaces the first word of test commands"
+    ,with       = def     &= typ "EXECUTABLE" &= help "replace the first word of test commands (unless indented)"
     ,testpaths  = def     &= args &= typ "TESTFILES|TESTDIRS"
 --    ,otheropts  = def &= explicit &= typ "OTHER FLAGS" &= help "any other flags are passed to test runner"
     }
@@ -135,7 +127,7 @@ data ShellTest = ShellTest {
     ,stdin            :: Maybe String
     ,stdoutExpected   :: Maybe Matcher
     ,stderrExpected   :: Maybe Matcher
-    ,exitCodeExpected :: Maybe Matcher
+    ,exitCodeExpected :: Matcher
     }
 
 data TestCommand = ReplaceableCommand String
@@ -195,7 +187,10 @@ parseShellTestFile args f = do
                                printf "parsed %s:\n" $ fromPlatformString f
                                mapM_ (putStrLn.(' ':).show) ts'
            return $ Right ts'
-    Left _ -> return p
+    Left _ -> do
+           when (debug args || debugparse args) $ do
+                               printf "failed to parse any tests in %s\n" $ fromPlatformString f
+           return p
 
 shelltestfilep :: Parser [ShellTest]
 shelltestfilep = do
@@ -213,8 +208,8 @@ shelltestp = do
   i <- optionMaybe inputp <?> "input"
   o <- optionMaybe expectedoutputp <?> "expected output"
   e <- optionMaybe expectederrorp <?> "expected error output"
-  x <- optionMaybe expectedexitcodep <?> "expected exit status"
-  when (null (show c) && (isNothing i) && (null $ catMaybes [o,e,x])) $ fail ""
+  x <- expectedexitcodep <?> "expected exit status"
+  when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   return $ ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
 
 newlineoreofp, whitespacecharp :: Parser Char
@@ -307,19 +302,6 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
       cmd = case (e,c) of (_:_, ReplaceableCommand s) -> e ++ " " ++ dropWhile (/=' ') s
                           (_, ReplaceableCommand s)   -> s
                           (_, FixedCommand s)         -> s
-      (o_expected',e_expected',x_expected') =
-          case (implicit args) of
-            All    -> (case o_expected of
-                        Just m -> Just m
-                        _ -> Just $ Lines 0 ""
-                     ,case e_expected of Just m -> Just m
-                                         _      -> Just $ Lines  0 ""
-                     ,case x_expected of Just m -> Just m
-                                         _      -> Just $ Numeric "0")
-            Exit -> (o_expected,e_expected
-                     ,case x_expected of Just m -> Just m
-                                         _      -> Just $ Numeric "0")
-            _ -> (o_expected,e_expected,x_expected)
       dir = if execdir args then Just $ takeDirectory n else Nothing
   when (debug args) $ printf "command was: %s\n" (show cmd)
   (o_actual, e_actual, x_actual) <- runCommandWithInput dir (toPlatformString cmd) i
@@ -330,15 +312,15 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError e_actual -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
-             if (maybe True (o_actual `matches`) o_expected')
+             if (maybe True (o_actual `matches`) o_expected)
               then ""
-              else showExpectedActual (diff args) "stdout"    (fromJust o_expected') o_actual
-            ,if (maybe True (e_actual `matches`) e_expected')
+              else showExpectedActual (diff args) "stdout"    (fromJust o_expected) o_actual
+            ,if (maybe True (e_actual `matches`) e_expected)
               then ""
-              else showExpectedActual (diff args) "stderr"    (fromJust e_expected') e_actual
-            ,if (maybe True (show x_actual `matches`) x_expected')
+              else showExpectedActual (diff args) "stderr"    (fromJust e_expected) e_actual
+            ,if (show x_actual `matches` x_expected)
               then ""
-              else showExpectedActual False "exit code" (fromJust x_expected') (show x_actual)
+              else showExpectedActual False "exit code" x_expected (show x_actual)
             ]
        where addnewline "" = ""
              addnewline s  = "\n"++s

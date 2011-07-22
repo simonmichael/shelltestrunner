@@ -2,12 +2,19 @@
 # 1. can we match / ?
  echo /
 >>> /\//
+>>>= 0
+
 # 2. can we handle a blank regexp ? with whitespace after ?
  echo
 >>> //
+>>>= 0
+
 # 3. how about a comment after ?
  echo
 >>> // # comment
+>>>= 0
+
 # 4. no trailing newline after regexp ?
  printf ""
 >>> //
+>>>= 0
