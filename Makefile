@@ -131,7 +131,7 @@ showunpushedchanges unpushed:
 
 showunreleasedcodechanges unreleased:
 	@echo "code changes since last release:"
-	@darcs changes --from-tag . --matches "not (name docs: or name doc: or name site: or name tools:)" | grep '*'
+	@darcs changes --from-tag . --matches "not (name docs: or name doc: or name site: or name tools:)" | egrep '^  \* '
 	@echo
 
 showcodechanges:
