@@ -86,7 +86,7 @@ release: test tagrepo push
 		|| (cabal upload $(TARBALL) --check -v3; false)
 
 # show project stats useful for release notes
-releasestats: \
+releasestats stats: \
 	showreleasedays \
 	showunreleasedchangecount \
 	showloc \
