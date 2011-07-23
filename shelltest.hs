@@ -1,25 +1,21 @@
 #!/usr/bin/env runhaskell
 {-# LANGUAGE DeriveDataTypeable #-}
--- cmdargs: the impure method of writing annotations is susceptible to
--- over-optimisation by GHC - sometimes {-# OPTIONS_GHC -fno-cse #-} will
--- be required.
 {- |
 
 shelltest - a tool for testing command-line programs.
 
 See shelltestrunner.cabal.
 
-(c) Simon Michael 2009-2010, released under GNU GPLv3
-
-We try to handle non-ascii content in test file paths, test commands, and
-expected test results.  For this we assume:
-- ghc 6.12
-- on unix, all file names, arguments, environment variables etc. are utf-8 encoded
+(c) Simon Michael 2009-2011, released under GNU GPLv3 or later.
 
 -}
 
 module Main
 where
+-- encoding: we try to handle non-ascii content in test file paths, test
+-- commands, and expected test results.  For this we assume 1. ghc 6.12+
+-- and 2. that on unix, all file names/arguments/environment variables are
+-- utf8 encoded
 import Codec.Binary.UTF8.String as UTF8 (decodeString, encodeString, isUTF8Encoded)
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
@@ -27,6 +23,9 @@ import Control.Monad (liftM,when,unless)
 import Data.List
 import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
 import qualified Test.HUnit (Test)
+-- cmdargs: the impure method of writing annotations is susceptible to
+-- over-optimisation by GHC - sometimes {-# OPTIONS_GHC -fno-cse #-} will be
+-- required.
 import System.Console.CmdArgs
 import System.Exit
 import System.Info (os)
