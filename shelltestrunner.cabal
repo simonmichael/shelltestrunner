@@ -4,12 +4,11 @@ version:        0.9.98
 category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:
- A tool for testing command-line programs or shell commands.
- It reads simple declarative tests specifying a command, standard input, and
- the expected standard output, standard error output and exit status.
- Tests can be run selectively, in parallel, with color output, and/or with differences highlighted.
- See <http://joyful.com/repos/shelltestrunner>.
- .
+ shelltestrunner is a handy cross-platform tool for testing command-line
+ programs or arbitrary shell commands.  It reads simple declarative tests
+ specifying a command, some input, and the expected output, error output
+ and exit status.  Tests can be run selectively, in parallel, with a
+ timeout, in color, and/or with differences highlighted.
 license:        GPL
 license-file:   LICENSE
 author:         Simon Michael <simon@joyful.com>
