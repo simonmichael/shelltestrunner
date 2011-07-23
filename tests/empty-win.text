@@ -1,0 +1,4 @@
+# handle a totally empty test file
+shelltest NUL:
+>>> /Total +0/
+>>>= 0
