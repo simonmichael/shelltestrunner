@@ -146,7 +146,7 @@ test-framework.
 
 ## Release history
 
-**1.0** (pending)
+**1.0** (2011/7/23)
 
   * The `>>>=` field is now required; you may need to add it to your existing tests
   * Input and expected output can now contain lines beginning with `#`
