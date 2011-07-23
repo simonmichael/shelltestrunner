@@ -71,10 +71,11 @@ the libraries it relies on, in particular Max Bolingbroke's test-framework.
 
  Run with `-- --help` to see some extra options affecting test-framework,
  which underlies shelltestrunner. These options let you run tests
- selectively, or in parallel for a nice speed boost. Here we allow up to 8
- tests to run at once, but only the ones with "args" in their name:
+ selectively, or with a timeout, or in parallel for a nice speed boost.
+ Here we allow up to 8 tests to run at once, but only the ones with "args"
+ in their name, and allowing no more than one second for each:
 
-    shelltestrunner$ shelltest tests -- -j8 -targs
+    shelltestrunner$ shelltest tests -- -j8 -targs -o1
     :tests/args.test:1: [OK]
     :tests/args.test:2: [OK]
     

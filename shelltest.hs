@@ -54,7 +54,10 @@ version = "0.9.98" -- keep synced with cabal file
 progname = "shelltest"
 progversion = progname ++ " " ++ version
 proghelpsuffix = [
-   "     -- TFOPTIONS       Pass options to test-framework (try -- --help)" -- sync whitespace with options width
+   -- keep this bit synced with options width
+   "     -- TFOPTIONS       Set extra test-framework options like -j/--threads,"
+  ,"                        -t/--select-tests, -o/--timeout (use -- --help for"
+  ,"                        a list.) Avoid spaces."
   ,""
   ,"Test file format:"
   ,""
@@ -65,34 +68,33 @@ proghelpsuffix = [
   ," >>>"
   ," 0 or more lines of expected stdout output (or /regexp/ on the previous line)"
   ," >>>2"
-  ," 0 or more lines of expected stderr output (or a /regexp/ on the previous line)"
-  ," >>>= 0 (or other expected numeric exit status, or /regexp/; required)"
+  ," 0 or more lines of expected stderr output (or /regexp/ on the previous line)"
+  ," >>>= 0 (or other expected numeric exit status, or /regexp/) (required)"
   ,""
   ]
 
 data Args = Args {
-     debug      :: Bool
-    ,debugparse :: Bool
-    ,diff       :: Bool
-    ,color      :: Bool
-    ,execdir    :: Bool
-    ,extension  :: String
-    ,with       :: String
-    ,exclude    :: [String]
-    ,testpaths  :: [FilePath]
---    ,otheropts  :: [String]
+     color       :: Bool
+    ,diff        :: Bool
+    ,exclude     :: [String]
+    ,execdir     :: Bool
+    ,extension   :: String
+    ,with        :: String
+    ,debug       :: Bool
+    ,debug_parse :: Bool
+    ,testpaths   :: [FilePath]
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     debug      = def     &= explicit &= name "debug" &= help "Show debug info, for troubleshooting"
-    ,debugparse = def     &= explicit &= name "debug-parse" &= help "Show test file parsing debug info and stop"
-    ,diff       = def     &= help "Show diff of expected vs. actual when tests fail"
-    ,color      = def     &= help "Display colored output if your terminal supports it"
-    ,execdir    = def     &= help "Run tests from within the test file's directory"
-    ,extension  = ".test" &= typ "EXT" &= help "File suffix to look for under dirs (default: .test)"
-    ,with       = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
-    ,exclude    = def     &= typ "STR" &= help "Exclude test files whose path contains STR"
-    ,testpaths  = def     &= args &= typ "TESTFILES|TESTDIRS"
+     color       = def     &= help "Show colored output if your terminal supports it"
+    ,diff        = def     &= name "d" &= help "Show diff of expected vs. actual when tests fail"
+    ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
+    ,execdir     = def     &= help "Run tests from within the test file's directory"
+    ,extension   = ".test" &= typ "EXT" &= help "Filename suffix of test files (default: .test)"
+    ,with        = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
+    ,debug       = def     &= help "Show debug info, for troubleshooting"
+    ,debug_parse = def     &= help "Show test file parsing info and stop"
+    ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
     &= program progname
     &= summary progversion
@@ -136,7 +138,7 @@ main = do
   when (excluded > 0) $ printf "Excluding %d test files\n" excluded
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " $ map fromPlatformString $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles
-  unless (debugparse args) $ defaultMainWithArgs
+  unless (debug_parse args) $ defaultMainWithArgs
                                (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults)
                                (passthroughopts ++ if color args then [] else ["--plain"])
 
@@ -144,7 +146,7 @@ main = do
 checkArgs :: Args -> IO Args
 checkArgs args = do
   when (null $ testpaths args) $
-       warn $ printf "Please specify at least one file or directory, eg: %s tests" progname
+       warn $ printf "Please specify at least one test file or directory, eg: %s tests" progname
   return args
 
 -- | Show a message, usage string, and terminate with exit status 1.
@@ -160,12 +162,12 @@ parseShellTestFile args f = do
     Right ts -> do
            let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
                    | otherwise     = ts
-           when (debug args || debugparse args) $ do
+           when (debug args || debug_parse args) $ do
                                printf "parsed %s:\n" $ fromPlatformString f
                                mapM_ (putStrLn.(' ':).show) ts'
            return $ Right ts'
     Left _ -> do
-           when (debug args || debugparse args) $ do
+           when (debug args || debug_parse args) $ do
                                printf "failed to parse any tests in %s\n" $ fromPlatformString f
            return p
 
