@@ -5,14 +5,16 @@ title: shelltestrunner
 shelltestrunner is a handy cross-platform tool for testing command-line
 programs or arbitrary shell commands.  It reads simple declarative tests
 specifying a command, some input, and the expected output, error output
-and exit status.  Tests can be run selectively, in parallel, with color
-output, and/or with differences highlighted.
+and exit status.  Tests can be run selectively, in parallel, with a
+timeout, in color, and/or with differences highlighted. Projects using it
+include hledger, yesod, and berp. shelltestrunner is free software released under GPLv3+.
 
-shelltestrunner is licensed under GPLv3+. Simon Michael wrote and
-maintains it; I was inspired by John Wiegley's ledger tests.  John
-Macfarlane, Bernie Pope and Trygve Laugstøl have contributed code. The
+Simon Michael wrote and maintains shelltestrunner; I was inspired by John
+Wiegley's ledger tests.  John Macfarlane, Bernie Pope and Trygve Laugstøl
+have contributed code. The
 [hackage page](http://hackage.haskell.org/package/shelltestrunner) shows
-the libraries it relies on, in particular Max Bolingbroke's test-framework.
+the libraries it relies on - most notably, Max Bolingbroke's
+test-framework.
 
 ## Usage
 
@@ -30,50 +32,90 @@ the libraries it relies on, in particular Max Bolingbroke's test-framework.
 
 ### Defining tests
 
- Tests are defined in test files (typically `tests/*.test`), one or more
- per file. Each test looks like this:
+ Tests are defined in test files (typically `tests/*.test`), one or more per file.
+ A test requires at least a command and an expected exit status, so it can be as simple as:
 
+    commandthatshouldsucceed
+    >>>= 0
+
+ Here's the full test format:
+
+    $ shelltest --help-format
+    Test format:
+    
     # optional comments
-    a one-line shell command (required)
+    one-line shell command (required; indent to disable --with substitution)
     <<<
-    0 or more lines of standard input
+    0 or more lines of stdin input
     >>>
-    0 or more lines of expected standard output (or /regexp/ on the previous line)
+    0 or more lines of expected stdout output (or /regexp/ on the previous line)
     >>>2
-    0 or more lines of expected standard error output (or /regexp/ on the previous line)
-    >>>= 0 (or other expected numeric exit status, or /regexp/; required))
-
- Only the command and exit status lines are required.
- Here are some [real-world tests](http://joyful.com/repos/hledger/tests) to look at.
+    0 or more lines of expected stderr output (or /regexp/ on the previous line)
+    >>>= 0 (or other expected numeric exit status, or /regexp/) (required)
 
  If a `/regexp/` pattern is used, a match anywhere in the output allows
- the test to pass. The syntax supported is that of
+ the test to pass. The regular expression syntax supported is that of
  [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa).  You can put
  `!` before a /regexp/ or numeric exit status to negate the match.
 
+ Here
+ [are](http://joyful.com/repos/shelltestrunner/tests)
+ [more](http://joyful.com/repos/hledger/tests)
+ [real-world](https://github.com/yesodweb/yesod/blob/master/yesod/tests/scaffold.shelltest)
+ [examples](https://github.com/bjpop/berp/tree/master/test/regression).
 
 ### Running tests
 
- Run `shelltest` with one or more test file or directory paths (a
- directory means find all test files below it.) Eg:
+ Run `shelltest` with one or more test file or directory paths. A
+ directory means "all files below it with the test suffix (default:
+ .test)". Eg:
 
     $ shelltest tests
+    :tests/example.test: [OK]
+    
+             Test Cases  Total      
+     Passed  1           1          
+     Failed  0           0          
+     Total   1           1          
 
- Run with `--help` to see shelltestrunner's options. Here are some notes:
+ Here are the options, and some notes:
+
+    $ shelltest --help
+    shelltest 1.0
+    
+    shelltest [OPTIONS] [TESTFILES|TESTDIRS]
+    
+    Common flags:
+      -c --color            Show colored output if your terminal supports it
+      -d --diff             Show diff of expected vs. actual when tests fail
+      -x --exclude=STR      Exclude test files whose path contains STR
+         --execdir          Run tests from within the test file's directory
+         --extension=EXT    Filename suffix of test files (default: .test)
+      -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
+         --debug            Show debug info, for troubleshooting
+         --debug-parse      Show test file parsing info and stop
+      -h --help-format      Display test format help
+      -? --help             Display help message
+      -V --version          Print version information
+    
+         -- TFOPTIONS       Set extra test-framework options like -j/--threads,
+                            -t/--select-tests, -o/--timeout (use -- --help for
+                            a list.) Avoid spaces.
 
  Test commands normally run within your current directory; the `--execdir`
  option makes them run within the directory where they are defined.
 
- The `--with` option replaces the first word of all commands with
+ The `-w/--with` option replaces the first word of all commands with
  something else, which can be useful for testing alternate versions of a
  program. Commands which have been indented by one or more spaces will not
  be affected.
 
- Run with `-- --help` to see some extra options affecting test-framework,
- which underlies shelltestrunner. These options let you run tests
- selectively, or with a timeout, or in parallel for a nice speed boost.
- Here we allow up to 8 tests to run at once, but only the ones with "args"
- in their name, and allowing no more than one second for each:
+ Run with `-- --help` to see some extra options provided by the
+ test-framework library, including the useful `-t/--select-tests`,
+ `-o/--timeout` and `-j/--threads`.  These let you run tests selectively,
+ or with a timeout, or in parallel for a nice speed boost.  Here we run up
+ to 8 tests at once, but only the ones with "args" in their name, and
+ allowing no more than a second for each:
 
     shelltestrunner$ shelltest tests -- -j8 -targs -o1
     :tests/args.test:1: [OK]
@@ -99,25 +141,23 @@ the libraries it relies on, in particular Max Bolingbroke's test-framework.
  Patches and feedback are welcome:
  [chat me](irc://irc.freenode.net/#haskell) (`sm` on irc.freenode.net) or
  [email me](mailto:simon@joyful.com?subject=shelltestrunner).\
- I will provide "best effort" support, or you can [hire me](http://joyful.com/)
- or [donate](https://www.wepay.com/donate/39988?utm_campaign=donation)!
+ Support/enhancement requests are handled on a best-effort basis, or you can [hire me](http://joyful.com/) or
+ [donate](https://www.wepay.com/donate/39988?utm_campaign=donation)!
 
 ## Release history
 
 **1.0** (pending)
 
-  * The `>>>=` field is now required; you may need to add it to your
-    existing tests
+  * The `>>>=` field is now required; you may need to add it to your existing tests
   * Input and expected output can now contain lines beginning with `#`
   * Multiple tests in a file  may now have whitespace between them
   * The error-prone `-i/--implicit` option has been dropped
-  * The new `--diff` option shows test failures as a unified diff when
-    possible, including line numbers to help locate the problem.
-  * Passing arguments through to test-framework is now more robust, using
-    the standard `--` idiom.
+  * New `-d/--diff` option shows test failures as a unified diff when possible, including line numbers to help locate the problem
+  * New `-x/--exclude` option skips certain test files (eg platform-specific ones)
+  * Passing arguments through to test-framework is now more robust
   * Fixed: parsing could fail when input contained left angle brackets
-  * Fixed: some test files generated an extra blank test at the end.
-  * Better home page/docs started
+  * Fixed: some test files generated an extra blank test at the end
+  * New home page/docs
 
 **0.9** (2010/9/3)
 
