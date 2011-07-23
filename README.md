@@ -2,11 +2,11 @@
 title: shelltestrunner
 ---
 
-shelltestrunner is a handy tool for testing command-line programs or
-arbitrary shell commands.  It reads simple declarative tests specifying a
-command, some input, and the expected output, error output and exit
-status.  Tests can be run selectively, in parallel, with color output,
-and/or with differences highlighted.
+shelltestrunner is a handy cross-platform tool for testing command-line
+programs or arbitrary shell commands.  It reads simple declarative tests
+specifying a command, some input, and the expected output, error output
+and exit status.  Tests can be run selectively, in parallel, with color
+output, and/or with differences highlighted.
 
 shelltestrunner is licensed under GPLv3+. Simon Michael wrote and
 maintains it; I was inspired by John Wiegley's ledger tests.  John
@@ -25,8 +25,8 @@ the libraries it relies on, in particular Max Bolingbroke's test-framework.
     $ cabal install shelltestrunner
 
  shelltestrunner should build with ghc 6.10 or greater; unicode support
- requires ghc 6.12 or greater.  It is intended to work on all platforms; I
- test it on gnu/linux, mac and windows (actually wine, some tests failing currently.)
+ requires ghc 6.12 or greater.  It has been tested on gnu/linux, mac and
+ windows.
 
 ### Defining tests
 
