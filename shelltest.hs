@@ -78,6 +78,7 @@ data Args = Args {
     ,execdir    :: Bool
     ,extension  :: String
     ,with       :: String
+    ,exclude    :: [String]
     ,testpaths  :: [FilePath]
 --    ,otheropts  :: [String]
     } deriving (Show, Data, Typeable)
@@ -90,6 +91,7 @@ argdefs = Args {
     ,execdir    = def     &= help "Run tests from within the test file's directory"
     ,extension  = ".test" &= typ "EXT" &= help "File suffix to look for under dirs (default: .test)"
     ,with       = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
+    ,exclude    = def     &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,testpaths  = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
     &= program progname
@@ -124,11 +126,14 @@ main = do
           where (ptopts,realargs) = partition ("-" `isPrefixOf`) $ testpaths args'
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (show args)
   let paths = testpaths args
-  testfiles <- nub . concat <$> mapM (\p -> do
+  testfiles' <- nub . concat <$> mapM (\p -> do
                                        isdir <- doesDirectoryExist p
                                        if isdir
                                         then findWithHandler (\_ e->fail (show e)) always (Find.extension ==? extension args) p
                                         else return [p]) paths
+  let testfiles = filter (not . \p -> any (`isInfixOf` p) (exclude args)) testfiles'
+      excluded = length testfiles' - length testfiles
+  when (excluded > 0) $ printf "Excluding %d test files\n" excluded
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " $ map fromPlatformString $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles
   unless (debugparse args) $ defaultMainWithArgs
