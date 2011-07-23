@@ -28,7 +28,7 @@ import Data.List
 import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs
-import System.Exit (ExitCode(..), exitWith)
+import System.Exit
 import System.Info (os)
 import System.IO (Handle, hGetContents, hPutStr)
 import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProcess (..), waitForProcess, ProcessHandle)
@@ -53,23 +53,27 @@ version, progname, progversion :: String
 version = "0.9.98" -- keep synced with cabal file
 progname = "shelltest"
 progversion = progname ++ " " ++ version
+proghelpsuffix :: [String]
 proghelpsuffix = [
    -- keep this bit synced with options width
    "     -- TFOPTIONS       Set extra test-framework options like -j/--threads,"
   ,"                        -t/--select-tests, -o/--timeout (use -- --help for"
   ,"                        a list.) Avoid spaces."
   ,""
-  ,"Test file format:"
+  ]
+formathelp :: String
+formathelp = unlines [
+   "Test format:"
   ,""
-  ," # optional comments"
-  ," one-line shell command (required)"
-  ," <<<"
-  ," 0 or more lines of stdin input"
-  ," >>>"
-  ," 0 or more lines of expected stdout output (or /regexp/ on the previous line)"
-  ," >>>2"
-  ," 0 or more lines of expected stderr output (or /regexp/ on the previous line)"
-  ," >>>= 0 (or other expected numeric exit status, or /regexp/) (required)"
+  ,"# optional comments"
+  ,"one-line shell command (required; indent to disable --with substitution)"
+  ,"<<<"
+  ,"0 or more lines of stdin input"
+  ,">>>"
+  ,"0 or more lines of expected stdout output (or /regexp/ on the previous line)"
+  ,">>>2"
+  ,"0 or more lines of expected stderr output (or /regexp/ on the previous line)"
+  ,">>>= 0 (or other expected numeric exit status, or /regexp/) (required)"
   ,""
   ]
 
@@ -82,6 +86,7 @@ data Args = Args {
     ,with        :: String
     ,debug       :: Bool
     ,debug_parse :: Bool
+    ,help_format :: Bool
     ,testpaths   :: [FilePath]
     } deriving (Show, Data, Typeable)
 
@@ -94,6 +99,7 @@ argdefs = Args {
     ,with        = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
     ,debug       = def     &= help "Show debug info, for troubleshooting"
     ,debug_parse = def     &= help "Show test file parsing info and stop"
+    ,help_format = def     &= help "Display test format help"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
     &= program progname
@@ -145,6 +151,7 @@ main = do
 -- | Additional argument checking.
 checkArgs :: Args -> IO Args
 checkArgs args = do
+  when (help_format args) $ printf formathelp >> exitSuccess
   when (null $ testpaths args) $
        warn $ printf "Please specify at least one test file or directory, eg: %s tests" progname
   return args
