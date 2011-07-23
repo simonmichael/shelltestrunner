@@ -1,12 +1,6 @@
 
 * todo
-** review/update all deps & cabal fields
-** fix unknown flags pass-through
-** review/update docs
-*** site/hackage description
-*** command-line help
-*** release notes
-*** announcement
+** announcement
 ** release 1.0
 * issues
 ** don't nub test names ? (for testing $$ with multithreaded)
@@ -29,7 +23,6 @@ b
 $ shelltest tests/add-default-commodity.test 
 :tests/add-default-commodity.test:1: [OK]
 
-** unknown args give test-framework's usage, we should integrate more clearly
 ** unparseable test files and uncompilable regexps are counted as test failures - ok ?
 ** error in one test stops all
 $ LANG= make test
@@ -39,37 +32,4 @@ shelltest: tests/unicode-проверка.test: hGetContents: invalid argument (
 make: *** [test] Error 1
 
 * wishlist
-** test runner issues
-*** no way to turn off progress output & final summary
-*** no obvious way to see test runner help
-** timeout for commands
-** configurable delimiters
->  Field delimiters other than the default <<<, >>>, >>>2 and >>>= may be
->  specified with the --stdin-marker, --stdout-marker, --stderr-marker and
->  --exitcode-marker options.
-
->  ,Arg {argIndex = StdinMarkerOption,
->        argName  = Just "stdin-marker",
->        argAbbr  = Nothing,
->        argData  = argDataDefaulted "string" ArgtypeString "<<<",
->        argDesc  = "marker for the stdin field (default: <<<)"
->       }
->  ,Arg {argIndex = StdoutMarkerOption,
->        argName  = Just "stdout-marker",
->        argAbbr  = Nothing,
->        argData  = argDataDefaulted "string" ArgtypeString ">>>",
->        argDesc  = "marker for the stdout field (default: >>>)"
->       }
->  ,Arg {argIndex = StderrMarkerOption,
->        argName  = Just "stderr-marker",
->        argAbbr  = Nothing,
->        argData  = argDataDefaulted "string" ArgtypeString ">>>2",
->        argDesc  = "marker for the stderr field (default: >>>2)"
->       }
->  ,Arg {argIndex = ExitcodeMarkerOption,
->        argName  = Just "exitcode-marker",
->        argAbbr  = Nothing,
->        argData  = argDataDefaulted "string" ArgtypeString ">>>=",
->        argDesc  = "marker for the exit code field (default: >>>=)"
->       }
-
+** timeouts for commands
