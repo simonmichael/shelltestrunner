@@ -155,10 +155,12 @@ showcodechanges:
 # emacstags:
 # 	rm -f TAGS; hasktags -e *hs *.cabal tests/*.test
 
+TAG=hasktags -e
+
 tag: TAGS
 
-TAGS: *.el *.hs *.markdown Makefile
-	etags *.el *.hs *.markdown Makefile
+TAGS: *.hs *.md Makefile
+	$(TAG) *.hs *.md tests/*.test Makefile
 
 clean:
 	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`
