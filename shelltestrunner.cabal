@@ -1,6 +1,6 @@
 name:           shelltestrunner
 -- keep synced with shelltest.hs:
-version:        0.9.98
+version:        1.0
 category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:

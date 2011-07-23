@@ -49,7 +49,7 @@ strace :: Show a => a -> a
 strace a = trace (show a) a
 
 version, progname, progversion :: String
-version = "0.9.98" -- keep synced with cabal file
+version = "1.0" -- keep synced with shelltestrunner.cabal
 progname = "shelltest"
 progversion = progname ++ " " ++ version
 proghelpsuffix :: [String]
