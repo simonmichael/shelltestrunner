@@ -129,10 +129,7 @@ main = do
                                        if isdir
                                         then findWithHandler (\_ e->fail (show e)) always (Find.extension ==? extension args) p
                                         else return [p]) paths
-  verbose <- isLoud
-  when verbose $ do
-         printf "executable: %s\n" (fromPlatformString $ with args)
-         printf "test files: %s\n" (intercalate ", " $ map fromPlatformString $ testfiles)
+  when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " $ map fromPlatformString $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles
   unless (debugparse args) $ defaultMainWithArgs
                                (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults)
