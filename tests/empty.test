@@ -1,4 +1,4 @@
 # handle a totally empty test file
-./shelltest /dev/null
+shelltest /dev/null
 >>> /Total +0/
 >>>= 0

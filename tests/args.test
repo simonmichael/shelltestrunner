@@ -1,22 +1,22 @@
 # test with various arguments
 #
 # 1. with no args, should run all tests below current dir
-# ./shelltest
+# shelltest
 # >>> /Not enough non-flag arguments/
 # >>>= !0
 #
 # 2. a bad executable with no testfiles is accepted
 # XXX should really error
-#./shelltest nosuchexe
+#shelltest nosuchexe
 #>>> /Total +0/
 #
 # 3. a bad executable with testfiles should fail
-./shelltest --with nosuchexe tests/args.test
+shelltest --with nosuchexe tests/args.test
 >>> /user error/
 >>>= 1
 #
 # 4. a bad testfile should fail
-./shelltest --with cat nosuchtestfile
+shelltest --with cat nosuchtestfile
 >>>2 /No such file/
 >>>= 1
 # a final comment
