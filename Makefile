@@ -19,8 +19,14 @@ AUTOBUILDCMDARGS=tests
 autobuild auto:
 	sp --no-exts --no-default-map -o $(EXE) ghc --make $(BUILDFLAGS) $(EXE).hs --run $(AUTOBUILDCMDARGS)
 
+# on unix, run all tests with the latest code
 test: build
-	./$(EXE) tests -w ./shelltest -- -j8
+	./$(EXE) tests -w ./$(EXE) -- -j8
+
+# on windows, run as many tests as possible with the installed version
+# if you can run make, you probably don't need this rule, it's just a reminder
+testwin:
+	$(EXE) tests --exclude unix -- -j8
 
 ######################################################################
 # DOC
