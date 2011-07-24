@@ -8,7 +8,7 @@
 
    h1, h2 { position:relative; left:-0.5em; margin-top:1.5em;}
 
-   pre { background-color:black; color:white; padding:0.5em; }
+   pre { background-color:black; color:white; padding:0.5em 1em; display:inline-block; }
 
    h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {color:black; text-decoration:none; }
 
