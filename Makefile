@@ -80,7 +80,7 @@ tagrepo:
 push:
 	darcs push -a joyful.com:/repos/shelltestrunner
 
-release: test tagrepo push
+release: test tagrepo #push
 	(cabal upload $(TARBALL) --check | grep '^Ok$$') \
 		&& cabal upload $(TARBALL) \
 		|| (cabal upload $(TARBALL) --check -v3; false)
