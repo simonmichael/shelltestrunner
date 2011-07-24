@@ -150,8 +150,8 @@ test-framework.
 
   * The `>>>=` field is now required; you may need to add it to your existing tests
   * Input and expected output can now contain lines beginning with `#`
-  * Multiple tests in a file  may now have whitespace between them
-  * The error-prone `-i/--implicit` option has been dropped
+  * Multiple tests in a file may now have whitespace between them
+  * The `-i/--implicit` option has been dropped
   * New `-d/--diff` option shows test failures as a unified diff when possible, including line numbers to help locate the problem
   * New `-x/--exclude` option skips certain test files (eg platform-specific ones)
   * Passing arguments through to test-framework is now more robust
