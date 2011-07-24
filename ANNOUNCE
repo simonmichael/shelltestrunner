@@ -1,0 +1,45 @@
+I'm pleased to announce the 1.0 release of shelltestrunner!
+
+Home page: http://joyful.com/repos/shelltestrunner 
+
+Install: $ cabal install shelltestrunner
+
+shelltestrunner tests command-line programs or arbitrary shell
+commands.  It reads simple declarative tests specifying a command,
+some input, and the expected output, error output and exit status.
+Tests can be run selectively, in parallel, with a timeout, in color,
+and/or with differences highlighted. Projects using it include
+hledger, yesod, and berp. shelltestrunner is free software released
+under GPLv3+.
+
+I started shelltestrunner two years ago, inspired by John Wiegley's
+ledger tests.  John Macfarlane, Bernie Pope and Trygve Laugstøl have
+contributed code. The hackage page shows the libraries it relies on -
+most notably, Max Bolingbroke's test-framework. The site uses hakyll,
+pandoc & hamlet.
+
+New in 1.0:
+
+* New home page/docs
+
+* The `>>>=` field is now required; you may need to add it to your
+  existing tests
+
+* Input and expected output can now contain lines beginning with `#`
+
+* Multiple tests in a file may now have whitespace between them
+
+* The `-i/--implicit` option has been dropped
+
+* New `-d/--diff` option shows test failures as a unified diff when
+  possible, including line numbers to help locate the problem
+
+* New `-x/--exclude` option skips certain test files (eg
+  platform-specific ones)
+
+* Passing arguments through to test-framework is now more robust
+
+* Fixed: parsing could fail when input contained left angle brackets
+
+* Fixed: some test files generated an extra blank test at the end
+
