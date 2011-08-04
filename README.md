@@ -40,9 +40,6 @@ test-framework.
 
  Here's the full test format:
 
-    $ shelltest --help-format
-    Test format:
-    
     # optional comments
     one-line shell command (required; indent to disable --with substitution)
     <<<
@@ -70,8 +67,8 @@ test-framework.
  directory means "all files below it with the test suffix (default:
  .test)". Eg:
 
-    $ shelltest tests
-    :tests/example.test: [OK]
+    $ shelltest example.test
+    :example.test: [OK]
     
              Test Cases  Total      
      Passed  1           1          
@@ -132,15 +129,15 @@ test-framework.
 
     $ darcs get http://joyful.com/repos/shelltestrunner
 
- [recent changes](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner) -
- [browse code](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner;a=headblob;f=/shelltest.hs)
+ [browse code](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner;a=headblob;f=/shelltest.hs) -
+ [recent changes](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner)
 
  <a href="https://www.wepay.com/donate/39988?ref=widget&utm_medium=widget&utm_campaign=donation"
     target="_blank" style="float:right;margin:0 1em;"
     ><img src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
  Patches and feedback are welcome:
  [chat me](irc://irc.freenode.net/#haskell) (`sm` on irc.freenode.net) or
- [email me](mailto:simon@joyful.com?subject=shelltestrunner).\
+ [email me](mailto:simon@joyful.com?subject=shelltestrunner).
  Support/enhancement requests are handled on a best-effort basis, or you can [hire me](http://joyful.com/) or
  [donate](https://www.wepay.com/donate/39988?utm_campaign=donation)!
 
@@ -148,6 +145,7 @@ test-framework.
 
 **1.0** (2011/7/23)
 
+  * New home page/docs
   * The `>>>=` field is now required; you may need to add it to your existing tests
   * Input and expected output can now contain lines beginning with `#`
   * Multiple tests in a file may now have whitespace between them
@@ -157,7 +155,6 @@ test-framework.
   * Passing arguments through to test-framework is now more robust
   * Fixed: parsing could fail when input contained left angle brackets
   * Fixed: some test files generated an extra blank test at the end
-  * New home page/docs
 
 **0.9** (2010/9/3)
 

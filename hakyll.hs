@@ -7,14 +7,11 @@ ghc --make -Wall hakyll.hs && ./hakyll build
 import Control.Monad.Trans (liftIO)
 import System.Process (system)
 import Text.Printf
-import Text.Hakyll (hakyllWithConfiguration, defaultHakyllConfiguration)
-import Text.Hakyll.HakyllMonad (HakyllConfiguration(..))
-import Text.Hakyll.Render (renderChain, static)
-import Text.Hakyll.CreateContext (createPage)
-import Text.Pandoc (ParserState(..), WriterOptions(..), defaultParserState, defaultWriterOptions)
+import Text.Hakyll
+import Text.Pandoc
 
 siteurl :: String
-siteurl = "http://joyful.com/repos/shelltestrunner"
+siteurl = "http://joyful.com/shelltestrunner"
 
 main:: IO ()
 main = hakyllWithConfiguration cfg $ do
