@@ -23,9 +23,6 @@ import Control.Monad (liftM,when,unless)
 import Data.List
 import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
 import qualified Test.HUnit (Test)
--- cmdargs: the impure method of writing annotations is susceptible to
--- over-optimisation by GHC - sometimes {-# OPTIONS_GHC -fno-cse #-} will be
--- required.
 import System.Console.CmdArgs
 import System.Exit
 import System.Info (os)
@@ -56,8 +53,8 @@ proghelpsuffix :: [String]
 proghelpsuffix = [
    -- keep this bit synced with options width
    "     -- TFOPTIONS       Set extra test-framework options like -j/--threads,"
-  ,"                        -t/--select-tests, -o/--timeout (use -- --help for"
-  ,"                        a list.) Avoid spaces."
+  ,"                        -t/--select-tests, -o/--timeout, --hide-successes."
+  ,"                        Use -- --help for a list. Avoid spaces."
   ,""
   ]
 formathelp :: String
@@ -77,7 +74,8 @@ formathelp = unlines [
   ]
 
 data Args = Args {
-     color       :: Bool
+     all_        :: Bool
+    ,color       :: Bool
     ,diff        :: Bool
     ,exclude     :: [String]
     ,execdir     :: Bool
@@ -90,7 +88,8 @@ data Args = Args {
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     color       = def     &= help "Show colored output if your terminal supports it"
+     all_        = def     &= name "a" &= help "Show all output on failures, even if large"
+    ,color       = def     &= help "Show colored output if your terminal supports it"
     ,diff        = def     &= name "d" &= help "Show diff of expected vs. actual when tests fail"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
@@ -288,24 +287,25 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
                           (_, ReplaceableCommand s)   -> s
                           (_, FixedCommand s)         -> s
       dir = if execdir args then Just $ takeDirectory n else Nothing
+      trim' = if all_ args then id else trim
   when (debug args) $ printf "command was: %s\n" (show cmd)
   (o_actual, e_actual, x_actual) <- runCommandWithInput dir (toPlatformString cmd) i
   when (debug args) $ do
-    printf "stdout was : %s\n" (show $ trim o_actual)
-    printf "stderr was : %s\n" (show $ trim e_actual)
-    printf "exit was   : %s\n" (show $ trim $ show x_actual)
+    printf "stdout was : %s\n" (show $ trim' o_actual)
+    printf "stderr was : %s\n" (show $ trim' e_actual)
+    printf "exit was   : %s\n" (show $ trim' $ show x_actual)
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError e_actual -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
              if (maybe True (o_actual `matches`) o_expected)
               then ""
-              else showExpectedActual (diff args) "stdout"    (fromJust o_expected) o_actual
+              else showExpectedActual args "stdout"    (fromJust o_expected) o_actual
             ,if (maybe True (e_actual `matches`) e_expected)
               then ""
-              else showExpectedActual (diff args) "stderr"    (fromJust e_expected) e_actual
+              else showExpectedActual args "stderr"    (fromJust e_expected) e_actual
             ,if (show x_actual `matches` x_expected)
               then ""
-              else showExpectedActual False "exit code" x_expected (show x_actual)
+              else showExpectedActual args{diff=False} "exit code" x_expected (show x_actual)
             ]
        where addnewline "" = ""
              addnewline s  = "\n"++s
@@ -347,11 +347,12 @@ matches s (Numeric p)         = s == p
 matches s (NegativeNumeric p) = not $ s == p
 matches s (Lines _ p)         = s == p
 
-showExpectedActual :: Bool -> String -> Matcher -> String -> String
-showExpectedActual True _ (Lines ln e) a =
+showExpectedActual :: Args -> String -> Matcher -> String -> String
+showExpectedActual Args{diff=True} _ (Lines ln e) a =
     printf "--- Expected\n+++ Got\n" ++ showDiff (1,ln) (getDiff (lines a) (lines e))
-showExpectedActual _ field e a =
-    printf "**Expected %s: %s\n**Got %s:      %s" field (show e) field (show $ trim a)
+showExpectedActual args field e a =
+    printf "**Expected %s: %s\n**Got %s:      %s" field (show e) field (show $ trim' a)
+    where trim' = if all_ args then id else trim
 
 showDiff :: (Int,Int) -> [(DI, String)] -> String
 showDiff _ []             = ""
