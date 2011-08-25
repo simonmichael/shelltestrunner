@@ -77,6 +77,7 @@ data Args = Args {
      all_        :: Bool
     ,color       :: Bool
     ,diff        :: Bool
+    ,precise     :: Bool
     ,exclude     :: [String]
     ,execdir     :: Bool
     ,extension   :: String
@@ -88,16 +89,17 @@ data Args = Args {
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     all_        = def     &= name "a" &= help "Show all output on failures, even if large"
+     all_        = def     &= help "Show all output on failures, even if large"
     ,color       = def     &= help "Show colored output if your terminal supports it"
-    ,diff        = def     &= name "d" &= help "Show expected vs. actual in diff format (implies -a)"
+    ,diff        = def     &= name "d" &= help "Show failures in diff format"
+    ,precise     = def     &= help "Show failures in precise format (good for whitespace)"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
     ,extension   = ".test" &= typ "EXT" &= help "Filename suffix of test files (default: .test)"
     ,with        = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
     ,debug       = def     &= help "Show debug info, for troubleshooting"
     ,debug_parse = def     &= help "Show test file parsing info and stop"
-    ,help_format = def     &= help "Display test format help"
+    ,help_format = def     &= explicit &= name "help-format" &= help "Display test format help"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
     &= program progname
@@ -348,38 +350,46 @@ matches s (NegativeNumeric p) = not $ s == p
 matches s (Lines _ p)         = s == p
 
 showExpectedActual :: Args -> String -> Matcher -> String -> String
-showExpectedActual Args{diff=True} _ (Lines ln e) a =
-    printf "--- Expected\n+++ Got\n" ++ showDiff (1,ln) (getDiff (lines a) (lines e))
-showExpectedActual args field e a =
-    printf "Expected %s: %s\nGot %s:      %s" field (show' e) field (show $ trim' a)
+showExpectedActual args@Args{diff=True} _ (Lines ln e) a =
+    printf "--- Expected\n+++ Got\n" ++ showDiff args(1,ln) (getDiff (lines a) (lines e))
+showExpectedActual Args{all_=all_,precise=precise} field e a =
+    printf "Expected %s: %s\nGot %s:      %s" field (show' $ showm e) field (show' $ trim' a)
     where
-      trim' = if all_ args then id else trim
-      show' = if all_ args then showMatcherAll else showMatcherTrimmed
+      show' = if precise then show else ("\n"++)
+      showm = if all_ then showMatcher else showMatcherTrimmed
+      trim' = if all_ then id else trim
 
-showDiff :: (Int,Int) -> [(DI, String)] -> String
-showDiff _ []             = ""
-showDiff (l,r) ((F, ln) : ds) =
-  printf "+%4d " l ++ ln ++ "\n" ++ showDiff (l+1,r) ds
-showDiff (l,r) ((S, ln) : ds) =
-  printf "-%4d " r ++ ln ++ "\n" ++ showDiff (l,r+1) ds
-showDiff (l,r) ((B, _ ) : ds) =
-  showDiff (l+1,r+1) ds
+showDiff :: Args -> (Int,Int) -> [(DI, String)] -> String
+showDiff _ _ []                   = ""
+showDiff args@Args{all_=all_,precise=precise} (l,r) ((F, ln) : ds) =
+    printf "+%4d " l ++ ln' ++ "\n" ++ showDiff args (l+1,r) ds
+    where
+      ln' = trim' $ show' ln
+      trim' = if all_ then id else trim
+      show' = if precise then show else id
+showDiff args@Args{all_=all_,precise=precise} (l,r) ((S, ln) : ds) =
+    printf "-%4d " r ++ ln' ++ "\n" ++ showDiff args (l,r+1) ds
+    where
+      ln' = trim' $ show' ln
+      trim' = if all_ then id else trim
+      show' = if precise then show else id
+showDiff args (l,r) ((B, _ ) : ds) = showDiff args (l+1,r+1) ds
 
 instance Show Matcher where show = showMatcherTrimmed
 
 showMatcherTrimmed :: Matcher -> String
 showMatcherTrimmed (PositiveRegex r)   = "/"++(trim r)++"/"
 showMatcherTrimmed (NegativeRegex r)   = "!/"++(trim r)++"/"
-showMatcherTrimmed (Numeric s)         = show $ trim s
-showMatcherTrimmed (NegativeNumeric s) = "!"++ show (trim s)
-showMatcherTrimmed (Lines _ s)         = show $ trim s
+showMatcherTrimmed (Numeric s)         = trim s
+showMatcherTrimmed (NegativeNumeric s) = "!"++ trim s
+showMatcherTrimmed (Lines _ s)         = trim s
 
-showMatcherAll :: Matcher -> String
-showMatcherAll (PositiveRegex r)   = "/"++r++"/"
-showMatcherAll (NegativeRegex r)   = "!/"++r++"/"
-showMatcherAll (Numeric s)         = show s
-showMatcherAll (NegativeNumeric s) = "!"++ show s
-showMatcherAll (Lines _ s)         = show s
+showMatcher :: Matcher -> String
+showMatcher (PositiveRegex r)   = "/"++r++"/"
+showMatcher (NegativeRegex r)   = "!/"++r++"/"
+showMatcher (Numeric s)         = s
+showMatcher (NegativeNumeric s) = "!"++ s
+showMatcher (Lines _ s)         = s
 
 instance Show ShellTest where
     show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
