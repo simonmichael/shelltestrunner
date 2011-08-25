@@ -46,7 +46,7 @@ strace :: Show a => a -> a
 strace a = trace (show a) a
 
 version, progname, progversion :: String
-version = "1.1" -- keep synced with shelltestrunner.cabal and README
+version = "1.1.98" -- keep synced with shelltestrunner.cabal and README
 progname = "shelltest"
 progversion = progname ++ " " ++ version
 proghelpsuffix :: [String]
