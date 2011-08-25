@@ -25,7 +25,7 @@ autobuild auto:
 testunix test: build
 	$(SHELLTEST) tests --exclude windows -- -j8
 
-# on windows, run all except windows tests
+# on windows, run all except unix tests
 # (though if you are able to run make on windows, you may be able to/have to use testunix)
 testwindows:
 	$(SHELLTEST) tests --exclude unix -- -j8
