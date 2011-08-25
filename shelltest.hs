@@ -351,8 +351,10 @@ showExpectedActual :: Args -> String -> Matcher -> String -> String
 showExpectedActual Args{diff=True} _ (Lines ln e) a =
     printf "--- Expected\n+++ Got\n" ++ showDiff (1,ln) (getDiff (lines a) (lines e))
 showExpectedActual args field e a =
-    printf "**Expected %s: %s\n**Got %s:      %s" field (show e) field (show $ trim' a)
-    where trim' = if all_ args then id else trim
+    printf "Expected %s: %s\nGot %s:      %s" field (show' e) field (show $ trim' a)
+    where
+      trim' = if all_ args then id else trim
+      show' = if all_ args then showMatcherAll else showMatcherTrimmed
 
 showDiff :: (Int,Int) -> [(DI, String)] -> String
 showDiff _ []             = ""
@@ -363,12 +365,21 @@ showDiff (l,r) ((S, ln) : ds) =
 showDiff (l,r) ((B, _ ) : ds) =
   showDiff (l+1,r+1) ds
 
-instance Show Matcher where
-    show (PositiveRegex r)   = "/"++(trim r)++"/"
-    show (NegativeRegex r)   = "!/"++(trim r)++"/"
-    show (Numeric s)         = show $ trim s
-    show (NegativeNumeric s) = "!"++ show (trim s)
-    show (Lines _ s)         = show $ trim s
+instance Show Matcher where show = showMatcherTrimmed
+
+showMatcherTrimmed :: Matcher -> String
+showMatcherTrimmed (PositiveRegex r)   = "/"++(trim r)++"/"
+showMatcherTrimmed (NegativeRegex r)   = "!/"++(trim r)++"/"
+showMatcherTrimmed (Numeric s)         = show $ trim s
+showMatcherTrimmed (NegativeNumeric s) = "!"++ show (trim s)
+showMatcherTrimmed (Lines _ s)         = show $ trim s
+
+showMatcherAll :: Matcher -> String
+showMatcherAll (PositiveRegex r)   = "/"++r++"/"
+showMatcherAll (NegativeRegex r)   = "!/"++r++"/"
+showMatcherAll (Numeric s)         = show s
+showMatcherAll (NegativeNumeric s) = "!"++ show s
+showMatcherAll (Lines _ s)         = show s
 
 instance Show ShellTest where
     show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
