@@ -1,8 +1,4 @@
-I'm pleased to announce the 1.1 release of shelltestrunner!
-
-Home page: http://joyful.com/shelltestrunner
-
-Install: $ cabal install shelltestrunner
+I'm pleased to announce the release of shelltestrunner 1.1.
 
 shelltestrunner tests command-line programs or arbitrary shell
 commands.  It reads simple declarative tests specifying a command,
@@ -17,3 +13,7 @@ New in 1.1:
   * bump process dependency to allow building with GHC 7.2.1
 
   * new `-a/--all` flag shows all failure output without truncating
+
+Home page: http://joyful.com/shelltestrunner
+
+Install: $ cabal install shelltestrunner
