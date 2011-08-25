@@ -150,6 +150,11 @@ test-framework.
 
 ## Release history
 
+**1.1** (2011/8/25)
+
+  * bump process dependency to allow building with GHC 7.2.1
+  * new `-a/--all` flag shows all failure output without truncating
+
 **1.0** (2011/7/23)
 
   * New home page/docs
