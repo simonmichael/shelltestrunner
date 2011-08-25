@@ -1,6 +1,6 @@
 I'm pleased to announce the 1.1 release of shelltestrunner!
 
-Home page: http://joyful.com/repos/shelltestrunner 
+Home page: http://joyful.com/shelltestrunner
 
 Install: $ cabal install shelltestrunner
 

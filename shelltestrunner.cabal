@@ -13,7 +13,7 @@ license:        GPL
 license-file:   LICENSE
 author:         Simon Michael <simon@joyful.com>
 maintainer:     Simon Michael <simon@joyful.com>
-homepage:       http://joyful.com/repos/shelltestrunner
+homepage:       http://joyful.com/shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      beta
 tested-with:    GHC==6.12.3, GHC==7.0.2, GHC==7.2.1
