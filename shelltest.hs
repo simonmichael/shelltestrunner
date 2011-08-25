@@ -143,7 +143,7 @@ main = do
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " $ map fromPlatformString $ testfiles)
   parseresults <- mapM (parseShellTestFile args) testfiles
   unless (debug_parse args) $ defaultMainWithArgs
-                               (concatMap (hUnitTestToTests.testFileParseToHUnitTest args) parseresults)
+                               (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults)
                                (passthroughopts ++ if color args then [] else ["--plain"])
 
 -- | Additional argument checking.
