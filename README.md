@@ -77,7 +77,7 @@ test-framework.
  Here are the options, and some notes:
 
     $ shelltest --help
-    shelltest 1.0
+    shelltest 1.1
     
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
     
