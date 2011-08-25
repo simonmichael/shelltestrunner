@@ -89,10 +89,10 @@ data Args = Args {
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     all_        = def     &= help "Show all output on failures, even if large"
+     all_        = def     &= help "Show all failure output, even if large"
     ,color       = def     &= help "Show colored output if your terminal supports it"
     ,diff        = def     &= name "d" &= help "Show failures in diff format"
-    ,precise     = def     &= help "Show failures in precise format (good for whitespace)"
+    ,precise     = def     &= help "Show failure output precisely (good for whitespace)"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
     ,extension   = ".test" &= typ "EXT" &= help "Filename suffix of test files (default: .test)"
