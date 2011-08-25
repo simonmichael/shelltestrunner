@@ -7,26 +7,28 @@ export LANG=en_US.UTF-8
 PREFERMACUSRLIBFLAGS=-L/usr/lib
 
 BUILDFLAGS=-threaded -W -fwarn-tabs -Werror $(PREFERMACUSRLIBFLAGS)
-EXE=shelltest
+PROGNAME=shelltest
+# run tests using the latest shelltest build
+SHELLTEST=./$(PROGNAME) --with ./$(PROGNAME)
 
 ######################################################################
 # BUILD
 
 build:
-	ghc --make $(BUILDFLAGS) $(EXE).hs
+	ghc --make $(BUILDFLAGS) $(PROGNAME).hs
 
 AUTOBUILDCMDARGS=tests
 autobuild auto:
-	sp --no-exts --no-default-map -o $(EXE) ghc --make $(BUILDFLAGS) $(EXE).hs --run $(AUTOBUILDCMDARGS)
+	sp --no-exts --no-default-map -o $(PROGNAME) ghc --make $(BUILDFLAGS) $(PROGNAME).hs --run $(AUTOBUILDCMDARGS)
 
-# on unix, run all tests with the latest code
-test: build
-	./$(EXE) tests -w ./$(EXE) -- -j8
+# on unix, run all except windows tests
+testunix test: build
+	$(SHELLTEST) tests --exclude windows -- -j8
 
-# on windows, run as many tests as possible with the installed version
-# if you can run make, you probably don't need this rule, it's just a reminder
-testwin:
-	$(EXE) tests --exclude unix -- -j8
+# on windows, run all except windows tests
+# (though if you are able to run make on windows, you may be able to/have to use testunix)
+testwindows:
+	$(SHELLTEST) tests --exclude unix -- -j8
 
 ######################################################################
 # DOC
