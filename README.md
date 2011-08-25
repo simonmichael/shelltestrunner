@@ -84,7 +84,7 @@ test-framework.
     Common flags:
       -a --all              Show all output on failures, even if large
       -c --color            Show colored output if your terminal supports it
-      -d --diff             Show diff of expected vs. actual when tests fail
+      -d --diff             Show expected vs. actual in diff format (implies -a)
       -x --exclude=STR      Exclude test files whose path contains STR
          --execdir          Run tests from within the test file's directory
          --extension=EXT    Filename suffix of test files (default: .test)

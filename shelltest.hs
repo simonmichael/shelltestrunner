@@ -90,7 +90,7 @@ data Args = Args {
 argdefs = Args {
      all_        = def     &= name "a" &= help "Show all output on failures, even if large"
     ,color       = def     &= help "Show colored output if your terminal supports it"
-    ,diff        = def     &= name "d" &= help "Show diff of expected vs. actual when tests fail"
+    ,diff        = def     &= name "d" &= help "Show expected vs. actual in diff format (implies -a)"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
     ,extension   = ".test" &= typ "EXT" &= help "Filename suffix of test files (default: .test)"
