@@ -20,9 +20,8 @@ test-framework.
 
 ### Getting started
 
- Your machine's packaging system may provide shelltestrunner; if not,
- get yourself a [cabal](http://www.haskell.org/haskellwiki/Cabal-Install)
- and
+ Your machine's packaging system may provide shelltestrunner; if not, get
+ yourself a working [cabal](http://www.haskell.org/haskellwiki/Cabal-Install) and
 
     $ cabal install shelltestrunner
 
@@ -83,6 +82,7 @@ test-framework.
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
     
     Common flags:
+      -a --all              Show all output on failures, even if large
       -c --color            Show colored output if your terminal supports it
       -d --diff             Show diff of expected vs. actual when tests fail
       -x --exclude=STR      Exclude test files whose path contains STR
@@ -96,8 +96,8 @@ test-framework.
       -V --version          Print version information
     
          -- TFOPTIONS       Set extra test-framework options like -j/--threads,
-                            -t/--select-tests, -o/--timeout (use -- --help for
-                            a list.) Avoid spaces.
+                            -t/--select-tests, -o/--timeout, --hide-successes.
+                            Use -- --help for a list. Avoid spaces.
 
  Test commands normally run within your current directory; the `--execdir`
  option makes them run within the directory where they are defined.
@@ -107,16 +107,23 @@ test-framework.
  program. Commands which have been indented by one or more spaces will not
  be affected.
 
- Run with `-- --help` to see some extra options provided by the
- test-framework library, including the useful `-t/--select-tests`,
- `-o/--timeout` and `-j/--threads`.  These let you run tests selectively,
- or with a timeout, or in parallel for a nice speed boost.  Here we run up
- to 8 tests at once, but only the ones with "args" in their name, and
- allowing no more than a second for each:
+ The test-framework library provides additional options which you can
+ specify after `--`. Run `shelltest -- --help` for a list. Here are some
+ useful ones:
 
-    shelltestrunner$ shelltest tests -- -j8 -targs -o1
-    :tests/args.test:1: [OK]
-    :tests/args.test:2: [OK]
+      -j NUMBER        --threads=NUMBER             number of threads to use to run tests
+      -o NUMBER        --timeout=NUMBER             how many seconds a test should be run for before giving up, by default
+      -t TEST-PATTERN  --select-tests=TEST-PATTERN  only tests that match at least one glob pattern given by an instance of this argument will be run
+                       --hide-successes             hide sucessful tests, and only show failures
+
+ Example: run all tests defined in or below the tests directory with
+ "args" in their name, up to 8 in parallel, allowing no more than a second
+ for each, showing only failures and the final summary.  Avoid spaces
+ between flags and values here (use <span
+ style="white-space:nowrap;">`-targs`</span> not <span
+ style="white-space:nowrap;">`-t args`</span> ):
+
+    $ shelltest tests -- -targs -j8 -o1 --hide
     
              Test Cases   Total
      Passed  2            2
