@@ -1,5 +1,5 @@
 #!/usr/bin/env runhaskell
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE DeriveDataTypeable, TemplateHaskell #-}
 {- |
 
 shelltest - a tool for testing command-line programs.
@@ -41,13 +41,14 @@ import System.FilePath.FindCompat (findWithHandler, (==?), always)
 import qualified System.FilePath.FindCompat as Find (extension)
 import Control.Applicative ((<$>))
 import Data.Algorithm.Diff
+import Distribution.PackageDescription.TH (packageVariable, package, pkgVersion)
 
 strace :: Show a => a -> a
 strace a = trace (show a) a
 
-version, progname, progversion :: String
-version = "1.1.98" -- keep synced with shelltestrunner.cabal and README
+progname, version, progversion :: String
 progname = "shelltest"
+version = $(packageVariable (pkgVersion . package))
 progversion = progname ++ " " ++ version
 proghelpsuffix :: [String]
 proghelpsuffix = [
