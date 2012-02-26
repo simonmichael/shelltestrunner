@@ -5,7 +5,7 @@ commands.  It reads simple declarative tests specifying a command,
 some input, and the expected output, error output and exit status.
 Tests can be run selectively, in parallel, with a timeout, in color,
 and/or with differences highlighted. Projects using it include
-hledger, yesod, and berp. shelltestrunner is free software released
+hledger, yesod, berp, and eddie. shelltestrunner is free software released
 under GPLv3+.
 
 New in 1.1:

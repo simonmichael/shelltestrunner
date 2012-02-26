@@ -3,6 +3,7 @@
 ** announcement
 ** release 1.0
 * issues
+** don't run tests if the -w option is bad
 ** don't nub test names ? (for testing $$ with multithreaded)
 $ shelltest tests/add-bad-date-fails.test tests/add-bad-date-fails.test 
 :tests/add-bad-date-fails.test: [OK]
