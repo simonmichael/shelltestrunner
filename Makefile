@@ -79,13 +79,15 @@ showversion:
 tagrepo:
 	@(darcs show tags | grep -q "^$(VERSION)$$") && echo tag $(VERSION) already present || darcs tag $(VERSION)
 
-push:
-	darcs push -a joyful.com:/repos/shelltestrunner
-
-release: test tagrepo #push
+upload:
 	(cabal upload $(TARBALL) --check | grep '^Ok$$') \
 		&& cabal upload $(TARBALL) \
 		|| (cabal upload $(TARBALL) --check -v3; false)
+
+push:
+	darcs push -a joyful.com:/repos/shelltestrunner
+
+release: test tagrepo upload #push
 
 # show project stats useful for release notes
 releasestats stats: \
