@@ -4,13 +4,13 @@ title: shelltestrunner
 
 # shelltestrunner
 
-shelltestrunner is a cross-platform tool for testing command-line programs
-(or arbitrary shell commands.)  It reads simple declarative tests
-specifying a command, some input, and the expected output, and can run
-them run in parallel, selectively, with a timeout, in color, and/or with
-differences highlighted. shelltestrunner has been tested on gnu/linux, mac
-and windows; projects using it include hledger, berp, cblrepo and
-eddie. shelltestrunner is free software released under GPLv3+.
+shelltestrunner tests command-line programs (or arbitrary shell commands.)
+It reads simple declarative tests specifying a command, some input, and
+the expected output, and can run them run in parallel, selectively, with a
+timeout, in color, and/or with differences highlighted. shelltestrunner
+has been tested on gnu/linux, mac and windows; projects using it include
+hledger, berp, cblrepo and eddie. shelltestrunner is free software
+released under GPLv3+.
 
 ## Installing
 

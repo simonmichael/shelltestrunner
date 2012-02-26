@@ -1,19 +1,24 @@
-I'm pleased to announce the release of shelltestrunner 1.1.
+I'm pleased to announce the release of shelltestrunner 1.2. Also, in case you missed it
+there's a survey where you can help steer the project (below).
 
-shelltestrunner tests command-line programs or arbitrary shell
-commands.  It reads simple declarative tests specifying a command,
-some input, and the expected output, error output and exit status.
-Tests can be run selectively, in parallel, with a timeout, in color,
-and/or with differences highlighted. Projects using it include
-hledger, yesod, berp, and eddie. shelltestrunner is free software released
-under GPLv3+.
+shelltestrunner tests command-line programs (or arbitrary shell commands.)
+It reads simple declarative tests specifying a command, some input, and
+the expected output, and can run them run in parallel, selectively, with a
+timeout, in color, and/or with differences highlighted. shelltestrunner
+has been tested on gnu/linux, mac and windows; projects using it include
+hledger, berp, cblrepo and eddie. shelltestrunner is free software
+released under GPLv3+.
 
-New in 1.1:
+New in 1.2:
 
-  * bump process dependency to allow building with GHC 7.2.1
+  * support latest cmdargs, test-framework, and GHC 7.4
 
-  * new `-a/--all` flag shows all failure output without truncating
+  * more readable non-quoted failure output by default; for quoted output, use `-p/--precise`
 
-Home page: http://joyful.com/shelltestrunner
+  * the `--all`, `--diff` and `--precise` options now interact well
 
 Install: $ cabal install shelltestrunner
+
+Home: http://joyful.com/shelltestrunner
+
+User survey: https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3
