@@ -82,9 +82,10 @@ test-framework.
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
     
     Common flags:
-      -a --all              Show all output on failures, even if large
+      -a --all              Show all failure output, even if large
       -c --color            Show colored output if your terminal supports it
-      -d --diff             Show expected vs. actual in diff format (implies -a)
+      -d --diff             Show failures in diff format
+      -p --precise          Show failure output precisely (good for whitespace)
       -x --exclude=STR      Exclude test files whose path contains STR
          --execdir          Run tests from within the test file's directory
          --extension=EXT    Filename suffix of test files (default: .test)
@@ -149,6 +150,11 @@ test-framework.
  [donate](https://www.wepay.com/donate/39988?utm_campaign=donation)!
 
 ## Release history
+
+**1.2** (2011/8/25)
+
+  * print readable failure output by default, use `-p/--precise` for repr-style output
+  * `--all`/`--diff`/`--precise` now interact well
 
 **1.1** (2011/8/25)
 
