@@ -2,85 +2,116 @@
 title: shelltestrunner
 ---
 
-shelltestrunner is a handy cross-platform tool for testing command-line
-programs or arbitrary shell commands.  It reads simple declarative tests
-specifying a command, some input, and the expected output, error output
-and exit status.  Tests can be run selectively, in parallel, with a
-timeout, in color, and/or with differences highlighted. Projects using it
-include hledger, yesod, and berp. shelltestrunner is free software released under GPLv3+.
+# shelltestrunner
 
-Simon Michael wrote and maintains shelltestrunner; I was inspired by John
-Wiegley's ledger tests.  John Macfarlane, Bernie Pope and Trygve Laugstøl
-have contributed code. The
-[hackage page](http://hackage.haskell.org/package/shelltestrunner) shows
-the libraries it relies on - most notably, Max Bolingbroke's
-test-framework.
+shelltestrunner is a cross-platform tool for testing command-line programs
+(or arbitrary shell commands.)  It reads simple declarative tests
+specifying a command, some input, and the expected output, and can run
+them run in parallel, selectively, with a timeout, in color, and/or with
+differences highlighted. shelltestrunner has been tested on gnu/linux, mac
+and windows; projects using it include hledger, berp, cblrepo and
+eddie. shelltestrunner is free software released under GPLv3+.
 
-## Usage
+## Installing
 
-### Getting started
-
- Your machine's packaging system may provide shelltestrunner; if not, get
- yourself a working [cabal](http://www.haskell.org/haskellwiki/Cabal-Install) and
+If your machine's packaging system does not provide an
+[up-to-date](#release-notes) shelltestrunner, install it with
+[cabal](http://hackage.haskell.org/trac/hackage/wiki/CabalInstall) (and if
+your packaging system does not provide an up-to-date cabal, get the
+[haskell platform](http://hackage.haskell.org/platform/)):
 
     $ cabal install shelltestrunner
 
- shelltestrunner should build with ghc 6.10 or greater; unicode support
- requires ghc 6.12 or greater.  It has been tested on gnu/linux, mac and
- windows.
+You should now have the `shelltest` program in your path.
 
-### Defining tests
+## Defining tests
 
- Tests are defined in test files (typically `tests/*.test`), one or more per file.
- A test requires at least a command and an expected exit status, so it can be as simple as:
+Test files, typically named `tests/*.test`, contain one or more tests
+consisting of:
 
-    commandthatshouldsucceed
+- a one-line command
+- optional standard input (`<<<`), standard output (`>>>`) and/or standard error output (`>>>2`) specifications
+- an exit status (`>>>=`) specification
+
+
+**Example:** here's `example.test`, a file containing two simple tests:
+
+    # 1. let's test that echo runs. Numbering your tests can be helpful.
+    echo
     >>>= 0
 
- Here's the full test format:
-
-    # optional comments
-    one-line shell command (required; indent to disable --with substitution)
+    # 2. and now the cat command. On windows, this one should fail.
+    cat
     <<<
-    0 or more lines of stdin input
+    foo
     >>>
-    0 or more lines of expected stdout output (or /regexp/ on the previous line)
-    >>>2
-    0 or more lines of expected stderr output (or /regexp/ on the previous line)
-    >>>= 0 (or other expected numeric exit status, or /regexp/) (required)
+    foo
+    >>>= 0
 
- If a `/regexp/` pattern is used, a match anywhere in the output allows
- the test to pass. The regular expression syntax supported is that of
- [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa).  You can put
- `!` before a /regexp/ or numeric exit status to negate the match.
-
- Here
- [are](http://joyful.com/repos/shelltestrunner/tests)
- [more](http://joyful.com/repos/hledger/tests)
- [real-world](https://github.com/yesodweb/yesod/blob/master/yesod/tests/scaffold.shelltest)
- [examples](https://github.com/bjpop/berp/tree/master/test/regression).
-
-### Running tests
-
- Run `shelltest` with one or more test file or directory paths. A
- directory means "all files below it with the test suffix (default:
- .test)". Eg:
+Run it with `shelltest`:
 
     $ shelltest example.test
-    :example.test: [OK]
+    :t.test:1: [OK]
+    :t.test:2: [OK]
     
-             Test Cases  Total      
-     Passed  1           1          
-     Failed  0           0          
-     Total   1           1          
+             Test Cases  Total
+     Passed  2           2
+     Failed  0           0
+     Total   2           2
 
- Here are the options, and some notes:
+**Test format:**
+
+    # optional comment
+    the command to test
+    <<<
+    zero or more lines of standard input
+    >>>
+    zero or more lines of expected standard output (or /REGEXP/ added to the previous line)
+    >>>2
+    zero or more lines of expected standard error output (or /REGEXP/ added to the previous line)
+    >>>= EXITCODE (or /REGEXP/)
+
+- A `/REGEXP/` pattern may be used instead of explicit data. In this case
+  a match anywhere in the output allows the test to pass. The regular
+  expression syntax is [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa)'s.
+- `EXITCODE` is a numeric
+  [exit status](http://en.wikipedia.org/wiki/Exit_status), eg `0` for a
+  successful exit.
+- You can put `!` before a `/REGEXP/` or `EXITCODE` to negate the match.
+- Comment lines beginning with `#` may be used between tests.
+
+Here
+[are](http://joyful.com/repos/shelltestrunner/tests)
+[some](http://joyful.com/repos/hledger/tests)
+<!-- [more](https://github.com/yesodweb/yesod/tree/master/yesod/test) -->
+[real-world](https://github.com/bjpop/berp/tree/master/test/regression)
+[project](https://github.com/magthe/cblrepo/tree/master/tests)
+[tests](http://code.google.com/p/eddie/source/browse/#hg%2Ftests)
+to give you ideas.
+
+## Running tests
+
+The `shelltest` program accepts one or more test file or directory paths.
+A directory means all files below it with the test file suffix (default: `.test`).
+
+**Example:** run all tests defined in or below the `tests` directory with
+`args` in their name, up to 8 in parallel, allowing a maximum of 1 second
+each, showing only failures and the final summary:
+
+    $ shelltest tests -- -targs -j8 -o1 --hide
+    
+             Test Cases   Total
+     Passed  2            2
+     Failed  0            0
+     Total   2            2
+
+**Command-line options:**
 
     $ shelltest --help
-    shelltest 1.1
-    
+    shelltest 1.2
+
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
-    
+
     Common flags:
       -a --all              Show all failure output, even if large
       -c --color            Show colored output if your terminal supports it
@@ -92,69 +123,58 @@ test-framework.
       -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
          --debug            Show debug info, for troubleshooting
          --debug-parse      Show test file parsing info and stop
-      -h --help-format      Display test format help
+         --help-format      Display test format help
       -? --help             Display help message
       -V --version          Print version information
-    
+
          -- TFOPTIONS       Set extra test-framework options like -j/--threads,
                             -t/--select-tests, -o/--timeout, --hide-successes.
                             Use -- --help for a list. Avoid spaces.
 
- Test commands normally run within your current directory; the `--execdir`
- option makes them run within the directory where they are defined.
+- Test commands normally run within your current directory; `--execdir`
+  makes them run within the directory where they are defined, instead.
 
- The `-w/--with` option replaces the first word of all commands with
- something else, which can be useful for testing alternate versions of a
- program. Commands which have been indented by one or more spaces will not
- be affected.
+- `-w/--with` replaces the first word of all test commands with something
+  else, which can be useful for testing alternate versions of a
+  program. Commands which have been indented by one or more spaces will
+  not be affected by this option.
 
- The test-framework library provides additional options which you can
- specify after `--`. Run `shelltest -- --help` for a list. Here are some
- useful ones:
+- The test-framework library provides additional options which you can
+  specify after `--` (note: avoid spaces between flags and values here.)
+  Run `shelltest -- --help` for a list. Here are some useful ones:
 
-      -j NUMBER        --threads=NUMBER             number of threads to use to run tests
-      -o NUMBER        --timeout=NUMBER             how many seconds a test should be run for before giving up, by default
-      -t TEST-PATTERN  --select-tests=TEST-PATTERN  only tests that match at least one glob pattern given by an instance of this argument will be run
-                       --hide-successes             hide sucessful tests, and only show failures
-
- Example: run all tests defined in or below the tests directory with
- "args" in their name, up to 8 in parallel, allowing no more than a second
- for each, showing only failures and the final summary.  Avoid spaces
- between flags and values here (use <span
- style="white-space:nowrap;">`-targs`</span> not <span
- style="white-space:nowrap;">`-t args`</span> ):
-
-    $ shelltest tests -- -targs -j8 -o1 --hide
-    
-             Test Cases   Total
-     Passed  2            2
-     Failed  0            0
-     Total   2            2
+        -j NUMBER        --threads=NUMBER             number of threads to use to run tests
+        -o NUMBER        --timeout=NUMBER             how many seconds a test should be run for before giving up, by default
+        -t TEST-PATTERN  --select-tests=TEST-PATTERN  only tests that match at least one glob pattern given by an instance of this argument will be run
+                         --hide-successes             hide sucessful tests, and only show failures
 
 ## Contributing
 
- You can get the latest code here:
+ The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner).
+ The latest code
+ ([browse](http://joyful.com/darcsden/simon/shelltestrunner/browse/shelltest.hs),
+ [changes](http://joyful.com/darcsden/simon/shelltestrunner/changes))
+ is here:
 
     $ darcs get http://joyful.com/repos/shelltestrunner
 
- [browse code](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner;a=headblob;f=/shelltest.hs) -
- [recent changes](http://joyful.com/darcsweb/darcsweb.cgi?r=shelltestrunner)
-
+ Feedback, code, testing, documentation/blogging are most welcome.  
+ Add your experience to the [user survey](https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3)
+ ([results](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html)).  
+ [Email](mailto:simon@joyful.com?subject=shelltestrunner) or
+ [chat](irc://irc.freenode.net/#haskell) me (`sm` on irc.freenode.net).  
+ For focussed support/faster development/good karma you can [hire me](http://joyful.com/) or 
  <a href="https://www.wepay.com/donate/39988?ref=widget&utm_medium=widget&utm_campaign=donation"
-    target="_blank" style="float:right;margin:0 1em;"
-    ><img src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
- Patches and feedback are welcome:
- [chat me](irc://irc.freenode.net/#haskell) (`sm` on irc.freenode.net) or
- [email me](mailto:simon@joyful.com?subject=shelltestrunner).
- Support/enhancement requests are handled on a best-effort basis, or you can [hire me](http://joyful.com/) or
- [donate](https://www.wepay.com/donate/39988?utm_campaign=donation)!
+    target="_blank" style=margin:0 1em;"
+    ><img style="vertical-align:middle;" src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
 
-## Release history
+## Release notes
 
-**1.2** (2011/8/25)
+**1.2** (2012/2/26)
 
-  * print readable failure output by default, use `-p/--precise` for repr-style output
-  * `--all`/`--diff`/`--precise` now interact well
+  * support latest cmdargs, test-framework, and GHC 7.4
+  * more readable non-quoted failure output by default; for quoted output, use `-p/--precise`
+  * the `--all`, `--diff` and `--precise` options now interact well
 
 **1.1** (2011/8/25)
 
@@ -258,3 +278,12 @@ test-framework.
 **0.1** (2009/7/10)
 
   * shelltestrunner, a generic shell command stdout/stderr/exit status tester
+
+## Credits
+
+[Simon Michael](http://joyful.com) wrote and maintains
+shelltestrunner. John Macfarlane, Bernie Pope and Trygve Laugstøl have
+contributed code. It relies heavily on Max Bolingbroke's test-framework,
+[other libraries](http://hackage.haskell.org/package/shelltestrunner), and
+of course the Glorious Haskell Compiler. It was inspired by the tests for
+John Wiegley's ledger.
