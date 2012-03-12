@@ -37,8 +37,8 @@ import Text.Regex.TDFA ((=~))
 import Debug.Trace
 import System.Directory (doesDirectoryExist)
 import System.FilePath (takeDirectory)
-import System.FilePath.FindCompat (findWithHandler, (==?), always)
-import qualified System.FilePath.FindCompat as Find (extension)
+import System.FilePath.Find (findWithHandler, (==?), always)
+import qualified System.FilePath.Find as Find (extension)
 import Control.Applicative ((<$>))
 import Data.Algorithm.Diff
 import Distribution.PackageDescription.TH (packageVariable, package, pkgVersion)
