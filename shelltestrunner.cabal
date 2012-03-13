@@ -1,6 +1,6 @@
 name:           shelltestrunner
 -- sync with README.md, ANNOUNCE:
-version:        1.2
+version:        1.2.1
 category:       Testing
 synopsis:       A tool for testing command-line programs.
 description:

@@ -108,7 +108,7 @@ each, showing only failures and the final summary:
 **Command-line options:**
 
     $ shelltest --help
-    shelltest 1.2
+    shelltest 1.2.1
 
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
 
@@ -169,6 +169,10 @@ each, showing only failures and the final summary:
     ><img style="vertical-align:middle;" src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
 
 ## Release notes
+
+**1.2.1** (2012/3/12)
+
+  * use the more up-to-date filemanip package for easier Debian packaging
 
 **1.2** (2012/2/26)
 
