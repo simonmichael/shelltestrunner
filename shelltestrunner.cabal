@@ -16,7 +16,7 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      stable
-tested-with:    GHC==6.12.3, GHC==7.0.2, GHC==7.2.1, GHC==7.4.1
+tested-with:    GHC==6.12.3, GHC==7.0.4, GHC==7.2.2, GHC==7.4.1
 cabal-version:  >= 1.6
 build-type:     Simple
 

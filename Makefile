@@ -8,7 +8,7 @@ PREFERMACUSRLIBFLAGS=-L/usr/lib
 
 BUILDFLAGS=-threaded -W -fwarn-tabs -Werror $(PREFERMACUSRLIBFLAGS)
 PROGNAME=shelltest
-# run tests using the latest shelltest build
+# when running tests, use the latest version to test itself
 SHELLTEST=./$(PROGNAME) --with ./$(PROGNAME)
 
 ######################################################################
@@ -16,6 +16,15 @@ SHELLTEST=./$(PROGNAME) --with ./$(PROGNAME)
 
 build:
 	ghc --make $(BUILDFLAGS) $(PROGNAME).hs
+
+shelltest.ghc-%: shelltest.hs
+	ghc-$* --make $(BUILDFLAGS) $(PROGNAME).hs -o $@ -outputdir .ghc-$*
+
+shelltest.ghcall: \
+	shelltest.ghc-7.4.1 \
+	shelltest.ghc-7.2.2 \
+	shelltest.ghc-7.0.4 \
+	shelltest.ghc-6.12.3 \
 
 AUTOBUILDCMDARGS=tests
 autobuild auto:
@@ -29,6 +38,18 @@ testunix test: build
 # (though if you are able to run make on windows, you may be able to/have to use testunix)
 testwindows:
 	$(SHELLTEST) tests --exclude unix -- -j8
+
+# run tests with a specific GHC version
+test-ghc-%: shelltest.ghcall
+	@echo; echo testing shelltest built with ghc-$*
+	@(./shelltest.ghc-$* --with ./shelltest.ghc-$* tests --exclude windows -- -j8 --hide-successes \
+	&& echo $@ PASSED) || echo $@ FAILED
+
+test-ghcall: \
+	test-ghc-7.4.1 \
+	test-ghc-7.2.2 \
+	test-ghc-7.0.4 \
+	test-ghc-6.12.3 \
 
 ######################################################################
 # DOC
