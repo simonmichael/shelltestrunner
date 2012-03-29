@@ -1,5 +1,4 @@
-#!/usr/bin/env runhaskell
-{-# LANGUAGE DeriveDataTypeable, TemplateHaskell #-}
+{-# LANGUAGE DeriveDataTypeable, TemplateHaskell, CPP #-}
 {- |
 
 shelltest - a tool for testing command-line programs.
@@ -12,11 +11,6 @@ See shelltestrunner.cabal.
 
 module Main
 where
--- encoding: we try to handle non-ascii content in test file paths, test
--- commands, and expected test results.  For this we assume 1. ghc 6.12+
--- and 2. that on unix, all file names/arguments/environment variables are
--- utf8 encoded
-import Codec.Binary.UTF8.String as UTF8 (decodeString, encodeString, isUTF8Encoded)
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
@@ -25,7 +19,6 @@ import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs
 import System.Exit
-import System.Info (os)
 import System.IO (Handle, hGetContents, hPutStr)
 import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProcess (..), waitForProcess, ProcessHandle)
 import Test.Framework (defaultMainWithArgs)
@@ -42,6 +35,8 @@ import qualified System.FilePath.Find as Find (extension)
 import Control.Applicative ((<$>))
 import Data.Algorithm.Diff
 import Distribution.PackageDescription.TH (packageVariable, package, pkgVersion)
+
+import PlatformString (fromPlatformString, toPlatformString)
 
 strace :: Show a => a -> a
 strace a = trace (show a) a
@@ -447,28 +442,3 @@ replace old new = replace'
                           then new ++ replace' (drop len l)
                           else h : replace' ts
      len = length old
-
--- | A platform string is a string value from or for the operating system,
--- such as a file path or command-line argument (or environment variable's
--- name or value ?). On some platforms (such as unix) these are not real
--- unicode strings but have some encoding such as UTF-8. This alias does
--- no type enforcement but aids code clarity.
-type PlatformString = String
-
--- | Convert a possibly encoded platform string to a real unicode string.
--- We decode the UTF-8 encoding recommended for unix systems
--- (cf http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html)
--- and leave anything else unchanged.
-fromPlatformString :: PlatformString -> String
-fromPlatformString s = if UTF8.isUTF8Encoded s then UTF8.decodeString s else s
-
--- | Convert a unicode string to a possibly encoded platform string.
--- On unix we encode with the recommended UTF-8
--- (cf http://www.dwheeler.com/essays/fixing-unix-linux-filenames.html)
--- and elsewhere we leave it unchanged.
-toPlatformString :: String -> PlatformString
-toPlatformString = case os of
-                     "unix" -> UTF8.encodeString
-                     "linux" -> UTF8.encodeString
-                     "darwin" -> UTF8.encodeString
-                     _ -> id
