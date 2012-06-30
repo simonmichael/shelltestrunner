@@ -1,6 +1,7 @@
 
 * backlog
-** no apparent effect from --diff ?
+** doesn't show haskell trace output
+** --diff is not working
 $ shelltest tests/unicode-error-message.test --debug --diff
 shelltest 1.1
 args: Args {all_ = False, color = False, diff = True, exclude = [], execdir = False, extension = ".test", with = "", debug = True, debug_parse = False, help_format = False, testpaths = ["tests/unicode-error-message.test"]}
@@ -51,5 +52,13 @@ shelltest: tests/unicode-проверка.test: hGetContents: invalid argument (
 make: *** [test] Error 1
 
 ** wishlist
+*** wrap long expected and actual values consistently
+### Failure in: 68:accountsReport
+expected: ([("assets:bank","assets:bank",0,$3.00),("assets:bank:checking","checking",1,$2.00),("assets:bank:saving","saving",1,$1.00),("expenses","expenses",0,$2.00),("expenses:food","food",1,$1.00),("expenses:supplies","supplies",1,$1.00),("liabilities:debts","liabilities:debts",0,$1.00)],$6.00)
+ but got: ([("assets:bank","assets:bank",0,$3.00
+     ),("assets:bank:checking","checking",1,$2.00
+     ),("assets:bank:saving","saving",1,$1.00),("expenses","expenses",0,$2.00),("expenses:food","food",1,$1.00),("expenses:supplies","supplies",1,$1.00),("liabilities:debts","liabilities:debts",0,$1.00)],$6.00
+     )
+
 *** report stdin with --debug
 *** timeouts for commands
