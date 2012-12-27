@@ -355,21 +355,21 @@ showExpectedActual Args{all_=all_,precise=precise} field e a =
       showm = if all_ then showMatcher else showMatcherTrimmed
       trim' = if all_ then id else trim
 
-showDiff :: Args -> (Int,Int) -> [(DI, String)] -> String
+showDiff :: Args -> (Int,Int) -> [(Diff String)] -> String
 showDiff _ _ []                   = ""
-showDiff args@Args{all_=all_,precise=precise} (l,r) ((F, ln) : ds) =
+showDiff args@Args{all_=all_,precise=precise} (l,r) ((First ln) : ds) =
     printf "+%4d " l ++ ln' ++ "\n" ++ showDiff args (l+1,r) ds
     where
       ln' = trim' $ show' ln
       trim' = if all_ then id else trim
       show' = if precise then show else id
-showDiff args@Args{all_=all_,precise=precise} (l,r) ((S, ln) : ds) =
+showDiff args@Args{all_=all_,precise=precise} (l,r) ((Second ln) : ds) =
     printf "-%4d " r ++ ln' ++ "\n" ++ showDiff args (l,r+1) ds
     where
       ln' = trim' $ show' ln
       trim' = if all_ then id else trim
       show' = if precise then show else id
-showDiff args (l,r) ((B, _ ) : ds) = showDiff args (l+1,r+1) ds
+showDiff args (l,r) ((Both _ _) : ds) = showDiff args (l+1,r+1) ds
 
 instance Show Matcher where show = showMatcherTrimmed
 

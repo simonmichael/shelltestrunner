@@ -16,7 +16,7 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      stable
-tested-with:    GHC==6.12.3, GHC==7.0.4, GHC==7.2.2, GHC==7.4.1
+tested-with:    GHC==7.4.1, GHC==7.6.1
 cabal-version:  >= 1.6
 build-type:     Simple
 
@@ -32,16 +32,16 @@ executable shelltest
                 ,cabal-file-th
                 ,filemanip            >= 0.3   && < 0.4
                 ,HUnit                            < 1.3
-                ,cmdargs              >= 0.7   && < 0.10
+                ,cmdargs              >= 0.7   && < 0.11
                 ,directory            >= 1.0
                 ,filepath             >= 1.0
                 ,parsec                           < 3.2
                 ,regex-tdfa           >= 1.1   && < 1.2
                 ,process                          < 1.2
-                ,test-framework       >= 0.3.2 && < 0.6
-                ,test-framework-hunit >= 0.2   && < 0.3
+                ,test-framework       >= 0.3.2 && < 0.9
+                ,test-framework-hunit >= 0.2   && < 0.4
                 ,utf8-string          >= 0.3.5 && < 0.4
-                ,Diff                 >= 0.1   && < 0.2
+                ,Diff                 == 0.2.*
 
 source-repository head
   type:     darcs
