@@ -1,5 +1,8 @@
-I'm pleased to announce the release of shelltestrunner 1.2. Also, in case you missed it
-there's a survey where you can help steer the project (below).
+I'm pleased to announce the release of shelltestrunner 1.3. New in this release:
+
+  * support latest Diff, cmdargs, test-framework; tested with GHC 7.6.1 (Magnus Therning)
+
+  * fix unicode handling on GHC >= 7.2
 
 shelltestrunner tests command-line programs (or arbitrary shell commands.)
 It reads simple declarative tests specifying a command, some input, and
@@ -9,16 +12,6 @@ has been tested on gnu/linux, mac and windows; projects using it include
 hledger, berp, cblrepo and eddie. shelltestrunner is free software
 released under GPLv3+.
 
-New in 1.2:
-
-  * support latest cmdargs, test-framework, and GHC 7.4
-
-  * more readable non-quoted failure output by default; for quoted output, use `-p/--precise`
-
-  * the `--all`, `--diff` and `--precise` options now interact well
-
-Install: $ cabal install shelltestrunner
-
 Home: http://joyful.com/shelltestrunner
 
-User survey: https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3
+Install: $ cabal install shelltestrunner
