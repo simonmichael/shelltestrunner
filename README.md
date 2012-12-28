@@ -81,8 +81,8 @@ Run it with `shelltest`:
 - Comment lines beginning with `#` may be used between tests.
 
 Here
-[are](http://joyful.com/repos/shelltestrunner/tests)
-[some](http://joyful.com/repos/hledger/tests)
+[are](http://hub.darcs.net/simon/shelltestrunner/tests)
+[some](http://hub.darcs.net/simon/hledger/tests)
 <!-- [more](https://github.com/yesodweb/yesod/tree/master/yesod/test) -->
 [real-world](https://github.com/bjpop/berp/tree/master/test/regression)
 [project](https://github.com/magthe/cblrepo/tree/master/tests)
@@ -152,11 +152,11 @@ each, showing only failures and the final summary:
 
  The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner).
  The latest code
- ([browse](http://joyful.com/darcsden/simon/shelltestrunner/browse/shelltest.hs),
- [changes](http://joyful.com/darcsden/simon/shelltestrunner/changes))
+ ([browse](http://hub.darcs.net/simon/shelltestrunner/shelltest.hs),
+ [changes](http://hub.darcs.net/simon/shelltestrunner/changes))
  is here:
 
-    $ darcs get http://joyful.com/repos/shelltestrunner
+    $ darcs get http://hub.darcs.net/simon/shelltestrunner
 
  Feedback, code, testing, documentation/blogging are most welcome.  
  Add your experience to the [user survey](https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3)
@@ -169,6 +169,12 @@ each, showing only failures and the final summary:
     ><img style="vertical-align:middle;" src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
 
 ## Release notes
+
+**1.3** (2012/12/28)
+
+  * support latest Diff, cmdargs, test-framework; tested with GHC 7.6.1 (Magnus Therning)
+
+  * fix unicode handling on GHC >= 7.2
 
 **1.2.1** (2012/3/12)
 
