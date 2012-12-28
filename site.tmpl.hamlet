@@ -27,6 +27,7 @@
     margin:0 0 1em 1em;
     border:thin solid #ddd;
     background-color:#f0f0f0;
+    border-radius:4px;
    }
 
    #TOC ul {
