@@ -92,7 +92,7 @@ haddock:
 # RELEASE
 
 TARBALL:=$(shell cabal sdist | tail -1 | cut -d' ' -f4)
-VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2)
+VERSION:=$(shell echo $(TARBALL) | cut -d- -f2 | cut -d. -f1-2) # XXX or -f1-3
 
 showversion:
 	@echo $(VERSION)
