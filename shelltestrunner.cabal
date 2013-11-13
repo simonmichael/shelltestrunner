@@ -16,7 +16,7 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      stable
-tested-with:    GHC==7.4.1, GHC==7.6.1
+tested-with:    GHC==7.6.3
 cabal-version:  >= 1.6
 build-type:     Simple
 
@@ -45,4 +45,4 @@ executable shelltest
 
 source-repository head
   type:     darcs
-  location: http://joyful.com/repos/shelltestrunner
+  location: http://hub.darcs.net/simon/shelltestrunner
