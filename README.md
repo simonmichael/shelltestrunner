@@ -15,7 +15,7 @@ released under GPLv3+.
 ## Installing
 
 If your machine's packaging system does not provide an
-[up-to-date](#release-notes) shelltestrunner, install it with
+up-to-date shelltestrunner, install it with
 [cabal](http://hackage.haskell.org/trac/hackage/wiki/CabalInstall) (and if
 your packaging system does not provide an up-to-date cabal, get the
 [haskell platform](http://hackage.haskell.org/platform/)):
@@ -23,6 +23,10 @@ your packaging system does not provide an up-to-date cabal, get the
     $ cabal install shelltestrunner
 
 You should now have the `shelltest` program in your path.
+
+## Release notes
+
+See <http://hub.darcs.net/simon/shelltestrunner/CHANGES>.
 
 ## Defining tests
 
@@ -167,10 +171,6 @@ each, showing only failures and the final summary:
  <a href="https://www.wepay.com/donate/39988?ref=widget&utm_medium=widget&utm_campaign=donation"
     target="_blank" style=margin:0 1em;"
     ><img style="vertical-align:middle;" src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
-
-## Release notes
-
-See http://hub.darcs.net/simon/shelltestrunner/CHANGES.
 
 ## Credits
 
