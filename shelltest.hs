@@ -16,6 +16,7 @@ import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Control.Monad (liftM,when,unless)
 import Data.List
 import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
+import Data.Version (showVersion)
 import qualified Test.HUnit (Test)
 import System.Console.CmdArgs
 import System.Exit
@@ -34,17 +35,16 @@ import System.FilePath.Find (findWithHandler, (==?), always)
 import qualified System.FilePath.Find as Find (extension)
 import Control.Applicative ((<$>))
 import Data.Algorithm.Diff
-import Distribution.PackageDescription.TH (packageVariable, package, pkgVersion)
 
 import PlatformString (fromPlatformString, toPlatformString)
+import Paths_shelltestrunner (version)
 
 strace :: Show a => a -> a
 strace a = trace (show a) a
 
-progname, version, progversion :: String
+progname, progversion :: String
 progname = "shelltest"
-version = $(packageVariable (pkgVersion . package))
-progversion = progname ++ " " ++ version
+progversion = progname ++ " " ++ showVersion version
 proghelpsuffix :: [String]
 proghelpsuffix = [
    -- keep this bit synced with options width
