@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, TemplateHaskell, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, CPP #-}
 {- |
 
 shelltest - a tool for testing command-line programs.
