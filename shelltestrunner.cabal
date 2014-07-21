@@ -23,6 +23,7 @@ build-type:     Simple
 extra-tmp-files:
 extra-source-files:
                     CHANGES
+                    tests/*.test
 
 executable shelltest
   main-is:        shelltest.hs
