@@ -62,14 +62,14 @@ docs: site haddock
 #VIEWHTML=google-chrome
 VIEWHTML=open
 
-viewsite: site
+viewsite: buildsite
 	$(VIEWHTML) index.html
 
 viewhaddock: docs
 	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html 
 
 # build website
-buildsite site: hakyll index.html
+buildsite: site index.html
 	./hakyll build
 
 index.html:
@@ -81,8 +81,8 @@ cleansite: hakyll
 previewsite: hakyll
 	./hakyll preview 8002
 
-hakyll: hakyll.hs
-	ghc --make -Wall hakyll.hs
+site: site.hs
+	ghc -Wall site.hs
 
 # build haddock docs
 haddock:

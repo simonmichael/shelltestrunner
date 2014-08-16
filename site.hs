@@ -1,7 +1,7 @@
 #!/usr/bin/env runhaskell
 {-
 website build script
-ghc --make -Wall hakyll.hs && ./hakyll build
+ghc site.hs && ./site build
 -}
 
 import Control.Monad.Trans (liftIO)
