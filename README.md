@@ -11,7 +11,7 @@ title: shelltestrunner
 
 ***Human or Replicant ?***&nbsp;
 If you have a testing situation such as this <sup><small>1</small></sup>,
-we can help.
+we at Joyful Corp. can help.
 
 shelltestrunner is a command-line tool for testing other command-line
 programs, or general shell commands, on GNU/Linux, Mac and Windows.
@@ -37,14 +37,13 @@ Elsewhere:                       | Get [GHC](http://haskell.org/ghc) and cabal (
 You should now have the `shelltest` program in your path.
 
 Tests are kept in files with the `.test` suffix by default. Here's a simple test file:
-```
+```bash
 # echo, given no input, prints nothing and terminates normally
 echo
 >>>= 0
 ```
-
-Here's another, containing two tests:
-```
+and another, containing two more tests:
+```bash
 # cat copies its input to stdout, nothing appears on stderr, exit status is 0
 cat
 <<<
@@ -60,7 +59,7 @@ cat --no-such-flag
 >>>= !0
 ```
 
-Run them with `shelltest`:
+Run the tests with `shelltest`:
 ```bash
 $ shelltest echo.test cat.test
 :echo.test: [OK]
@@ -80,9 +79,9 @@ $ shelltest echo.test cat.test
 <!-- ### Old format -->
 
 Test files contain one or more tests, which look like this:
-```
+```bash
 # optional comment
-the command to test, on one line
+a one-line shell command
 <<<
 zero or more lines of standard input
 >>>
@@ -135,8 +134,8 @@ A directory means all files below it with the test file suffix (default: `.test`
 **Command-line options:**
 ```bash
 $ shelltest --help
-shelltest 1.3.4
-
+```
+```
 shelltest [OPTIONS] [TESTFILES|TESTDIRS]
 
 Common flags:
@@ -145,7 +144,7 @@ Common flags:
   -d --diff             Show failures in diff format
   -p --precise          Show failure output precisely (good for whitespace)
   -x --exclude=STR      Exclude test files whose path contains STR
-     --execdir          Run tests from within the test file's directory
+     --execdir          Run tests from within the test file’s directory
      --extension=EXT    Filename suffix of test files (default: .test)
   -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
      --debug            Show debug info, for troubleshooting
@@ -171,11 +170,11 @@ not be affected by this option.
 The test-framework library provides additional options which you can
 specify after `--` (note: avoid spaces between flags and values here.)
 Run `shelltest -- --help` for a list. Here are some useful ones:
-```bash
+```
     -j NUMBER        --threads=NUMBER             number of threads to use to run tests
     -o NUMBER        --timeout=NUMBER             how many seconds a test should be run for before giving up, by default
     -t TEST-PATTERN  --select-tests=TEST-PATTERN  only tests that match at least one glob pattern given by an instance of this argument will be run
-                     --hide-successes             hide sucessful tests, and only show failures
+                      --hide-successes             hide sucessful tests, and only show failures
 ````
 
 **Example:**
@@ -183,40 +182,44 @@ Run `shelltest -- --help` for a list. Here are some useful ones:
 Run
 
 - the tests defined in any `*.test` file in or below the `tests/` directory (`tests`),
+- in colour if possible (`-c`),
 - whose names<sup><small>2</small></sup> contain "`args`" (`-- -targs`),
 - with up to 8 tests running in parallel (`-- -j8`),
 - allowing a maximum of 1 second for each test (`-- -o1`),
 - reporting only the failures (`-- --hide-successes`):
 
 ````bash
-$ shelltest tests -- -targs -j8 -o1 --hide
+$ shelltest tests -c -- -targs -j8 -o1 --hide
 ````
+
 <a name="note2"><small><sup>2</sup>
 A test's name is what you see when running tests, ie the file name plus the sequence number within the file.
 </small></a>
 
 ## Contributing
 
- The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
- ([Release notes](http://hackage.haskell.org/package/shelltestrunner/changelog)).
+The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
+([Release notes](http://hackage.haskell.org/package/shelltestrunner/changelog)).
 
- The latest code is on darcs hub
- ([browse](http://hub.darcs.net/simon/shelltestrunner),
- [changes](http://hub.darcs.net/simon/shelltestrunner/changes)).
- Clone it with:
+The latest code is on darcs hub
+([browse](http://hub.darcs.net/simon/shelltestrunner),
+[changes](http://hub.darcs.net/simon/shelltestrunner/changes)).
+Clone it with:
 
-    $ darcs get http://hub.darcs.net/simon/shelltestrunner
+```bash
+$ darcs get http://hub.darcs.net/simon/shelltestrunner
+```
 
- Feedback, code, testing, documentation/blogging are most welcome.
- Here's the
- <!-- [2012 user survey](https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3) -->
- [2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).  
- [Email](mailto:simon@joyful.com?subject=shelltestrunner) or
- [chat](irc://irc.freenode.net/#haskell) me (`sm` on irc.freenode.net).  
+Feedback, code, testing, documentation, blogging are most welcome.
+Here's the
+<!-- [2012 user survey](https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3) -->
+[2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).  
+[Email](mailto:simon@joyful.com?subject=shelltestrunner) or
+[chat](irc://irc.freenode.net/#haskell) me (`sm` on irc.freenode.net).
 
- <a href="https://www.wepay.com/donate/39988?ref=widget&utm_medium=widget&utm_campaign=donation"
-    target="_blank" style=margin:0 1em;"
-    ><img style="vertical-align:middle;" src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
+<a href="https://www.wepay.com/donate/39988?ref=widget&utm_medium=widget&utm_campaign=donation"
+   target="_blank" style=margin:0 1em;"
+   ><img style="vertical-align:middle;" src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
 
 ## Credits
 
