@@ -10,7 +10,7 @@ title: shelltestrunner
 * toc
 
 ***Human or Replicant ?***&nbsp;
-If you have a testing situation like this <sup><small>1</small></sup>,
+If you have a testing situation such as this <sup><small>1</small></sup>,
 we can help.
 
 shelltestrunner is a command-line tool for testing other command-line
@@ -92,18 +92,18 @@ zero or more lines of expected standard error output (or /REGEXP/ added to the p
 >>>= EXITCODE (or /REGEXP/)
 ```
 
-The command and the exit status are required; the standard input, standard output, and/or standard error output are optional.
+The command and the exit status are required; the standard input, standard output, and standard error output are optional.
 
-A `/REGEXP/` pattern may be used instead of specifying the output
-exactly, in which case a match anywhere in the output allows the test
+A `/REGEXP/` pattern may be used instead of specifying the full
+output, in which case a match anywhere in the output allows the test
 to pass. The regular expression syntax is
 [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa)'s, plus
 you can put `!` before `/REGEXP/` to negate the match.
 
 `EXITCODE` is a numeric [exit status](http://en.wikipedia.org/wiki/Exit_status)
-or a `/REGEXP/`. Again, prefix a `!` to negate the match. Eg `!0` matches an unsuccessful exit. 
+or a `/REGEXP/`. Again, use a `!` prefix to negate the match. Eg `!0` matches an unsuccessful exit.
 
-Comment lines beginning with `#` may be used between tests (but not within them).
+Comment lines beginning with `#` may be used between tests, but not within them.
 
 Here
 [are](http://hub.darcs.net/simon/shelltestrunner/tests)
@@ -192,7 +192,7 @@ Run
 $ shelltest tests -- -targs -j8 -o1 --hide
 ````
 <a name="note2"><small><sup>2</sup>
-A test's name is the name of the file where it was defined plus its sequence number within the file.
+A test's name is what you see when running tests, ie the file name plus the sequence number within the file.
 </small></a>
 
 ## Contributing
@@ -201,7 +201,7 @@ A test's name is the name of the file where it was defined plus its sequence num
  ([Release notes](http://hackage.haskell.org/package/shelltestrunner/changelog)).
 
  The latest code is on darcs hub
- ([browse](http://hub.darcs.net/simon/shelltestrunner/shelltest.hs),
+ ([browse](http://hub.darcs.net/simon/shelltestrunner),
  [changes](http://hub.darcs.net/simon/shelltestrunner/changes)).
  Clone it with:
 
@@ -221,11 +221,16 @@ A test's name is the name of the file where it was defined plus its sequence num
 ## Credits
 
 [Simon Michael](http://joyful.com) wrote shelltestrunner, inspired by John Wiegley's test system for Ledger.
-Code contributors include
+
+Code contributors include:
 John Macfarlane,
 Bernie Pope,
-Trygve Laugstøl
-and John Chee.
+Trygve Laugstøl,
+Iustin Pop,
+Sergei Trofimovich,
+Andrés Sicard-Ramírez,
+John Chee.
+
 shelltestrunner depends on
 several fine [libraries](http://hackage.haskell.org/package/shelltestrunner),
 in particular Max Bolingbroke's test-framework,
