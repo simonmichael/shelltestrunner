@@ -3,6 +3,8 @@ body {
     background-color:white;
     color:black;
     font-family: Merriweather, serif;
+		max-width:60em;
+		margin:0 auto 2em;
 }
 
 h1, h2, h3 {
@@ -47,8 +49,13 @@ pre {
     background-color:#e0e0e0;
     border-radius:4px;
     font-weight:bold;
-    display:inline-block;
 		padding:.5em;
+		margin-left:.5em;
+    /* display:inline-block; */
+		/* max-width:60em; */
+		/* overflow:scroll; */
+    max-width:  intrinsic;         /* Safari/WebKit */
+    max-width:  -moz-max-content;  /* Firefox/Gecko */
 }
 
 
