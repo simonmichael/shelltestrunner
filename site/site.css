@@ -1,0 +1,100 @@
+body {
+    padding:0 10%;
+    background-color:white;
+    color:black;
+    font-family: Merriweather, serif;
+}
+
+h1, h2, h3 {
+    position:relative;
+    left:-0.5em;
+    margin-top:1.5em;
+    font-family: 'Trebuchet MS', Helvetica, sans-serif;
+    font-style:italic;
+}
+
+h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
+    color:black;
+    text-decoration:none;
+}
+
+#title {
+  text-align:center;
+  margin-top:6em;
+  margin-bottom:4em;
+}
+
+#toc {
+    font-size:small;
+    /* float:right; */
+    /* margin:0 0 1em 1em; */
+    /* border:thin solid #ddd; */
+    /* background-color:#f0f0f0; */
+    /* border-radius:4px; */
+}
+
+/* #toc ul { */
+/*     list-style-type: none; */
+/*     padding:0 1em 0 1em; */
+/* } */
+
+code {
+    font-family: Inconsolata, 'Lucida Console', Monaco, monospace;
+    font-size:medium;
+}
+
+pre {
+    background-color:#e0e0e0;
+    border-radius:4px;
+    font-weight:bold;
+    display:inline-block;
+		padding:.5em;
+}
+
+
+/* from https://github.com/blaenk/blaenk.github.io/blob/source/provider/scss/_article.scss */
+#toc.right-toc {
+    float: right;
+    margin-left: 15px;
+    margin-bottom: 15px;
+    margin-top: 0;
+    padding: 0;
+    @media screen and (max-width: 600px) {
+        float: none;
+        padding: 0;
+        margin-left: 0;
+        margin-top: 10px;
+    }
+}
+#toc {
+    margin-top: 10px;
+    p {
+        font-weight: bold;
+        margin-top: 0;
+    }
+    & > ol {
+        margin-left: 0;
+        margin-top: 5px;
+        font-size: 14px;
+        @media screen and (max-width: 600px) {
+            font-size: 13px;
+        }
+    }
+    ol {
+        counter-reset: item;
+    }
+    li {
+        margin-top: 0;
+        display: block;
+        @media screen and (max-width: 600px) {
+            line-height: 1.69;
+        }
+        &:before {
+            content: counters(item, ".") ". ";
+            counter-increment: item;
+        }
+    }
+    &:after {
+        clear: both;
+    }
+}

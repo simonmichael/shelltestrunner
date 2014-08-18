@@ -59,34 +59,33 @@ commithook: site
 
 docs: site haddock
 
-#VIEWHTML=google-chrome
+# build website using my standard site build script
+# (twice, to help it link index.html)
+.PHONY: site
+site:
+	hakyll build
+	hakyll build
+
+cleansite:
+	hakyll clean
+
+# re-copy/render files on change, also serve them on port 8000
+# preview allows remote clients unlike the newer watch command
+previewsite:
+	hakyll preview
+
+#VIEWHTML=firefox
 VIEWHTML=open
 
-viewsite: buildsite
-	$(VIEWHTML) index.html
-
-viewhaddock: docs
-	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html 
-
-# build website
-buildsite: site index.html
-	./hakyll build
-
-index.html:
-	ln -s README.html index.html
-
-cleansite: hakyll
-	./hakyll clean
-
-previewsite: hakyll
-	./hakyll preview 8002
-
-site: site.hs
-	ghc -Wall site.hs
+viewsite: site
+	$(VIEWHTML) _site/index.html
 
 # build haddock docs
 haddock:
 	cabal configure && cabal haddock --executables
+
+viewhaddock: docs
+	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html 
 
 ######################################################################
 # RELEASE

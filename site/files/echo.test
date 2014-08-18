@@ -1,0 +1,3 @@
+# echo, given no input, prints nothing and terminates normally
+echo
+>>>= 0
