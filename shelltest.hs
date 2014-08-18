@@ -292,16 +292,23 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
     printf "stdout was : %s\n" (show $ trim' o_actual)
     printf "stderr was : %s\n" (show $ trim' e_actual)
     printf "exit was   : %s\n" (show $ trim' $ show x_actual)
+  let outputMatch = maybe True (o_actual `matches`) o_expected
+  let errorMatch = maybe True (e_actual `matches`) e_expected
+  let exitCodeMatch = show x_actual `matches` x_expected
+  let matches = [outputMatch, errorMatch, exitCodeMatch]
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
-   then ioError $ userError e_actual -- XXX still a test failure; should be an error
+   then ioError $ userError $ unwords $ filter (not . null) [e_actual, printf "Command: '%s' Exit code: %i" cmd x_actual] -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
-             if (maybe True (o_actual `matches`) o_expected)
+             if any not matches
+               then printf "Command:\n%s\n" cmd
+               else ""
+            ,if outputMatch
               then ""
               else showExpectedActual args "stdout"    (fromJust o_expected) o_actual
-            ,if (maybe True (e_actual `matches`) e_expected)
+            ,if errorMatch
               then ""
               else showExpectedActual args "stderr"    (fromJust e_expected) e_actual
-            ,if (show x_actual `matches` x_expected)
+            ,if exitCodeMatch
               then ""
               else showExpectedActual args{diff=False} "exit code" x_expected (show x_actual)
             ]
