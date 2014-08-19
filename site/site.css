@@ -2,16 +2,15 @@ body {
     padding:0 10%;
     background-color:white;
     color:black;
-    font-family: Merriweather, serif;
-		max-width:60em;
+    font-family: 'Droid Sans', Helvetica, sans-serif;
+		max-width:50em;
 		margin:0 auto 2em;
 }
 
 h1, h2, h3 {
     position:relative;
     left:-0.5em;
-    margin-top:1.5em;
-    font-family: 'Trebuchet MS', Helvetica, sans-serif;
+    margin-top:2em;
     font-style:italic;
 }
 
@@ -62,7 +61,8 @@ pre {
 /* from https://github.com/blaenk/blaenk.github.io/blob/source/provider/scss/_article.scss */
 #toc.right-toc {
     float: right;
-    margin-left: 15px;
+    /* margin-left: 15px; */
+		margin-left:2em;
     margin-bottom: 15px;
     margin-top: 0;
     padding: 0;

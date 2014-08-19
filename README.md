@@ -1,26 +1,26 @@
 ---
-title: shelltestrunner
+title: shelltestrunner: command-line testing
 ---
 
 <div id=title>
-<h2>Command-line testing</h2>
+<h1>Command-line testing</h1>
 <img src="site/title2.png">
 </div>
 
 * toc
 
-***Human or Replicant ?***&nbsp;
-If you have a testing situation such as this <sup><small>1</small></sup>,
+*Human or Replicant ?*
+If you have a testing situation such as this<sup><small>1</small></sup>,
 we at Joyful Corp. can help.
 
-shelltestrunner is a command-line tool for testing other command-line
+**shelltestrunner** is a command-line tool for testing other command-line
 programs, or general shell commands, on GNU/Linux, Mac and Windows.
 
-It reads simple test specifications consisting of a command to run,
-some input, and the expected stdout, stderr, and exit status output.  It
-can run tests in parallel, selectively, with a timeout, with color
-output, or with expected/actual differences highlighted.
-shelltestrunner is free software released under GPLv3+.
+It reads tests which specify a command to run, some input, and the
+expected stdout, stderr, and exit status output.  It can run tests in
+parallel, selectively, with a timeout, with color output, or with
+expected/actual differences highlighted.  shelltestrunner is free
+software released under GPLv3+.
 
 <a name="note1">
 <small><sup>1</sup> expressed on the command line</small>
@@ -29,20 +29,21 @@ shelltestrunner is free software released under GPLv3+.
 
 ## Getting started
 
----------------------------------|------------------------------------
-Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | `apt-get install shelltestrunner`
-Gentoo:                          | `emerge shelltestrunner`
-Elsewhere:                       | Get [GHC](http://haskell.org/ghc) and cabal (or the [Haskell Platform](http://haskell.org/platform)), ensure `~/.cabal/bin` is in your $PATH, and:<br>`cabal install shelltestrunner`.
-
-You should now have the `shelltest` program in your path.
+---------------------------------|--------------------------------------
+Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | **`apt-get install shelltestrunner`**
+Gentoo:                          | **`emerge shelltestrunner`**
+Elsewhere:<br><br><br>           | Get [GHC](http://haskell.org/ghc) and cabal (or the [Haskell Platform](http://haskell.org/platform)),<br>ensure `~/.cabal/bin` is in your $PATH,<br>**`cabal install shelltestrunner`**
 
 Tests are kept in files with the `.test` suffix by default. Here's a simple test file:
+
 ```bash
 # echo, given no input, prints nothing and terminates normally
 echo
 >>>= 0
 ```
+
 and another, containing two more tests:
+
 ```bash
 # cat copies its input to stdout, nothing appears on stderr, exit status is 0
 cat
@@ -59,7 +60,8 @@ cat --no-such-flag
 >>>= !0
 ```
 
-Run the tests with `shelltest`:
+Run the tests:
+
 ```bash
 $ shelltest echo.test cat.test
 :echo.test: [OK]
@@ -71,6 +73,8 @@ $ shelltest echo.test cat.test
  Failed  0           0          
  Total   3           3          
 ```
+
+That's it!
 
 ## Test format
 
@@ -88,10 +92,10 @@ zero or more lines of standard input
 zero or more lines of expected standard output (or /REGEXP/ added to the previous line)
 >>>2
 zero or more lines of expected standard error output (or /REGEXP/ added to the previous line)
->>>= EXITCODE (or /REGEXP/)
+>>>= STATUS (or /REGEXP/)
 ```
 
-The command and the exit status are required; the standard input, standard output, and standard error output are optional.
+The command and the final exit status line are required; the other parts are optional.
 
 A `/REGEXP/` pattern may be used instead of specifying the full
 output, in which case a match anywhere in the output allows the test
@@ -99,7 +103,7 @@ to pass. The regular expression syntax is
 [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa)'s, plus
 you can put `!` before `/REGEXP/` to negate the match.
 
-`EXITCODE` is a numeric [exit status](http://en.wikipedia.org/wiki/Exit_status)
+`STATUS` is a numeric [exit status](http://en.wikipedia.org/wiki/Exit_status)
 or a `/REGEXP/`. Again, use a `!` prefix to negate the match. Eg `!0` matches an unsuccessful exit.
 
 Comment lines beginning with `#` may be used between tests, but not within them.
@@ -128,8 +132,8 @@ Test files contain one or more test groups consisting of:
 
 ## Usage
 
-The `shelltest` program accepts one or more test file or directory arguments.
-A directory means all files below it with the test file suffix (default: `.test`).
+`shelltest` accepts one or more test file or directory arguments.
+A directory means all files below it which have the test file suffix (`.test`, by default).
 
 **Command-line options:**
 ```bash
@@ -171,10 +175,11 @@ The test-framework library provides additional options which you can
 specify after `--` (note: avoid spaces between flags and values here.)
 Run `shelltest -- --help` for a list. Here are some useful ones:
 ```
-    -j NUMBER        --threads=NUMBER             number of threads to use to run tests
-    -o NUMBER        --timeout=NUMBER             how many seconds a test should be run for before giving up, by default
-    -t TEST-PATTERN  --select-tests=TEST-PATTERN  only tests that match at least one glob pattern given by an instance of this argument will be run
-                      --hide-successes             hide sucessful tests, and only show failures
+  -j NUM  --threads=NUMBER    number of threads to use to run tests
+  -o NUM  --timeout=NUMBER    how many seconds a test should be run for before giving up
+  -t PAT  --select-tests=PAT  only tests that match at least one glob pattern given by
+                               an instance of this argument will be run
+          --hide-successes    hide sucessful tests, and only show failures
 ````
 
 **Example:**
@@ -185,7 +190,7 @@ Run
 - in colour if possible (`-c`),
 - whose names<sup><small>2</small></sup> contain "`args`" (`-- -targs`),
 - with up to 8 tests running in parallel (`-- -j8`),
-- allowing a maximum of 1 second for each test (`-- -o1`),
+- allowing no more than 1 second for each test (`-- -o1`),
 - reporting only the failures (`-- --hide-successes`):
 
 ````bash
@@ -201,7 +206,7 @@ A test's name is what you see when running tests, ie the file name plus the sequ
 The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
 ([Release notes](http://hackage.haskell.org/package/shelltestrunner/changelog)).
 
-The latest code is on darcs hub
+The latest code is on darcs hub<sup><small>3</small></sup>
 ([browse](http://hub.darcs.net/simon/shelltestrunner),
 [changes](http://hub.darcs.net/simon/shelltestrunner/changes)).
 Clone it with:
@@ -210,16 +215,20 @@ Clone it with:
 $ darcs get http://hub.darcs.net/simon/shelltestrunner
 ```
 
-Feedback, code, testing, documentation, blogging are most welcome.
+<div id="donate-buttons" style="float:right; padding-left:1em;">
+<a title="Donate via Gittip" href="https://www.gittip.com/simonmichael"><img src="/site/gittip.png" alt="Gittip"></a>
+<a style="margin-left:1em;" title="Donate via Paypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2PLCMR67L4G3E"><img src="/site/paypal.gif" alt="Paypal"></a>
+</div>
+Feedback, testing, code, documentation, packaging, blogging are most welcome.
 Here's the
 <!-- [2012 user survey](https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3) -->
-[2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).  
+[2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).
 [Email](mailto:simon@joyful.com?subject=shelltestrunner) or
 [chat](irc://irc.freenode.net/#haskell) me (`sm` on irc.freenode.net).
 
-<a href="https://www.wepay.com/donate/39988?ref=widget&utm_medium=widget&utm_campaign=donation"
-   target="_blank" style=margin:0 1em;"
-   ><img style="vertical-align:middle;" src="https://www.wepay.com/img/widgets/donate_with_wepay.png" alt="Donate with WePay" /></a>
+<a name="note3"><small><sup>3</sup>
+For help with darcs see [here](http://hub.darcs.net).
+</small></a>
 
 ## Credits
 
@@ -234,9 +243,10 @@ Sergei Trofimovich,
 Andrés Sicard-Ramírez,
 John Chee.
 
-shelltestrunner depends on
-several fine [libraries](http://hackage.haskell.org/package/shelltestrunner),
-in particular Max Bolingbroke's test-framework,
-and of course on the Glorious Haskell Compiler.
+shelltestrunner depends on several fine libraries, in particular Max
+Bolingbroke's test-framework, and of course on the Glorious Haskell
+Compiler.
+
+The Blade Runner font is by Phil Steinschneider.
 
 <!-- http://www.explore-science-fiction-movies.com/blade-runner-movie-quotes.html -->
