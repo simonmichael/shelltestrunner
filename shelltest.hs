@@ -12,17 +12,12 @@ See shelltestrunner.cabal.
 module Main
 where
 
-import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
-import Control.Monad (when,unless)
 import Data.Algorithm.Diff
-import Data.List
-import Data.Maybe (isJust,fromJust)
 import Data.Version (showVersion)
 import System.Console.CmdArgs
 import System.Directory (doesDirectoryExist)
-import System.Exit
 import System.FilePath (takeDirectory)
 import System.FilePath.Find (findWithHandler, (==?), always)
 import qualified System.FilePath.Find as Find (extension)
@@ -32,9 +27,9 @@ import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
 import Text.ParserCombinators.Parsec
-import Text.Printf (printf)
 
 import Paths_shelltestrunner (version)
+import Import
 import Utils
 import Types
 import Parse

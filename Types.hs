@@ -1,8 +1,7 @@
 module Types
 where
 
-import Text.Printf (printf)
-
+import Import
 import Utils
 
   

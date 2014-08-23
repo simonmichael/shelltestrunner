@@ -1,22 +1,17 @@
 module Parse
 where
 
-import Control.Applicative ((<$>))
-import Control.Monad (liftM,when)
-import Data.Maybe (isNothing,catMaybes)
 import Text.ParserCombinators.Parsec
-import Text.Printf (printf)
 
+import Import
 import Types
--- import Utils
-
--- import qualified Hledger.Utils (trace,strace,ptrace)
+import qualified Utils
 
 
--- dbg = False
-ptrace_ _s -- | dbg       = Hledger.Utils.ptrace s
-          | otherwise = return ()
-ptrace _s _a -- | dbg       = Hledger.Utils.ptrace $ s ++ ": " ++ show a
+dbg = False
+ptrace_ s  | dbg       = Utils.ptrace s
+           | otherwise = return ()
+ptrace s a | dbg       = Utils.ptrace $ s ++ ": " ++ show a
            | otherwise = return ()
 
 parseShellTestFile :: Bool -> FilePath -> IO (Either ParseError [ShellTest])
@@ -37,7 +32,7 @@ parseShellTestFile debug f = do
 shelltestfilep :: Parser [ShellTest]
 shelltestfilep = do
   ptrace_ "shelltestfilep 0"
-  ts <- concat `fmap` many (try inputthentestsp <|> ((:[]) `fmap` try testwithinputp))
+  ts <- concat <$> many (try inputthentestsp <|> ((:[]) <$> try testwithinputp))
   ptrace "shelltestfilep 1" ts
   skipMany whitespaceorcommentlinep
   ptrace_ "shelltestfilep 2"
