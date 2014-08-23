@@ -6,13 +6,14 @@ export LANG=en_US.UTF-8
 # flag(s) to work around ghc vs. macports issue on mac, if needed
 PREFERMACUSRLIBFLAGS=-L/usr/lib
 
-BUILDFLAGS=-threaded -W -fwarn-tabs -Werror $(PREFERMACUSRLIBFLAGS)
+BUILDFLAGS=-idist/build/autogen -threaded -W -fwarn-tabs $(PREFERMACUSRLIBFLAGS) # -Wall
 PROGNAME=shelltest
 # when running tests, use the latest version to test itself
 SHELLTEST=./$(PROGNAME) --with ./$(PROGNAME)
 
 ######################################################################
 # BUILD
+# XXX needs update for new modules
 
 build:
 	ghc --make $(BUILDFLAGS) $(PROGNAME).hs
@@ -50,6 +51,9 @@ test-ghcall: \
 	test-ghc-7.2.2 \
 	test-ghc-7.0.4 \
 	test-ghc-6.12.3 \
+
+ghci:
+	ghci -idist/build/autogen shelltest.hs
 
 ######################################################################
 # DOC
