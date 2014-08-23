@@ -28,7 +28,6 @@ extra-source-files:
 executable shelltest
   main-is:          shelltest.hs
   other-modules:
-                    PlatformString
                     Utils
                     Types
                     Parse

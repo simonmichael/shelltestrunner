@@ -35,7 +35,6 @@ import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
 
 import Paths_shelltestrunner (version)
-import PlatformString (fromPlatformString, toPlatformString)
 import Utils
 import Types
 import Parse
@@ -118,7 +117,7 @@ main = do
   let testfiles = filter (not . \p -> any (`isInfixOf` p) (exclude args)) testfiles'
       excluded = length testfiles' - length testfiles
   when (excluded > 0) $ printf "Excluding %d test files\n" excluded
-  when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " $ map fromPlatformString $ testfiles)
+  when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
   parseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
   unless (debug_parse args) $ defaultMainWithArgs
                                (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults)
@@ -154,7 +153,7 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
       dir = if execdir args then Just $ takeDirectory n else Nothing
       trim' = if all_ args then id else trim
   when (debug args) $ printf "command was: %s\n" (show cmd)
-  (o_actual, e_actual, x_actual) <- runCommandWithInput dir (toPlatformString cmd) i
+  (o_actual, e_actual, x_actual) <- runCommandWithInput dir cmd i
   when (debug args) $ do
     printf "stdout was : %s\n" (show $ trim' o_actual)
     printf "stderr was : %s\n" (show $ trim' e_actual)

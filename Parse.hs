@@ -7,7 +7,6 @@ import Data.Maybe (isNothing,catMaybes)
 import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
 
-import PlatformString (fromPlatformString)
 import Types
 -- import Utils
 
@@ -28,11 +27,11 @@ parseShellTestFile debug f = do
            let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
                    | otherwise     = ts
            when (debug) $ do
-             printf "parsed %s:\n" $ fromPlatformString f
+             printf "parsed %s:\n" f
              mapM_ (putStrLn.(' ':).show) ts'
            return $ Right ts'
     Left _ -> do
-           when (debug) $ printf "failed to parse any tests in %s\n" $ fromPlatformString f
+           when (debug) $ printf "failed to parse any tests in %s\n" f
            return p
 
 shelltestfilep :: Parser [ShellTest]
@@ -73,7 +72,7 @@ testafterinputp i = do
   x <- expectedexitcodep <?> "expected exit status"
   ptrace "  testafterinputp x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
-  f <- fromPlatformString . sourceName . statePos <$> getParserState
+  f <- sourceName . statePos <$> getParserState
   let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
   ptrace "  testafterinputp ." t
   return t
@@ -96,7 +95,7 @@ testwithinputp = do
   x <- expectedexitcodep <?> "expected exit status"
   ptrace " testwithinputp x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
-  f <- fromPlatformString . sourceName . statePos <$> getParserState
+  f <- sourceName . statePos <$> getParserState
   let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
   ptrace " testwithinputp ." t
   return t
