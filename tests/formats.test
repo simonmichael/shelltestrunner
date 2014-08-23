@@ -1,0 +1,32 @@
+# format 1 - test specifies input
+ cat
+<<<
+A
+>>>
+A
+>>>2
+>>>= 0
+
+# format 2 - tests follow input
+<<<
+B
+$$$  cat
+>>>
+B
+>>>2
+>>>= 0
+
+$$$  cat
+>>>
+B
+>>>2
+>>>= 0
+
+# format 1 again, allows $$$ too
+$$$  cat
+<<<
+A
+>>>
+A
+>>>2
+>>>= 0

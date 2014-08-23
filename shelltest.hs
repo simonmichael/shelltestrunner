@@ -5,42 +5,43 @@ shelltest - a tool for testing command-line programs.
 
 See shelltestrunner.cabal.
 
-(c) Simon Michael 2009-2011, released under GNU GPLv3 or later.
+(c) Simon Michael 2009-2014, released under GNU GPLv3 or later.
 
 -}
 
 module Main
 where
+
+import Control.Applicative ((<$>))
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
-import Control.Monad (liftM,when,unless)
+import Control.Monad (when,unless)
+import Data.Algorithm.Diff
 import Data.List
-import Data.Maybe (isNothing,isJust,fromJust,catMaybes)
+import Data.Maybe (isJust,fromJust)
 import Data.Version (showVersion)
-import qualified Test.HUnit (Test)
 import System.Console.CmdArgs
+import System.Directory (doesDirectoryExist)
 import System.Exit
+import System.FilePath (takeDirectory)
+import System.FilePath.Find (findWithHandler, (==?), always)
+import qualified System.FilePath.Find as Find (extension)
 import System.IO (Handle, hGetContents, hPutStr)
 import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProcess (..), waitForProcess, ProcessHandle)
 import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
-import Test.HUnit hiding (Test)
+import Test.HUnit
 import Text.ParserCombinators.Parsec
 import Text.Printf (printf)
-import Text.Regex.TDFA ((=~))
-import Debug.Trace
-import System.Directory (doesDirectoryExist)
-import System.FilePath (takeDirectory)
-import System.FilePath.Find (findWithHandler, (==?), always)
-import qualified System.FilePath.Find as Find (extension)
-import Control.Applicative ((<$>))
-import Data.Algorithm.Diff
 
-import PlatformString (fromPlatformString, toPlatformString)
 import Paths_shelltestrunner (version)
+import PlatformString (fromPlatformString, toPlatformString)
+import Utils
+import Types
+import Parse
 
-strace :: Show a => a -> a
-strace a = trace (show a) a
+-- import qualified Hledger.Utils (trace,strace,ptrace)
+
 
 progname, progversion :: String
 progname = "shelltest"
@@ -102,27 +103,6 @@ argdefs = Args {
     &= summary progversion
     &= details proghelpsuffix
 
-data ShellTest = ShellTest {
-     testname         :: String
-    ,command          :: TestCommand
-    ,stdin            :: Maybe String
-    ,stdoutExpected   :: Maybe Matcher
-    ,stderrExpected   :: Maybe Matcher
-    ,exitCodeExpected :: Matcher
-    }
-
-data TestCommand = ReplaceableCommand String
-                 | FixedCommand String
-                   deriving Show
-
-type Regexp = String
-
-data Matcher = Lines Int String
-             | Numeric String
-             | NegativeNumeric String
-             | PositiveRegex Regexp
-             | NegativeRegex Regexp
-
 main :: IO ()
 main = do
   args' <- cmdArgs argdefs >>= checkArgs
@@ -139,7 +119,7 @@ main = do
       excluded = length testfiles' - length testfiles
   when (excluded > 0) $ printf "Excluding %d test files\n" excluded
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " $ map fromPlatformString $ testfiles)
-  parseresults <- mapM (parseShellTestFile args) testfiles
+  parseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
   unless (debug_parse args) $ defaultMainWithArgs
                                (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults)
                                (passthroughopts ++ if color args then [] else ["--plain"])
@@ -156,121 +136,8 @@ checkArgs args = do
 warn :: String -> IO ()
 warn s = putStrLn s >> exitWith (ExitFailure 1)
 
--- parsing
 
-parseShellTestFile :: Args -> FilePath -> IO (Either ParseError [ShellTest])
-parseShellTestFile args f = do
-  p <- parseFromFile shelltestfilep f
-  case p of
-    Right ts -> do
-           let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
-                   | otherwise     = ts
-           when (debug args || debug_parse args) $ do
-                               printf "parsed %s:\n" $ fromPlatformString f
-                               mapM_ (putStrLn.(' ':).show) ts'
-           return $ Right ts'
-    Left _ -> do
-           when (debug args || debug_parse args) $ do
-                               printf "failed to parse any tests in %s\n" $ fromPlatformString f
-           return p
-
-shelltestfilep :: Parser [ShellTest]
-shelltestfilep = do
-  ts <- many (try shelltestp)
-  skipMany whitespaceorcommentlinep
-  eof
-  return ts
-
-shelltestp :: Parser ShellTest
-shelltestp = do
-  st <- getParserState
-  let f = fromPlatformString $ sourceName $ statePos st
-  skipMany whitespaceorcommentlinep
-  c <- commandp <?> "command line"
-  i <- optionMaybe inputp <?> "input"
-  o <- optionMaybe expectedoutputp <?> "expected output"
-  e <- optionMaybe expectederrorp <?> "expected error output"
-  x <- expectedexitcodep <?> "expected exit status"
-  when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
-  return $ ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
-
-newlineoreofp, whitespacecharp :: Parser Char
-linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,delimiterp,inputp :: Parser String
-linep = (anyChar `manyTill` newline) <?> "rest of line"
-newlineoreofp = newline <|> (eof >> return '\n') <?> "newline or end of file"
-lineoreofp = (anyChar `manyTill` newlineoreofp)
-whitespacecharp = oneOf " \t"
-whitespacep = many whitespacecharp
-whitespacelinep = try (newline >> return "") <|> try (whitespacecharp >> whitespacecharp `manyTill` newlineoreofp)
-commentlinep = try (whitespacep >> char '#' >> lineoreofp) <?> "comments"
-whitespaceorcommentlinep = commentlinep <|> whitespacelinep
-whitespaceorcommentlineoreofp = choice [(eof >> return ""), commentlinep, whitespacelinep]
-delimiterp = choice [try $ string "<<<", try $ string ">>>", eof >> return ""]
-
-commandp,fixedcommandp,replaceablecommandp :: Parser TestCommand
-commandp = fixedcommandp <|> replaceablecommandp
-fixedcommandp = many1 whitespacecharp >> linep >>= return . FixedCommand
-replaceablecommandp = linep >>= return . ReplaceableCommand
-
-inputp = try $ string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
-
-expectedoutputp :: Parser Matcher
-expectedoutputp = (try $ do
-  string ">>>" >> optional (char '1')
-  whitespacep
-  choice [positiveregexmatcherp, negativeregexmatcherp, whitespaceorcommentlineoreofp >> linesmatcherp]
- ) <?> "expected output"
-
-expectederrorp :: Parser Matcher
-expectederrorp = (try $ do
-  string ">>>2"
-  whitespacep
-  choice [positiveregexmatcherp, negativeregexmatcherp, (whitespaceorcommentlineoreofp >> linesmatcherp)]
- ) <?> "expected error output"
-
-expectedexitcodep :: Parser Matcher
-expectedexitcodep = (try $ do
-  string ">>>="
-  whitespacep
-  choice [positiveregexmatcherp, try negativeregexmatcherp, numericmatcherp, negativenumericmatcherp]
- ) <?> "expected exit status"
-
-linesmatcherp :: Parser Matcher
-linesmatcherp = do
-  ln <- liftM sourceLine getPosition
-  (liftM $ Lines ln . unlines) (linep `manyTill` (lookAhead delimiterp)) <?> "lines of output"
-
-negativeregexmatcherp :: Parser Matcher
-negativeregexmatcherp = (do
-  char '!'
-  PositiveRegex r <- positiveregexmatcherp
-  return $ NegativeRegex r) <?> "non-matched regexp pattern"
-
-positiveregexmatcherp :: Parser Matcher
-positiveregexmatcherp = (do
-  char '/'
-  r <- (try escapedslashp <|> noneOf "/") `manyTill` (char '/')
-  whitespaceorcommentlineoreofp
-  return $ PositiveRegex r) <?> "regexp pattern"
-
-negativenumericmatcherp :: Parser Matcher
-negativenumericmatcherp = (do
-  char '!'
-  Numeric s <- numericmatcherp
-  return $ NegativeNumeric s
-  ) <?> "non-matched number"
-
-numericmatcherp :: Parser Matcher
-numericmatcherp = (do
-  s <- many1 $ oneOf "0123456789"
-  whitespaceorcommentlineoreofp
-  return $ Numeric s
-  ) <?> "number"
-
-escapedslashp :: Parser Char
-escapedslashp = char '\\' >> char '/'
-
--- running
+-- running tests
 
 testFileParseToHUnitTest :: Args -> Either ParseError [ShellTest] -> Test.HUnit.Test
 testFileParseToHUnitTest args (Right ts) = TestList $ map (shellTestToHUnitTest args) ts
@@ -378,74 +245,3 @@ showDiff args@Args{all_=all_,precise=precise} (l,r) ((Second ln) : ds) =
       show' = if precise then show else id
 showDiff args (l,r) ((Both _ _) : ds) = showDiff args (l+1,r+1) ds
 
-instance Show Matcher where show = showMatcherTrimmed
-
-showMatcherTrimmed :: Matcher -> String
-showMatcherTrimmed (PositiveRegex r)   = "/"++(trim r)++"/"
-showMatcherTrimmed (NegativeRegex r)   = "!/"++(trim r)++"/"
-showMatcherTrimmed (Numeric s)         = trim s
-showMatcherTrimmed (NegativeNumeric s) = "!"++ trim s
-showMatcherTrimmed (Lines _ s)         = trim s
-
-showMatcher :: Matcher -> String
-showMatcher (PositiveRegex r)   = "/"++r++"/"
-showMatcher (NegativeRegex r)   = "!/"++r++"/"
-showMatcher (Numeric s)         = s
-showMatcher (NegativeNumeric s) = "!"++ s
-showMatcher (Lines _ s)         = s
-
-instance Show ShellTest where
-    show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
-        printf "ShellTest {testname = %s, command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s}"
-                   (show $ trim n)
-                   (show c)
-                   (maybe "Nothing" (show.trim) i)
-                   (show o)
-                   (show e)
-                   (show x)
-
-
--- utils
-
-trim :: String -> String
-trim s | l <= limit = s
-       | otherwise = take limit s ++ suffix
-    where
-      limit = 500
-      l = length s
-      suffix = printf "...(%d more)" (l-limit)
-
--- toExitCode :: Int -> ExitCode
--- toExitCode 0 = ExitSuccess
--- toExitCode n = ExitFailure n
-
-fromExitCode :: ExitCode -> Int
-fromExitCode ExitSuccess     = 0
-fromExitCode (ExitFailure n) = n
-
-strip,lstrip,rstrip,dropws :: String -> String
-strip = lstrip . rstrip
-lstrip = dropws
-rstrip = reverse . dropws . reverse
-dropws = dropWhile (`elem` " \t")
-
--- | Test if a string contains a regular expression.  A malformed regexp
--- (or a regexp larger than 300 characters, to avoid a regex-tdfa memory leak)
--- will cause a runtime error.  This version uses regex-tdfa and no regexp
--- options.
-containsRegex :: String -> String -> Bool
-containsRegex s "" = containsRegex s "^"
-containsRegex s r
-    | length r <= 300 = s =~ r
-    | otherwise      =  error "please avoid regexps larger than 300 characters, they are currently problematic"
-
--- | Replace occurrences of old list with new list within a larger list.
-replace::(Eq a) => [a] -> [a] -> [a] -> [a]
-replace [] _ = id
-replace old new = replace'
-    where
-     replace' [] = []
-     replace' l@(h:ts) = if old `isPrefixOf` l
-                          then new ++ replace' (drop len l)
-                          else h : replace' ts
-     len = length old
