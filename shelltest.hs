@@ -1,10 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable, CPP #-}
 {- |
 
-shelltest - a tool for testing command-line programs.
-
-See shelltestrunner.cabal.
-
+shelltest - for testing command-line programs. See shelltestrunner.cabal.
 (c) Simon Michael 2009-2014, released under GNU GPLv3 or later.
 
 -}
@@ -33,8 +30,6 @@ import Import
 import Utils
 import Types
 import Parse
-
--- import qualified Hledger.Utils (trace,strace,ptrace)
 
 
 progname, progversion :: String

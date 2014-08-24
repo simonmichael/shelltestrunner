@@ -1,0 +1,33 @@
+# Test file with formats 1 and 2 intermixed
+
+# format 1
+ cat
+<<<
+A
+>>>
+A
+>>>2
+>>>= 0
+
+# format 2
+<<<
+B
+$$$  cat
+B
+>>>2
+>>>= 0
+
+$$$  cat
+B
+>>>2
+>>>= 0
+
+# format 1 again
+ cat
+<<<
+A
+>>>
+A
+>>>2
+>>>= 0
+

@@ -83,3 +83,5 @@ replace old new = replace'
                           else h : replace' ts
      len = length old
 
+choice' :: [GenParser tok st a] -> GenParser tok st a
+choice' = choice . map Text.ParserCombinators.Parsec.try

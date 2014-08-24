@@ -9,7 +9,7 @@ module Import
     , module Text.Printf
     ) where
 
-import Control.Applicative ((<$>))
+import Control.Applicative ((<$>), (<*), (*>))
 import Control.Monad (liftM, when, unless)
 import Data.List
 import Data.Maybe

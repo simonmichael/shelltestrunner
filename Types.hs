@@ -30,11 +30,11 @@ data TestCommand = ReplaceableCommand String
 
 type Regexp = String
 
-data Matcher = Lines Int String
-             | Numeric String
-             | NegativeNumeric String
-             | PositiveRegex Regexp
-             | NegativeRegex Regexp
+data Matcher = Lines Int String       -- ^ 0 or more lines of text, also the starting line number ?
+             | Numeric String         -- ^ numeric exit code as a string
+             | NegativeNumeric String -- ^ numeric exit code as a string, matched negatively
+             | PositiveRegex Regexp   -- ^ regular expression
+             | NegativeRegex Regexp   -- ^ regular expression, matched negatively
 
 instance Show Matcher where show = showMatcherTrimmed
 

@@ -8,15 +8,22 @@ import Types
 import qualified Utils
 
 
+-- Enable this to see parser debug output.
 dbg = False
 ptrace_ s  | dbg       = Utils.ptrace s
            | otherwise = return ()
 ptrace s a | dbg       = Utils.ptrace $ s ++ ": " ++ show a
            | otherwise = return ()
 
+-- | Try to parse this shelltest file and return the number of tests
+-- parsed, or 0 if there was a parse error.
+testparse :: FilePath -> IO Int
+testparse f = parseFromFile shelltestfile f  >>= return . either (const 0) length
+
+-- | Parse this shell test file, optionally logging debug output.
 parseShellTestFile :: Bool -> FilePath -> IO (Either ParseError [ShellTest])
 parseShellTestFile debug f = do
-  p <- parseFromFile shelltestfilep f
+  p <- parseFromFile shelltestfile f
   case p of
     Right ts -> do
            let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
@@ -29,149 +36,202 @@ parseShellTestFile debug f = do
            when (debug) $ printf "failed to parse any tests in %s\n" f
            return p
 
-shelltestfilep :: Parser [ShellTest]
-shelltestfilep = do
-  ptrace_ "shelltestfilep 0"
-  ts <- concat <$> many (try inputthentestsp <|> ((:[]) <$> try testwithinputp))
-  ptrace "shelltestfilep 1" ts
-  skipMany whitespaceorcommentlinep
-  ptrace_ "shelltestfilep 2"
+-- parsers
+
+shelltestfile :: Parser [ShellTest]
+shelltestfile = do
+  ptrace_ "shelltestfile 0"
+  ts <- concat <$> many (try format2testgroup <|> ((:[]) <$> try format1test))
+  ptrace "shelltestfile ts" ts
+  skipMany whitespaceorcommentline
+  ptrace_ "shelltestfile 2"
   eof
-  ptrace_ "shelltestfilep ."
+  ptrace_ "shelltestfile ."
   return ts
 
--- input followed by tests
+-- format 1 (v1.0+) - each test specifies its input; missing test parts are not checked
 
-inputthentestsp :: Parser [ShellTest]
-inputthentestsp = do
-  ptrace_ " inputthentestsp 0"
-  skipMany whitespaceorcommentlinep
-  ptrace_ " inputthentestsp 1"
-  i <- optionMaybe inputp <?> "input"
-  ptrace " inputthentestsp i" i
-  ts <- many1 $ try (testafterinputp i)
-  ptrace_ " inputthentestsp ."
-  return ts
-
-testafterinputp :: Maybe String -> Parser ShellTest
-testafterinputp i = do
-  ptrace_ "  testafterinputp 0"
-  skipMany whitespaceorcommentlinep
-  ptrace_ "  testafterinputp 1"
-  c <- commandp' <?> "command line"
-  ptrace "  testafterinputp c" c
-  o <- optionMaybe expectedoutputp <?> "expected output"
-  ptrace "  testafterinputp o" o
-  e <- optionMaybe expectederrorp <?> "expected error output"
-  ptrace "  testafterinputp e" e
-  x <- expectedexitcodep <?> "expected exit status"
-  ptrace "  testafterinputp x" x
-  when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
-  f <- sourceName . statePos <$> getParserState
-  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
-  ptrace "  testafterinputp ." t
-  return t
-
--- a test with its own input
-
-testwithinputp :: Parser ShellTest
-testwithinputp = do
-  ptrace_ " testwithinputp 0"
-  skipMany whitespaceorcommentlinep
-  ptrace_ " testwithinputp 1"
+format1test :: Parser ShellTest
+format1test = do
+  ptrace_ " format1test 0"
+  skipMany whitespaceorcommentline
+  ptrace_ " format1test 1"
   c <- commandp <?> "command line"
-  ptrace " testwithinputp c" c
-  i <- optionMaybe inputp <?> "input"
-  ptrace " testwithinputp i" i
-  o <- optionMaybe expectedoutputp <?> "expected output"
-  ptrace " testwithinputp o" o
-  e <- optionMaybe expectederrorp <?> "expected error output"
-  ptrace " testwithinputp e" e
-  x <- expectedexitcodep <?> "expected exit status"
-  ptrace " testwithinputp x" x
+  ptrace " format1test c" c
+  i <- optionMaybe input <?> "input"
+  ptrace " format1test i" i
+  o <- optionMaybe expectedoutput1 <?> "expected output"
+  ptrace " format1test o" o
+  e <- optionMaybe expectederror <?> "expected error output"
+  ptrace " format1test e" e
+  x <- expectedexitcode <?> "expected exit status"
+  ptrace " format1test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
   let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
-  ptrace " testwithinputp ." t
+  ptrace " format1test ." t
   return t
 
-newlineoreofp, whitespacecharp :: Parser Char
-linep,lineoreofp,whitespacep,whitespacelinep,commentlinep,whitespaceorcommentlinep,whitespaceorcommentlineoreofp,delimiterp,inputp :: Parser String
-linep = (anyChar `manyTill` newline) <?> "rest of line"
-newlineoreofp = newline <|> (eof >> return '\n') <?> "newline or end of file"
-lineoreofp = (anyChar `manyTill` newlineoreofp)
-whitespacecharp = oneOf " \t"
-whitespacep = many whitespacecharp
-whitespacelinep = try (newline >> return "") <|> try (whitespacecharp >> whitespacecharp `manyTill` newlineoreofp)
-commentlinep = try (whitespacep >> char '#' >> lineoreofp) <?> "comments"
-whitespaceorcommentlinep = commentlinep <|> whitespacelinep
-whitespaceorcommentlineoreofp = choice [(eof >> return ""), commentlinep, whitespacelinep]
-delimiterp = choice [string "$$$", string "<<<", try $ string ">>>", eof >> return ""]
+-- format 2 (v1.4+) - input first, then tests; missing test parts are implicit checks
 
-commandp,fixedcommandp,replaceablecommandp :: Parser TestCommand
-commandp = optional (string "$$$") >> (fixedcommandp <|> replaceablecommandp)
-commandp' = string "$$$" >> (fixedcommandp <|> replaceablecommandp)
-fixedcommandp = many1 whitespacecharp >> linep >>= return . FixedCommand
-replaceablecommandp = linep >>= return . ReplaceableCommand
+format2testgroup :: Parser [ShellTest]
+format2testgroup = do
+  ptrace_ " format2testgroup 0"
+  skipMany whitespaceorcommentline
+  ptrace_ " format2testgroup 1"
+  i <- optionMaybe (linesBetween ["<<<",""] ["$$$","<<<"]) <?> "input"
+  ptrace " format2testgroup i" i
+  ts <- many1 $ try (format2test i)
+  ptrace " format2testgroup ." ts
+  return ts
 
-inputp = try $ string "<<<" >> whitespaceorcommentlinep >> (liftM unlines) (linep `manyTill` (lookAhead delimiterp))
+format2test :: Maybe String -> Parser ShellTest
+format2test i = do
+  ptrace_ "  format2test 0"
+  skipMany whitespaceorcommentline
+  ptrace_ "  format2test 1"
+  c <- commandp' <?> "command line"
+  ptrace "  format2test c" c
+  nullstdout <- nullLinesMatcher . sourceLine <$> getPosition
+  o <- maybe (Just nullstdout) Just <$> optionMaybe expectedoutput2 <?> "expected output"
+  ptrace "  format2test o" o
+  nullstderr <- nullLinesMatcher . sourceLine <$> getPosition
+  e <- maybe (Just $ nullstderr) Just <$> optionMaybe expectederror <?> "expected error output"
+  ptrace "  format2test e" e
+  x <- fromMaybe nullStatusMatcher <$> optionMaybe expectedexitcode <?> "expected exit status"
+  ptrace "  format2test x" x
+  when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
+  f <- sourceName . statePos <$> getParserState
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  ptrace "  format2test ." t
+  return t
 
-expectedoutputp :: Parser Matcher
-expectedoutputp = (try $ do
-  string ">>>" >> optional (char '1')
-  whitespacep
-  choice [positiveregexmatcherp, negativeregexmatcherp, whitespaceorcommentlineoreofp >> linesmatcherp]
+--
+
+nullLinesMatcher n = Lines n ""
+nullStatusMatcher  = Numeric "0"
+
+input = try $ string "<<<" >> whitespaceorcommentline >> unlines <$> (line `manyTill` (lookAhead (try delimiter)))
+
+commandp,fixedcommand,replaceablecommand :: Parser TestCommand
+commandp = optional (string "$$$") >> (fixedcommand <|> replaceablecommand)
+commandp' = string "$$$" >> (fixedcommand <|> replaceablecommand)
+fixedcommand = many1 whitespacechar >> line >>= return . FixedCommand
+replaceablecommand = line >>= return . ReplaceableCommand
+
+expectedoutput1 :: Parser Matcher
+expectedoutput1 = (try $ do
+  string ">>>"
+  whitespace
+  choice [positiveregexmatcher, negativeregexmatcher, whitespaceorcommentlineoreof >> linesmatcher]
  ) <?> "expected output"
 
-expectederrorp :: Parser Matcher
-expectederrorp = (try $ do
+-- In format 2, >>> is used only with /REGEX/, also don't consume the
+-- whitespace/comments immediately preceding a following test.
+expectedoutput2 :: Parser Matcher
+expectedoutput2 = (try $ do
+  (try $ do string ">>>"
+            whitespace
+            (positiveregexmatcher <|> negativeregexmatcher)
+              <|> (do p <- getPosition
+                      error $ ">>> should be used only with a following /REGEX/ at "++show p))
+  <|> linesmatcher2
+ ) <?> "expected output"
+
+expectederror :: Parser Matcher
+expectederror = (try $ do
   string ">>>2"
-  whitespacep
-  choice [positiveregexmatcherp, negativeregexmatcherp, (whitespaceorcommentlineoreofp >> linesmatcherp)]
+  whitespace
+  choice [positiveregexmatcher, negativeregexmatcher, (whitespaceorcommentlineoreof >> linesmatcher)]
  ) <?> "expected error output"
 
-expectedexitcodep :: Parser Matcher
-expectedexitcodep = (try $ do
+expectedexitcode :: Parser Matcher
+expectedexitcode = (try $ do
   string ">>>="
-  whitespacep
-  choice [positiveregexmatcherp, try negativeregexmatcherp, numericmatcherp, negativenumericmatcherp]
+  whitespace
+  choice [positiveregexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher]
  ) <?> "expected exit status"
 
-linesmatcherp :: Parser Matcher
-linesmatcherp = do
-  ln <- liftM sourceLine getPosition
-  (liftM $ Lines ln . unlines) (linep `manyTill` (lookAhead delimiterp)) <?> "lines of output"
+linesmatcher :: Parser Matcher
+linesmatcher = do
+  ln <- sourceLine <$> getPosition
+  (Lines ln . unlines <$>) (line `manyTill` (lookAhead delimiter)) <?> "lines of output"
 
-negativeregexmatcherp :: Parser Matcher
-negativeregexmatcherp = (do
+-- For format 2, don't consume the whitespace/comments immediately preceding a following test.
+linesmatcher2 :: Parser Matcher
+linesmatcher2 = do
+  -- ptrace_ "   linesmatcher2 0"
+  ln <- sourceLine <$> getPosition
+  let endmarker = delimiterNotNewTest <|> try newTest <|> eofasstr
+  (Lines ln . unlines) <$> (line `manyTill` (lookAhead endmarker)) <?> "lines of output"
+
+
+negativeregexmatcher :: Parser Matcher
+negativeregexmatcher = (do
   char '!'
-  PositiveRegex r <- positiveregexmatcherp
-  return $ NegativeRegex r) <?> "non-matched regexp pattern"
+  PositiveRegex r <- positiveregexmatcher
+  return $ NegativeRegex r) <?> "non-matched regex pattern"
 
-positiveregexmatcherp :: Parser Matcher
-positiveregexmatcherp = (do
+positiveregexmatcher :: Parser Matcher
+positiveregexmatcher = (do
   char '/'
-  r <- (try escapedslashp <|> noneOf "/") `manyTill` (char '/')
-  whitespaceorcommentlineoreofp
-  return $ PositiveRegex r) <?> "regexp pattern"
+  r <- (try escapedslash <|> noneOf "/") `manyTill` (char '/')
+  whitespaceorcommentlineoreof
+  return $ PositiveRegex r) <?> "regex pattern"
 
-negativenumericmatcherp :: Parser Matcher
-negativenumericmatcherp = (do
+negativenumericmatcher :: Parser Matcher
+negativenumericmatcher = (do
   char '!'
-  Numeric s <- numericmatcherp
+  Numeric s <- numericmatcher
   return $ NegativeNumeric s
   ) <?> "non-matched number"
 
-numericmatcherp :: Parser Matcher
-numericmatcherp = (do
+numericmatcher :: Parser Matcher
+numericmatcher = (do
   s <- many1 $ oneOf "0123456789"
-  whitespaceorcommentlineoreofp
+  whitespaceorcommentlineoreof
   return $ Numeric s
   ) <?> "number"
 
-escapedslashp :: Parser Char
-escapedslashp = char '\\' >> char '/'
+escapedslash :: Parser Char
+escapedslash = char '\\' >> char '/'
 
--- | Try to parse this shelltest file and return the number of tests
--- parsed (0 on parse error). Best with dbg=True.
-testparse f = parseFromFile shelltestfilep f  >>= return . either (const 0) length
+linesBetween :: [String] -> [String] -> Parser String
+linesBetween startdelims enddelims = do
+  let delimp "" = string ""
+      delimp s  = string s <* whitespace <* newline
+  Utils.choice' $ map delimp startdelims
+  let end = choice $ (map (try . string) enddelims) ++ [eofasstr]
+  unlines <$> line `manyTill` lookAhead end
+
+delimiter = choice [string "$$$", string "<<<", try (string ">>>2"), try (string ">>>="), string ">>>", eofasstr]
+
+newTest = do
+  -- ptrace_ "    newTest 0"
+  many whitespaceorcommentline
+  delimiterNewTest
+
+delimiterNewTest = do
+  -- ptrace_ "     delimiterNewTest 0"
+  choice [string "$$$", string "<<<"]
+
+delimiterNotNewTest = do
+  -- ptrace_ "    delimiterNotNewTest 0"
+  choice [try (string ">>>2"), try (string ">>>="), string ">>>"]
+
+-- longdelims = ["<<<", "$$$", ">>>2", ">>>=", ">>>"]
+-- shortdelims = ["<", "$", ">2", ">=", ">"]
+
+newlineoreof, whitespacechar :: Parser Char
+line,lineoreof,whitespace,whitespaceline,commentline,whitespaceorcommentline,whitespaceorcommentlineoreof,delimiter,input :: Parser String
+line = (anyChar `manyTill` newline) <?> "rest of line"
+newlineoreof = newline <|> (eof >> return '\n') <?> "newline or end of file"
+lineoreof = (anyChar `manyTill` newlineoreof)
+whitespacechar = oneOf " \t"
+whitespace = many whitespacechar
+whitespaceline = try (newline >> return "") <|> try (whitespacechar >> whitespacechar `manyTill` newlineoreof)
+commentline = try (whitespace >> char '#' >> lineoreof) <?> "comments"
+whitespaceorcommentline = commentline <|> whitespaceline
+whitespaceorcommentlineoreof = choice [eofasstr, commentline, whitespaceline]
+
+eofasstr = eof >> return ""

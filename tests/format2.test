@@ -1,0 +1,36 @@
+# Test file format 2 - one or more test groups, which are input followed by one or more tests.
+#
+# OPTIONAL WHITESPACE/#COMMENT
+# OPTIONAL INPUT FOLLOWING OPTIONAL <<<
+# $$$ COMMAND LINE
+# OPTIONAL OUTPUT OR >>> /REGEX/
+# OPTIONAL >>>2 STDERR OR /REGEX/
+# OPTIONAL >>>= STATUS OR /REGEX/
+# 0 OR MORE ADDITIONAL TESTS IN THIS GROUP, WITH OPTIONAL PRECEDING WHITESPACE/#COMMENT
+# 0 OR MORE ADDITIONAL TEST GROUPS, <<< REQUIRED, WITH OPTIONAL PRECEDING WHITESPACE/#COMMENT
+#
+# The <<< delimiter is optional for the first input in the file.
+# The $$$ delimiter is always required.
+# The >>> delimiter is used only when matching stdout with a regex.
+# stdout/stderr/status are checked implicitly if missing.
+# Comment & blank lines preceding <<< or following >>>= are ignored. This means:
+# - comment & blank lines are allowed before and after tests and test groups,
+#   but not between input and the first test.
+# - the first input begins from the first <<<, or when that is omitted, from the
+#   first non-whitespace/comment line in the file
+# - expected output extends to the next >>>2 or >>>=,
+#   or the last non-whitespace/comment line preceding the next test or test group,
+#   or end of file.
+
+
+AA
+$$$  cat
+AA
+
+# test 2
+$$$  cat
+>>> /A/
+>>>2
+>>>= 0
+
+#
