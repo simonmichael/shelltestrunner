@@ -1,14 +1,15 @@
 name:           shelltestrunner
--- sync with: CHANGES [ANNOUNCE]
 version:        1.9.98
 category:       Testing
 synopsis:       A tool for testing command-line programs.
+
 description:
- shelltestrunner is a cross-platform tool for testing command-line
- programs (or arbitrary shell commands.)  It reads simple declarative tests
- specifying a command, some input, and the expected output, error output
- and exit status.  Tests can be run selectively, in parallel, with a
- timeout, in color, and/or with differences highlighted.
+  shelltestrunner is a cross-platform tool for testing command-line
+  programs (or arbitrary shell commands.)  It reads simple declarative tests
+  specifying a command, some input, and the expected output, error output
+  and exit status.  Tests can be run selectively, in parallel, with a
+  timeout, in color, and/or with differences highlighted.
+
 license:        GPL
 license-file:   LICENSE
 author:         Simon Michael <simon@joyful.com>
@@ -22,31 +23,33 @@ build-type:     Simple
 
 extra-tmp-files:
 extra-source-files:
-                    CHANGES
-                    tests/*.test
+  CHANGES
+  tests/*.test
 
 executable shelltest
-  main-is:          shelltest.hs
+  main-is: shelltest.hs
   other-modules:
-                    Import
-                    Utils
-                    Types
-                    Parse
-  ghc-options:      -threaded -W -fwarn-tabs
+    Import
+    Utils
+    Types
+    Parse
+
   build-depends:
-                     base                 >= 4     && < 5
-                    ,filemanip            >= 0.3   && < 0.4
-                    ,HUnit                            < 1.3
-                    ,cmdargs              >= 0.7   && < 0.11
-                    ,directory            >= 1.0
-                    ,filepath             >= 1.0
-                    ,parsec                           < 3.2
-                    ,regex-tdfa           >= 1.1   && < 1.3
-                    ,process                          < 1.3
-                    ,test-framework       >= 0.3.2 && < 0.9
-                    ,test-framework-hunit >= 0.2   && < 0.4
-                    ,utf8-string          >= 0.3.5 && < 0.4
-                    ,Diff                 >= 0.2.0 && < 0.4
+    base                 >= 4     && < 5,
+    Diff                 >= 0.2.0 && < 0.4
+    filemanip            >= 0.3   && < 0.4,
+    HUnit                            < 1.3,
+    cmdargs              >= 0.7   && < 0.11,
+    directory            >= 1.0,
+    filepath             >= 1.0,
+    parsec                           < 3.2,
+    process                          < 1.3,
+    regex-tdfa           >= 1.1   && < 1.3,
+    test-framework       >= 0.3.2 && < 0.9,
+    test-framework-hunit >= 0.2   && < 0.4,
+    utf8-string          >= 0.3.5 && < 0.4,
+
+  ghc-options: -threaded -W -fwarn-tabs
 
 source-repository head
   type:     darcs
