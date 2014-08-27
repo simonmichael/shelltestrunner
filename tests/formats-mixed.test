@@ -1,4 +1,5 @@
 # Test file with formats 1 and 2 intermixed
+# A format 1 test may not follow a format 2 test unless the latter is terminated with >>>=
 
 # format 1
  cat
