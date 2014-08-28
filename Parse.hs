@@ -144,21 +144,16 @@ command2 = string "$$$" >> (fixedcommand <|> replaceablecommand)
 -- whitespace/comments immediately preceding a following test.
 expectedoutput2 :: Parser Matcher
 expectedoutput2 = (try $ do
-  (try $ do string ">>>"
-            whitespace
-            (regexmatcher <|> negativeregexmatcher)
-              <|> (do p <- getPosition
-                      error $ ">>> should be used only with a following /REGEX/ at "++show p))
-  <|> linesmatcher2
+  (string ">>>" >> whitespace >> (regexmatcher <|> negativeregexmatcher))
+  <|> (optional (string ">>>" >> whitespaceline) >> linesmatcher2)
  ) <?> "expected output"
 
 -- Don't consume the whitespace/comments immediately preceding a
 -- following test.
 expectederror2 :: Parser Matcher
 expectederror2 = (try $ do
-  string ">>>2"
-  whitespace
-  choice [regexmatcher, negativeregexmatcher, (whitespaceorcommentlineoreof >> linesmatcher1)]
+  (string ">>>2" >> whitespace >> (regexmatcher <|> negativeregexmatcher))
+  <|> (optional (string ">>>2" >> whitespaceline) >> linesmatcher2)
  ) <?> "expected error output"
 
 expectedexitcode2 :: Parser Matcher
