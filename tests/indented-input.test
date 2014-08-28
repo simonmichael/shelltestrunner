@@ -1,5 +1,5 @@
 # indented input should not break the parser
- echo
+ cat
 <<<
  x
 >>>= 0
