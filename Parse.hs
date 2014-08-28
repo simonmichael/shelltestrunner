@@ -21,7 +21,7 @@ parseShellTestFile debug f = do
                    | otherwise     = ts
            when (debug) $ do
              printf "parsed %s:\n" f
-             mapM_ (putStrLn.(' ':).show) ts'
+             mapM_ (putStrLn.(' ':).ppShow) ts'
            return $ Right ts'
     Left _ -> do
            when (debug) $ printf "failed to parse any tests in %s\n" f
@@ -32,7 +32,7 @@ parseShellTestFile debug f = do
 
 -- show lots of parsing debug output, this is currently separate
 -- from the --debug-parse flag
-showParserDebugOutput = False
+showParserDebugOutput = debugLevel >= 2
 
 ptrace_ s  | showParserDebugOutput = Utils.ptrace s
            | otherwise             = return ()
@@ -43,11 +43,11 @@ shelltestfile :: Parser [ShellTest]
 shelltestfile = do
   ptrace_ "shelltestfile 0"
   ts <- concat <$> many (try format2testgroup <|> ((:[]) <$> try format1test))
-  ptrace "shelltestfile ts" ts
+  ptrace_ "shelltestfile 1"
   skipMany whitespaceorcommentline
   ptrace_ "shelltestfile 2"
   eof
-  ptrace_ "shelltestfile ."
+  ptrace "shelltestfile ." ts
   return ts
 
 
@@ -75,7 +75,7 @@ format1test = do
   return t
 
 command1 :: Parser TestCommand
-command1 = optional (string "$$$") >> (fixedcommand <|> replaceablecommand)
+command1 = optional (string "$$$" >> optional (char ' ')) >> (fixedcommand <|> replaceablecommand)
 
 input1 :: Parser String
 input1 = try $ string "<<<" >> whitespaceorcommentline >> unlines <$> (line `manyTill` (lookAhead (try delimiter)))
@@ -138,7 +138,7 @@ format2test i = do
   return t
 
 command2 :: Parser TestCommand
-command2 = string "$$$" >> (fixedcommand <|> replaceablecommand)
+command2 = string "$$$" >> optional (char ' ') >> (fixedcommand <|> replaceablecommand)
 
 -- In format 2, >>> is used only with /REGEX/, also don't consume the
 -- whitespace/comments immediately preceding a following test.
