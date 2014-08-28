@@ -31,14 +31,14 @@ AUTOBUILDCMDARGS=tests
 autobuild auto:
 	sp --no-exts --no-default-map -o $(PROGNAME) ghc --make $(BUILDFLAGS) $(PROGNAME).hs --run $(AUTOBUILDCMDARGS)
 
-# on unix, run all except windows tests
+# run cross-platform and unix-specific tests
 testunix test: build
-	$(SHELLTEST) tests --exclude windows -- -j8
+	$(SHELLTEST) tests tests.unix -- -j8
 
-# on windows, run all except unix tests
+# run cross-platform and windows-specific tests
 # (though if you are able to run make on windows, you may be able to/have to use testunix)
 testwindows:
-	$(SHELLTEST) tests --exclude unix -- -j8
+	$(SHELLTEST) tests tests.windows -- -j8
 
 # run tests with a specific GHC version
 test-ghc-%: shelltest.ghcall
