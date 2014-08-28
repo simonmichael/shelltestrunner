@@ -31,12 +31,13 @@ executable shelltest
   other-modules:
     Import
     Utils
+    Utils.Debug
     Types
     Parse
 
   build-depends:
     base                 >= 4     && < 5,
-    Diff                 >= 0.2.0 && < 0.4
+    Diff                 >= 0.2.0 && < 0.4,
     filemanip            >= 0.3   && < 0.4,
     HUnit                            < 1.3,
     cmdargs              >= 0.7   && < 0.11,
@@ -49,7 +50,7 @@ executable shelltest
     safe,
     test-framework       >= 0.3.2 && < 0.9,
     test-framework-hunit >= 0.2   && < 0.4,
-    utf8-string          >= 0.3.5 && < 0.4,
+    utf8-string          >= 0.3.5 && < 0.4
 
   ghc-options: -threaded -W -fwarn-tabs
 
