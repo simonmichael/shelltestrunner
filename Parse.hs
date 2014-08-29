@@ -30,8 +30,8 @@ parseShellTestFile debug f = do
 
 -- parsers
 
--- show lots of parsing debug output, this is currently separate
--- from the --debug-parse flag
+-- show lots of parsing debug output if enabled.
+-- NB not connected to the --debug-parse flag
 showParserDebugOutput = debugLevel >= 2
 
 ptrace_ s  | showParserDebugOutput = Utils.ptrace s
@@ -42,7 +42,12 @@ ptrace s a | showParserDebugOutput = Utils.ptrace $ s ++ ": " ++ show a
 shelltestfile :: Parser [ShellTest]
 shelltestfile = do
   ptrace_ "shelltestfile 0"
-  ts <- concat <$> many (try format2testgroup <|> ((:[]) <$> try format1test))
+  ts <- (do first <- try (format2testgroup False)
+            rest <- many $ try (format2testgroup True)
+            return $ concat $ first : rest
+        )
+        <|>
+        (many $ try format1test)
   ptrace_ "shelltestfile 1"
   skipMany whitespaceorcommentline
   ptrace_ "shelltestfile 2"
@@ -75,7 +80,7 @@ format1test = do
   return t
 
 command1 :: Parser TestCommand
-command1 = optional (string "$$$" >> optional (char ' ')) >> (fixedcommand <|> replaceablecommand)
+command1 = fixedcommand <|> replaceablecommand
 
 input1 :: Parser String
 input1 = try $ string "<<<" >> whitespaceorcommentline >> unlines <$> (line `manyTill` (lookAhead (try delimiter)))
@@ -105,12 +110,17 @@ expectedexitcode1 = (try $ do
 -- format 2 (shelltestrunner 1.4+)
 -- input first, then tests; missing test parts are implicitly checked
 
-format2testgroup :: Parser [ShellTest]
-format2testgroup = do
-  ptrace_ " format2testgroup 0"
+-- A format 2 test group, optionally with the initial <<< delimiter
+-- being optional.
+format2testgroup :: Bool -> Parser [ShellTest]
+format2testgroup inputRequiresDelimiter = do
+  ptrace " format2testgroup 0" inputRequiresDelimiter
   skipMany whitespaceorcommentline
   ptrace_ " format2testgroup 1"
-  i <- optionMaybe (linesBetween ["<<<",""] ["$$$","<<<"]) <?> "input"
+  let startdelims | inputRequiresDelimiter = ["<<<"]
+                  | otherwise              = ["<<<", ""]
+      enddelims = ["$$$","<<<"]
+  i <- optionMaybe (linesBetween startdelims enddelims) <?> "input"
   ptrace " format2testgroup i" i
   ts <- many1 $ try (format2test i)
   ptrace " format2testgroup ." ts
@@ -137,6 +147,10 @@ format2test i = do
   ptrace "  format2test ." t
   return t
 
+nullLinesMatcher n = Lines n ""
+
+nullStatusMatcher  = Numeric "0"
+
 command2 :: Parser TestCommand
 command2 = string "$$$" >> optional (char ' ') >> (fixedcommand <|> replaceablecommand)
 
@@ -144,33 +158,42 @@ command2 = string "$$$" >> optional (char ' ') >> (fixedcommand <|> replaceablec
 -- whitespace/comments immediately preceding a following test.
 expectedoutput2 :: Parser Matcher
 expectedoutput2 = (try $ do
-  (string ">>>" >> whitespace >> (regexmatcher <|> negativeregexmatcher))
-  <|> (optional (string ">>>" >> whitespaceline) >> linesmatcher2)
- ) <?> "expected output"
+  try (string ">>>" >> whitespace >> (regexmatcher <|> negativeregexmatcher))
+  <|> (optional (string ">>>" >> whitespaceline) >> linesmatcher2 <?> "expected output")
+ )
 
 -- Don't consume the whitespace/comments immediately preceding a
 -- following test.
 expectederror2 :: Parser Matcher
 expectederror2 = (try $ do
-  (string ">>>2" >> whitespace >> (regexmatcher <|> negativeregexmatcher))
-  <|> (optional (string ">>>2" >> whitespaceline) >> linesmatcher2)
- ) <?> "expected error output"
+  ptrace_ "   expectederror2 0"
+  string ">>>2" >> whitespace
+  ptrace_ "   expectederror2 1"
+  m <- (regexmatcher <|> negativeregexmatcher)
+       <|>
+       (newline >> linesmatcher2 <?> "expected error output")
+  ptrace "   expectederror2 ." m
+  return m
+ )
 
 expectedexitcode2 :: Parser Matcher
 expectedexitcode2 = expectedexitcode1
 
--- For format 2, don't consume the whitespace/comments immediately preceding a following test.
+-- The format 2 lines matcher consumes lines until one of these:
+-- 1. another section delimiter in this test (>>>, >>>2, >>>=)
+-- 2. the next test's start delimiter (<<<, $$$), or the start of blank/comment lines preceding it
+-- 3. end of file, or the start of blank/comment lines preceding it
 linesmatcher2 :: Parser Matcher
 linesmatcher2 = do
-  -- ptrace_ "   linesmatcher2 0"
+  ptrace_ "    linesmatcher2 0"
   ln <- sourceLine <$> getPosition
-  let endmarker = delimiterNotNewTest <|> try newTest <|> eofasstr
-  (Lines ln . unlines) <$> (line `manyTill` (lookAhead endmarker)) <?> "lines of output"
-
-newTest = do
-  -- ptrace_ "    newTest 0"
-  many whitespaceorcommentline
-  delimiterNewTest
+  ls <- unlines <$> 
+        line `manyTill` lookAhead (choice' [delimiterNotNewTest
+                                           ,many whitespaceorcommentline >> delimiterNewTest
+                                           ,many whitespaceorcommentline >> eofasstr])
+        <?> "lines of output"
+  ptrace "    linesmatcher2 ." ls
+  return $ Lines ln ls
 
 delimiterNewTest = do
   -- ptrace_ "     delimiterNewTest 0"
@@ -187,11 +210,6 @@ linesBetween startdelims enddelims = do
   Utils.choice' $ map delimp startdelims
   let end = choice $ (map (try . string) enddelims) ++ [eofasstr]
   unlines <$> line `manyTill` lookAhead end
-
--- for.. getting position ?
-nullLinesMatcher n = Lines n ""
-
-nullStatusMatcher  = Numeric "0"
 
 
 -- common
@@ -214,21 +232,21 @@ negativeregexmatcher :: Parser Matcher
 negativeregexmatcher = (do
   char '!'
   PositiveRegex r <- regexmatcher
-  return $ NegativeRegex r) <?> "non-matched regex pattern"
+  return $ NegativeRegex r) <?> "negative regex pattern"
 
 numericmatcher :: Parser Matcher
 numericmatcher = (do
   s <- many1 $ oneOf "0123456789"
   whitespaceorcommentlineoreof
   return $ Numeric s
-  ) <?> "number"
+  ) <?> "number match"
 
 negativenumericmatcher :: Parser Matcher
 negativenumericmatcher = (do
   char '!'
   Numeric s <- numericmatcher
   return $ NegativeNumeric s
-  ) <?> "non-matched number"
+  ) <?> "negative number match"
 
 linesmatcher1 :: Parser Matcher
 linesmatcher1 = do
