@@ -1,4 +1,5 @@
 # indented input should not break the parser
+ cat
+<<<
  x
-$$$  cat
->>> //
+>>>= 0

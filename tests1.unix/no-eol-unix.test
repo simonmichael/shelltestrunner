@@ -1,4 +1,5 @@
 # test output which does not end with a newline
+ cat
 <<<
-$$$  cat
 >>> /^$/
+>>>= 0

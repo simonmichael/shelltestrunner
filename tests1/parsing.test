@@ -1,12 +1,15 @@
 # misc. testfile parsing tests
 # 1. can we regexp-match a forward slash ?
-$$$  echo /
+ echo /
 >>> /\//
+>>>= 0
 
 # 2. can we handle an empty regexp ?
-$$$  echo
+ echo
 >>> //
+>>>= 0
 
 # 3. or a regexp followed by a comment ?
-$$$  echo
+ echo
 >>> // # comment
+>>>= 0
