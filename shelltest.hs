@@ -23,7 +23,7 @@ import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProce
 import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
-import Text.ParserCombinators.Parsec
+import Text.Parsec
 
 import Paths_shelltestrunner (version)
 import Import
@@ -97,7 +97,7 @@ main = do
   args' <- cmdArgs argdefs >>= checkArgs
   let (args,passthroughopts) = (args'{testpaths=realargs}, ptopts)
           where (ptopts,realargs) = partition ("-" `isPrefixOf`) $ testpaths args'
-  when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (show args)
+  when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
   let paths = testpaths args
   testfiles' <- nub . concat <$> mapM (\p -> do
                                        isdir <- doesDirectoryExist p
@@ -109,6 +109,7 @@ main = do
   when (excluded > 0) $ printf "Excluding %d test files\n" excluded
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
   parseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
+  when (debug args) $ printf "running tests:\n"
   unless (debug_parse args) $ defaultMainWithArgs
                                (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults)
                                (passthroughopts ++ if color args then [] else ["--plain"])
@@ -142,12 +143,13 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
                           (_, FixedCommand s)         -> s
       dir = if execdir args then Just $ takeDirectory n else Nothing
       trim' = if all_ args then id else trim
-  when (debug args) $ printf "command was: %s\n" (show cmd)
+  when (debug args) $ do
+    printf "actual command was: %s\n" (show cmd)
   (o_actual, e_actual, x_actual) <- runCommandWithInput dir cmd i
   when (debug args) $ do
-    printf "stdout was : %s\n" (show $ trim' o_actual)
-    printf "stderr was : %s\n" (show $ trim' e_actual)
-    printf "exit was   : %s\n" (show $ trim' $ show x_actual)
+    printf "actual stdout was : %s\n" (show $ trim' o_actual)
+    printf "actual stderr was : %s\n" (show $ trim' e_actual)
+    printf "actual exit was   : %s\n" (trim' $ show x_actual)
   let outputMatch = maybe True (o_actual `matches`) o_expected
   let errorMatch = maybe True (e_actual `matches`) e_expected
   let exitCodeMatch = show x_actual `matches` x_expected

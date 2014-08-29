@@ -19,8 +19,8 @@ instance Show ShellTest where
         printf "ShellTest {command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s, testname = %s}"
                    (show c)
                    (maybe "Nothing" (show.trim) i)
-                   (show o)
-                   (show e)
+                   (show $ show <$> o)
+                   (show $ show <$> e)
                    (show x)
                    (show $ trim n)
 
@@ -43,7 +43,7 @@ showMatcherTrimmed (PositiveRegex r)   = "/"++(trim r)++"/"
 showMatcherTrimmed (NegativeRegex r)   = "!/"++(trim r)++"/"
 showMatcherTrimmed (Numeric s)         = trim (show s)
 showMatcherTrimmed (NegativeNumeric s) = "!"++ trim (show s)
-showMatcherTrimmed (Lines _ s)         = trim (show s)
+showMatcherTrimmed (Lines _ s)         = trim s
 
 showMatcher :: Matcher -> String
 showMatcher (PositiveRegex r)   = "/"++r++"/"
