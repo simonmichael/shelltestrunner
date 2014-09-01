@@ -38,10 +38,6 @@ progversion = progname ++ " " ++ showVersion version
 proghelpsuffix :: [String]
 proghelpsuffix = [
    -- keep this bit synced with options width
-   "     -- TFOPTIONS       Set extra test-framework options like -j/--threads,"
-  ,"                        -t/--select-tests, -o/--timeout, --hide-successes."
-  ,"                        Use -- --help for a list. Avoid spaces."
-  ,""
   ]
 formathelp :: String
 formathelp = unlines [
@@ -64,10 +60,14 @@ data Args = Args {
     ,color       :: Bool
     ,diff        :: Bool
     ,precise     :: Bool
+    ,hide_successes :: Bool
+    ,include     :: [String]
     ,exclude     :: [String]
     ,execdir     :: Bool
     ,extension   :: String
     ,with        :: String
+    ,timeout     :: Int
+    ,threads     :: Int
     ,debug       :: Bool
     ,debug_parse :: Bool
     ,help_format :: Bool
@@ -79,10 +79,14 @@ argdefs = Args {
     ,color       = def     &= help "Show colored output if your terminal supports it"
     ,diff        = def     &= name "d" &= help "Show failures in diff format"
     ,precise     = def     &= help "Show failure output precisely (good for whitespace)"
+    ,hide_successes = def  &= help "Report only failed tests"
+    ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
     ,extension   = ".test" &= typ "EXT" &= help "Filename suffix of test files (default: .test)"
     ,with        = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
+    ,timeout     = def     &= name "o" &= typ "SECS" &= help "Number of seconds a test may run (default: no limit)"
+    ,threads     = def     &= name "j" &= typ "N" &= help "Number of threads for running tests (default: 1)"
     ,debug       = def     &= help "Show debug info, for troubleshooting"
     ,debug_parse = def     &= help "Show test file parsing info and stop"
     ,help_format = def     &= explicit &= name "help-format" &= help "Display test format help"
@@ -94,25 +98,41 @@ argdefs = Args {
 
 main :: IO ()
 main = do
+  -- parse args
   args' <- cmdArgs argdefs >>= checkArgs
-  let (args,passthroughopts) = (args'{testpaths=realargs}, ptopts)
-          where (ptopts,realargs) = partition ("-" `isPrefixOf`) $ testpaths args'
+  -- some of the cmdargs-parsed "arguments" may be test-framework options following --,
+  -- separate those out
+  let (tfopts', realargs) = partition ("-" `isPrefixOf`) $ testpaths args'
+      args = args'{testpaths=realargs}
+      tfopts = tfopts'
+               ++ if color args then [] else ["--plain"]
+               ++ if hide_successes args then ["--hide-successes"] else []
+               ++ ["--select-tests="++s | s <- include args]
+               ++ if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else []
+               ++ if threads args > 0 then ["--threads=" ++ show (threads args)] else []
+
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
-  let paths = testpaths args
-  testfiles' <- nub . concat <$> mapM (\p -> do
-                                       isdir <- doesDirectoryExist p
-                                       if isdir
-                                        then findWithHandler (\_ e->fail (show e)) always (Find.extension ==? extension args) p
-                                        else return [p]) paths
+
+  -- gather test files
+  testfiles' <- nub . concat <$> mapM
+                                 (\p -> do
+                                     isdir <- doesDirectoryExist p
+                                     if isdir
+                                       then findWithHandler (\_ e->fail (show e)) always (Find.extension ==? extension args) p
+                                       else return [p])
+                                 (testpaths args)
   let testfiles = filter (not . \p -> any (`isInfixOf` p) (exclude args)) testfiles'
       excluded = length testfiles' - length testfiles
   when (excluded > 0) $ printf "Excluding %d test files\n" excluded
+
+  -- parse test files
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
   parseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
+
+  -- run tests
   when (debug args) $ printf "running tests:\n"
-  unless (debug_parse args) $ defaultMainWithArgs
-                               (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults)
-                               (passthroughopts ++ if color args then [] else ["--plain"])
+  unless (debug_parse args) $
+    defaultMainWithArgs (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults) tfopts
 
 -- | Additional argument checking.
 checkArgs :: Args -> IO Args
