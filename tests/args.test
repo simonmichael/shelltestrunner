@@ -2,7 +2,7 @@
 
 # 1. with no args, should run all tests below current dir
 $$$ shelltest
->>> /Please specify at least one test file or directory/
+>>>2 /Usage: /
 >>>= !0
 
 # 2. XXX a bad executable should error without running tests
