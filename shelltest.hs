@@ -12,7 +12,7 @@ where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Data.Algorithm.Diff
-import Data.Monoid (mempty)
+-- import Data.Monoid (mempty)
 import Data.Version (showVersion)
 import Options.Applicative hiding (ParseError, command)
 import System.Directory (doesDirectoryExist)
@@ -25,7 +25,7 @@ import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProce
 import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
-import Text.Parsec hiding (many, option)
+import Text.Parsec hiding (many, option, (<|>))
 
 import Paths_shelltestrunner (version)
 import Import
@@ -55,8 +55,10 @@ formathelp = unlines [
   ,""
   ]
 
-data Args = Args {
-     all_        :: Bool
+data Args =
+  Args {
+     list        :: Bool
+    ,all_        :: Bool
     ,color       :: Bool
     ,diff        :: Bool
     ,precise     :: Bool
@@ -72,15 +74,18 @@ data Args = Args {
     ,debug_parse :: Bool
     ,help_format :: Bool
     ,testpaths   :: [FilePath]
-    } deriving (Show)
+    }
+  deriving (Show)
 
 argsparser :: Parser Args
-argsparser = Args
-  <$> switch          (long "all"            <> short 'a'                                           <> h "Show all failure output, even if large")
+argsparser =
+  Args
+  <$> switch          (long "list"                                                                  <> h "List available tests by name")
+  <*> switch          (long "all"            <> short 'a'                                           <> h "Show all failure output, even if large")
   <*> switch          (long "color"          <> short 'c'                                           <> h "Show colored output if your terminal supports it")
   <*> switch          (long "diff"           <> short 'd'                                           <> h "Show failures in diff format")
   <*> switch          (long "precise"        <> short 'p'                                           <> h "Show failure output precisely (good for whitespace)")
-  <*> switch          (long "hide-successes" <> short 'h'                                           <> h "Report only failed tests")
+  <*> switch          (long "hide-successes"                                                        <> h "Report only failed tests")
   <*> many (strOption (long "include"        <> short 'i' <> m "PAT"               <> n "include"   <> h "Include tests whose name contains this glob pattern"))
   <*> many (strOption (long "exclude"        <> short 'x' <> m "STR"               <> n "exclude"   <> h "Exclude test files whose path contains STR"))
   <*> strOption       (long "extension"                   <> m "EXT"  <> v ".test" <> n "extension" <> h "Filename suffix of test files (default: .test)")
@@ -91,7 +96,7 @@ argsparser = Args
   <*> switch          (long "debug"                                                                 <> h "Show debug info, for troubleshooting")
   <*> switch          (long "debug-parse"                                                           <> h "Show test file parsing info and stop")
   <*> switch          (long "help-format"                                                           <> h "Display test format help")
-  <*> some (strArgument (metavar "\nFILES/DIRS..."))
+  <*> some (strArgument (metavar "FILES/DIRS..."))
   where
     -- (l, s, m, v, n, h) = (long, short, metavar, value, needsarg, help)
     (m, v, n, h) = (metavar, value, needsarg, help)
@@ -133,7 +138,8 @@ main = do
   rawargs <- getArgs
   args <- handleParseResult (execParserPure parserprefs argsinfo rawargs) >>= extraArgsChecks
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
-  let tfargs =    if color args then [] else ["--plain"]
+  let tfargs =    if list args then ["--list"] else []
+               ++ if color args then [] else ["--plain"]
                ++ if hide_successes args then ["--hide-successes"] else []
                ++ ["--select-tests="++s | s <- include args]
                ++ if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else []
@@ -155,8 +161,8 @@ main = do
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
   testparseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
 
-  -- run tests
-  when (debug args) $ printf "running tests:\n"
+  -- list or run tests
+  when (debug args) $ printf "calling test-framework:\n"
   unless (debug_parse args) $
     flip defaultMainWithArgs tfargs $ concatMap (hUnitTestToTests . testFileParseToHUnitTest args) testparseresults
 
