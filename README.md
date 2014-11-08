@@ -14,7 +14,7 @@ If you have a testing situation such as this<sup><small>1</small></sup>,
 we at Joyful Corp. can help.
 
 **shelltestrunner** is a command-line tool for testing other command-line
-programs, or general shell commands, on GNU/Linux, Mac and Windows.
+programs, or general shell commands, on (eg) GNU/Linux, Mac and Windows.
 
 It reads tests which specify a command to run, some input, and the
 expected stdout, stderr, and exit status output.  It can run tests in
@@ -170,6 +170,9 @@ makes them run within the directory where they are defined, instead.
 else, which can be useful for testing alternate versions of a
 program. Test commands which have been indented by one or more spaces will
 not be affected by this option.
+
+`--exclude` can be useful to avoid running certain tests, eg
+unix-specific tests when on windows and vice-versa.
 
 The test-framework library provides additional options which you can
 specify after `--` (note: avoid spaces between flags and values here.)
