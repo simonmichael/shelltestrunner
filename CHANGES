@@ -1,3 +1,9 @@
+unreleased
+
+  * new shared-input test format, requiring fewer delimiters
+  * show the command when tests fail (John Chee)
+  * include tests in cabal sdist archive
+
 1.3.4 (2014/5/28)
 
   * drop cabal-file-th, support GHC 7.8.2
