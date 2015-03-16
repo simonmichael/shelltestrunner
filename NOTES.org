@@ -1,47 +1,13 @@
 
 * backlog
-** lighter syntax
-** --diff is not working
-$ shelltest tests/unicode-error-message.test --debug --diff
-shelltest 1.1
-args: Args {all_ = False, color = False, diff = True, exclude = [], execdir = False, extension = ".test", with = "", debug = True, debug_parse = False, help_format = False, testpaths = ["tests/unicode-error-message.test"]}
-processing 1 test files: tests/unicode-error-message.test
-parsed tests/unicode-error-message.test:
- ShellTest {testname = "tests/unicode-error-message.test", command = ReplaceableCommand "bin/hledger -f - balance", stdin = "2009-01-01 broken entry\n  \1076\1077\1073\1080\1090    1\n  \1082\1088\1077\1076\1080\1090  -2\n", stdoutExpected = Nothing, stderrExpected = Just /дебит/, exitCodeExpected = "1"}
-command was: "bin/hledger -f - balance"
-stdout was : ""
-stderr was : "hledger: could not parse journal data in (stdin)\ncould not balance this transaction (real postings are off by -1)\n2009/01/01 broken entry\n    \208\180\208\181\208\177\208\184\209\130              1\n    \208\186\209\128\208\181\208\180\208\184\209\130            -2\n\n\n"
-exit was   : "1"
-:tests/unicode-error-message.test: [Failed]
-Failed: 
-Expected stderr: /дебит/
-Got stderr:      "hledger: could not parse journal data in (stdin)\ncould not balance this transaction (real postings are off by -1)\n2009/01/01 broken entry\n    \208\180\208\181\208\177\208\184\209\130              1\n    \208\186\209\128\208\181\208\180\208\184\209\130            -2\n\n\n"
-
-         Test Cases  Total      
- Passed  0           0          
- Failed  1           1          
- Total   1           1          
-
-** regexp ignored (unquoted /)
-# simple add with no existing journal, no commodity entered
- rm -f add-default-commodity-$$.j; bin/hledger -f add-default-commodity-$$.j add; rm -f add-default-commodity-$$.j
-<<<
-
-
-a
-1000
-b
-
-.
->>> /lkdjsljdf^date [2010/11/16]: description []: account 1: amount  1: account 2: amount  2 [-1000]: account 3: date [2010/11/16]: $/
-
-$ shelltest tests/add-default-commodity.test 
-:tests/add-default-commodity.test:1: [OK]
-
-** move to github ?
-** 2014 survey
-** 1.4/2.0
+** real-world testing
+** bump to 2.0
 ** wishlist
+*** optional lighter delimiters (< $ > >2 >=)
+*** customisable delimiters
+*** -j without arg
+*** --list should respect -i (-- -t)
+*** disable -- TFOPTS passthrough ?
 *** error in one test should not stop all
 *** don't run tests if the -w option is bad
 *** don't nub test names ? (for testing $$ with multithreaded)
@@ -65,3 +31,4 @@ expected: ([("assets:bank","assets:bank",0,$3.00),("assets:bank:checking","check
 
 *** report stdin with --debug
 *** timeouts for commands
+*** 2015 survey ?
