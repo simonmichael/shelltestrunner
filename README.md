@@ -2,6 +2,10 @@
 title: shelltestrunner: command-line testing
 ---
 
+<a href="http://github.com/simonmichael/shelltestrunner">
+<img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
+</a>
+
 <div id=title>
 <h1>Command-line testing</h1>
 <img src="site/title2.png">
@@ -9,18 +13,17 @@ title: shelltestrunner: command-line testing
 
 * toc
 
-*Human or Replicant ?*
+*Human or Replicant ??*
+
 If you have a testing situation such as this<sup><small>1</small></sup>,
-we at Joyful Corp. can help.
+we at Joyful Corp. can help!
 
 **shelltestrunner** is a command-line tool for testing other command-line
-programs, or general shell commands, on (eg) Unix, Mac and Windows.
-
+programs, or general shell commands, on (eg) Unix, Mac or Windows.
 It reads tests which specify a command to run, some input, and the
 expected stdout, stderr, and exit status output.  It can run tests in
-parallel, selectively, with a timeout, with color output, or with
-expected/actual differences highlighted.  shelltestrunner is free
-software released under GPLv3+.
+parallel, selectively, with a timeout, with color output, etc.
+shelltestrunner is free software released under GPLv3+.
 
 <a name="note1">
 <small><sup>1</sup> expressed on the command line</small>
@@ -34,7 +37,8 @@ Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | **`apt-get install shelltestrunner`**
 Gentoo:                          | **`emerge shelltestrunner`**
 Elsewhere:<br><br><br>           | Get [GHC](http://haskell.org/ghc) and cabal (or the [Haskell Platform](http://haskell.org/platform)),<br>ensure `~/.cabal/bin` is in your $PATH,<br>**`cabal install shelltestrunner`**
 
-Tests are kept in files with the `.test` suffix by default. Here's a simple test file, `true.test`:
+Tests are kept in files with the `.test` suffix by default. Here's a
+simple test file, `true.test`, containing two tests:
 
 ```bash
 # true, given no input, prints nothing on stdout or stderr and
@@ -46,8 +50,8 @@ $$$ false
 >>>= 1
 ```
 
-Here's another test file, `cat.test`. Here, the first test group has
-two tests sharing the same input ("foo"):
+Here's another test file, `cat.test`. Here, the first two tests are
+in a group and share the same input (`foo`):
 
 ```bash
 # 1a. cat copies its input to stdout
@@ -245,7 +249,7 @@ Here
 [examples](http://code.google.com/p/eddie/source/browse/#hg%2Ftests).
 
 
-## Contributing
+## Contribute
 
 <div id="donate-buttons" style="float:right; padding-left:1em;">
 <a title="Donate via Gittip" href="https://www.gittip.com/simonmichael"><img src="/site/gittip.png" alt="Gittip"></a>
