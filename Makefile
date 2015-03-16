@@ -27,7 +27,7 @@ shelltest.ghcall: \
 	shelltest.ghc-7.0.4 \
 	shelltest.ghc-6.12.3 \
 
-AUTOBUILDCMDARGS=tests
+AUTOBUILDCMDARGS=tests*
 autobuild auto:
 	sp --no-exts --no-default-map -o $(PROGNAME) ghc --make $(BUILDFLAGS) $(PROGNAME).hs --run $(AUTOBUILDCMDARGS)
 
@@ -35,17 +35,17 @@ test: testunix
 
 # run cross-platform and unix-specific tests
 testunix: build
-	$(SHELLTEST) tests1 tests1.unix tests tests.unix -j8
+	$(SHELLTEST) tests.format1 tests.format1.unix tests.format2 tests.format2.unix -j8
 
 # run cross-platform and windows-specific tests
 # (though if you are able to run make on windows, you may be able to/have to use testunix)
 testwindows:
-	$(SHELLTEST) tests1 tests1.windows tests tests.windows -j8
+	$(SHELLTEST) tests.format1 tests.format1.windows tests.format2 tests.format2.windows -j8
 
 # run tests with a specific GHC version
 test-ghc-%: shelltest.ghcall
 	@echo; echo testing shelltest built with ghc-$*
-	@(./shelltest.ghc-$* --with ./shelltest.ghc-$* tests --exclude windows -j8 --hide-successes \
+	@(./shelltest.ghc-$* --with ./shelltest.ghc-$* tests* --exclude windows -j8 --hide-successes \
 	&& echo $@ PASSED) || echo $@ FAILED
 
 test-ghcall: \
@@ -193,7 +193,7 @@ HSFILES=*.hs Utils/*.hs
 TESTFILES=tests*/*.test
 
 TAGS: $(HSFILES) $(TESTFILES) *.md Makefile
-	$(TAG) $(HSFILES) $(TESTFILES) *.md tests/*.test Makefile
+	$(TAG) $(HSFILES) $(TESTFILES) *.md Makefile
 
 clean:
 	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`
