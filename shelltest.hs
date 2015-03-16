@@ -107,12 +107,12 @@ main = do
   let (tfopts', realargs) = partition ("-" `isPrefixOf`) $ testpaths args'
       args = args'{testpaths=realargs}
       tfopts = tfopts'
-               ++ if list args then ["--list"] else []
-               ++ if color args then [] else ["--plain"]
-               ++ if hide_successes args then ["--hide-successes"] else []
-               ++ ["--select-tests="++s | s <- include args]
-               ++ if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else []
-               ++ if threads args > 0 then ["--threads=" ++ show (threads args)] else []
+               ++ (if list args then ["--list"] else [])
+               ++ (if color args then [] else ["--plain"])
+               ++ (if hide_successes args then ["--hide-successes"] else [])
+               ++ (["--select-tests="++s | s <- include args])
+               ++ (if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else [])
+               ++ (if threads args > 0 then ["--threads=" ++ show (threads args)] else [])
 
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
 
