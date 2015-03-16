@@ -215,7 +215,7 @@ The [exit status](http://en.wikipedia.org/wiki/Exit_status) is a
 number, normally 0 for a successful exit.  This too can be prefixed
 with `!` to negate the match, or you can use a `/REGEX/`.
 
-### Old (1.x) format
+<h3>Old (1.x) format</h3>
 
 This format is also supported for backward compatibility, but
 deprecated.  Test files contain one or more individual tests, each
