@@ -1,11 +1,12 @@
 unreleased
 
+  * new test format allowing input re-use and a lighter syntax
   * shelltest --list ... lists the tests found
-  * expose common test-framework features as native options
-  * new shared-input test format, requiring fewer delimiters
+  * replace the test-framework options with native ones
   * show the command when tests fail (John Chee)
-  * include tests in cabal sdist archive
+  * include tests in cabal sdist archive for packagers
   * allow utf8-string-1
+  * code moved to github
 
 1.3.4 (2014/5/28)
 
