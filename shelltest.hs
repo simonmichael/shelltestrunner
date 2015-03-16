@@ -56,8 +56,8 @@ formathelp = unlines [
   ]
 
 data Args = Args {
-     all_        :: Bool
-    ,list        :: Bool
+     list        :: Bool
+    ,all_        :: Bool
     ,color       :: Bool
     ,diff        :: Bool
     ,precise     :: Bool
@@ -76,22 +76,22 @@ data Args = Args {
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     all_        = def     &= help "Show all failure output, even if large"
-    ,list        = def     &= help "List available tests by name"
+     list        = def     &= help "List all parsed tests by name"
+    ,all_        = def     &= help "Don't truncate output, even if large"
     ,color       = def     &= help "Show colored output if your terminal supports it"
-    ,diff        = def     &= name "d" &= help "Show failures in diff format"
-    ,precise     = def     &= help "Show failure output precisely (good for whitespace)"
-    ,hide_successes = def  &= help "Report only failed tests"
+    ,diff        = def     &= name "d" &= help "Show expected output mismatches in diff format"
+    ,precise     = def     &= help "Show expected/actual output precisely (eg whitespace)"
+    ,hide_successes = def  &= help "Show only test failures"
     ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
-    ,extension   = ".test" &= typ "EXT" &= help "Filename suffix of test files (default: .test)"
+    ,extension   = ".test" &= typ "EXT" &= help "File suffix of test files (default: .test)"
     ,with        = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
     ,timeout     = def     &= name "o" &= typ "SECS" &= help "Number of seconds a test may run (default: no limit)"
     ,threads     = def     &= name "j" &= typ "N" &= help "Number of threads for running tests (default: 1)"
     ,debug       = def     &= help "Show debug info, for troubleshooting"
     ,debug_parse = def     &= help "Show test file parsing info and stop"
-    ,help_format = def     &= explicit &= name "help-format" &= help "Describe the test format"
+    ,help_format = def     &= explicit &= name "help-format" &= help "Describe the test file format"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
     &= program progname
