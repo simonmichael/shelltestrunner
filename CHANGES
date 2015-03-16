@@ -1,8 +1,11 @@
 unreleased
 
+  * shelltest --list ... lists the tests found
+  * expose common test-framework features as native options
   * new shared-input test format, requiring fewer delimiters
   * show the command when tests fail (John Chee)
   * include tests in cabal sdist archive
+  * allow utf8-string-1
 
 1.3.4 (2014/5/28)
 
