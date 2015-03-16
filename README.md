@@ -109,8 +109,8 @@ or a `/REGEXP/`. Again, use a `!` prefix to negate the match. Eg `!0` matches an
 Comment lines beginning with `#` may be used between tests, but not within them.
 
 Here
-[are](http://hub.darcs.net/simon/shelltestrunner/tests)
-[some](http://hub.darcs.net/simon/hledger/tests)
+[are](https://github.com/simonmichael/shelltestrunner/tree/master/tests)
+[some](https://github.com/simonmichael/hledger/tree/master/tests)
 <!-- [more](https://github.com/yesodweb/yesod/tree/master/yesod/test) -->
 [real](https://github.com/bjpop/berp/tree/master/test/regression)
 [world](https://github.com/magthe/cblrepo/tree/master/tests)
@@ -207,16 +207,10 @@ A test's name is what you see when running tests, ie the file name plus the sequ
 ## Contributing
 
 The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
-([Release notes](http://hackage.haskell.org/package/shelltestrunner/changelog)).
-
-The latest code is on darcs hub<sup><small>3</small></sup>
-([browse](http://hub.darcs.net/simon/shelltestrunner),
-[changes](http://hub.darcs.net/simon/shelltestrunner/changes)).
-Clone it with:
-
-```bash
-$ darcs get http://hub.darcs.net/simon/shelltestrunner
-```
+([changelog](http://hackage.haskell.org/package/shelltestrunner/changelog)).
+The [code](https://github.com/simonmichael/shelltestrunner)
+and [issues](https://github.com/simonmichael/shelltestrunner/issues)
+are on github.
 
 <div id="donate-buttons" style="float:right; padding-left:1em;">
 <a title="Donate via Gittip" href="https://www.gittip.com/simonmichael"><img src="/site/gittip.png" alt="Gittip"></a>
@@ -228,10 +222,6 @@ Here's the
 [2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).
 [Email](mailto:simon@joyful.com?subject=shelltestrunner) or
 [chat](irc://irc.freenode.net/#haskell) me (`sm` on irc.freenode.net).
-
-<a name="note3"><small><sup>3</sup>
-For help with darcs see [here](http://hub.darcs.net).
-</small></a>
 
 ## Credits
 
