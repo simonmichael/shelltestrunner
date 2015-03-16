@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, CPP, RankNTypes #-}
+{-# LANGUAGE DeriveDataTypeable, CPP #-}
 {- |
 
 shelltest - for testing command-line programs. See shelltestrunner.cabal.
@@ -12,11 +12,9 @@ where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Data.Algorithm.Diff
--- import Data.Monoid (mempty)
 import Data.Version (showVersion)
-import Options.Applicative hiding (ParseError, command)
+import System.Console.CmdArgs
 import System.Directory (doesDirectoryExist)
-import System.Environment (getArgs)
 import System.FilePath (takeDirectory)
 import System.FilePath.Find (findWithHandler, (==?), always)
 import qualified System.FilePath.Find as Find (extension)
@@ -25,7 +23,7 @@ import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProce
 import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
-import Text.Parsec hiding (many, option, (<|>))
+import Text.Parsec
 
 import Paths_shelltestrunner (version)
 import Import
@@ -37,9 +35,11 @@ import Parse
 progname, progversion :: String
 progname = "shelltest"
 progversion = progname ++ " " ++ showVersion version
-helpheader = progversion
-helpfooter = unlines [
+proghelpsuffix :: [String]
+proghelpsuffix = [
+   -- keep this bit synced with options width
   ]
+formathelp :: String
 formathelp = unlines [
    "Test format:"
   ,""
@@ -55,95 +55,66 @@ formathelp = unlines [
   ,""
   ]
 
-data Args =
-  Args {
-     list        :: Bool
-    ,all_        :: Bool
+data Args = Args {
+     all_        :: Bool
+    ,list        :: Bool
     ,color       :: Bool
     ,diff        :: Bool
     ,precise     :: Bool
     ,hide_successes :: Bool
     ,include     :: [String]
     ,exclude     :: [String]
+    ,execdir     :: Bool
     ,extension   :: String
     ,with        :: String
-    ,execdir     :: Bool
     ,timeout     :: Int
     ,threads     :: Int
     ,debug       :: Bool
     ,debug_parse :: Bool
     ,help_format :: Bool
     ,testpaths   :: [FilePath]
+    } deriving (Show, Data, Typeable)
+
+argdefs = Args {
+     all_        = def     &= help "Show all failure output, even if large"
+    ,list        = def     &= help "List available tests by name"
+    ,color       = def     &= help "Show colored output if your terminal supports it"
+    ,diff        = def     &= name "d" &= help "Show failures in diff format"
+    ,precise     = def     &= help "Show failure output precisely (good for whitespace)"
+    ,hide_successes = def  &= help "Report only failed tests"
+    ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern"
+    ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
+    ,execdir     = def     &= help "Run tests from within the test file's directory"
+    ,extension   = ".test" &= typ "EXT" &= help "Filename suffix of test files (default: .test)"
+    ,with        = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
+    ,timeout     = def     &= name "o" &= typ "SECS" &= help "Number of seconds a test may run (default: no limit)"
+    ,threads     = def     &= name "j" &= typ "N" &= help "Number of threads for running tests (default: 1)"
+    ,debug       = def     &= help "Show debug info, for troubleshooting"
+    ,debug_parse = def     &= help "Show test file parsing info and stop"
+    ,help_format = def     &= explicit &= name "help-format" &= help "Describe the test format"
+    ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
-  deriving (Show)
-
-argsparser :: Parser Args
-argsparser =
-  Args
-  <$> switch          (long "list"                                                                  <> h "List available tests by name")
-  <*> switch          (long "all"            <> short 'a'                                           <> h "Show all failure output, even if large")
-  <*> switch          (long "color"          <> short 'c'                                           <> h "Show colored output if your terminal supports it")
-  <*> switch          (long "diff"           <> short 'd'                                           <> h "Show failures in diff format")
-  <*> switch          (long "precise"        <> short 'p'                                           <> h "Show failure output precisely (good for whitespace)")
-  <*> switch          (long "hide-successes"                                                        <> h "Report only failed tests")
-  <*> many (strOption (long "include"        <> short 'i' <> m "PAT"               <> n "include"   <> h "Include tests whose name contains this glob pattern"))
-  <*> many (strOption (long "exclude"        <> short 'x' <> m "STR"               <> n "exclude"   <> h "Exclude test files whose path contains STR"))
-  <*> strOption       (long "extension"                   <> m "EXT"  <> v ".test" <> n "extension" <> h "Filename suffix of test files (default: .test)")
-  <*> strOption       (long "with"           <> short 'w' <> m "EXE"  <> v ""      <> n "with"      <> h "Replace the first word of (unindented) test commands")
-  <*> switch          (long "execdir"                                                               <> h "Run tests from within the test file's directory")
-  <*> option auto     (long "timeout"        <> short 'o' <> m "SECS" <> v 0       <> n "timeout"   <> h "Number of seconds a test may run (default: no limit)")
-  <*> option auto     (long "threads"        <> short 'j' <> m "N"    <> v 1       <> n "threads"   <> h "Number of threads for running tests (default: 1)")
-  <*> switch          (long "debug"                                                                 <> h "Show debug info, for troubleshooting")
-  <*> switch          (long "debug-parse"                                                           <> h "Show test file parsing info and stop")
-  <*> switch          (long "help-format"                                                           <> h "Display test format help")
-  <*> some (strArgument (metavar "FILES/DIRS..."))
-  where
-    -- (l, s, m, v, n, h) = (long, short, metavar, value, needsarg, help)
-    (m, v, n, h) = (metavar, value, needsarg, help)
-    needsarg s = noArgError $ ErrorMsg ("--" ++ s ++ " needs an argument")
--- XXX issues
--- need a precise error on missing arguments (FILES/DIRS displayed with [] if we do it ourselves)
--- --help is not listed in short usage message
-
-argsinfo :: ParserInfo Args
-argsinfo = info
-  (helper <*> argsparser)
-  (header helpheader <> footer helpfooter)
-
--- | Additional argument checking.
-extraArgsChecks :: Args -> IO Args
-extraArgsChecks args = do
-  -- give a better args-required error message than optparse-applicative
-  -- when (null $ testpaths args) $
-  --   parserError (printf "Please specify at least one test file or directory, eg: %s tests" progname)
-  return args
-
--- parserError :: String -> IO ()
--- parserError msg = do
---   let f = parserFailure parserprefs argsinfo (ErrorMsg msg) mempty
---       (s, code) = renderFailure f progname
---   putStrLn s >> exitWith code
-
-parserprefs = ParserPrefs
-  { prefMultiSuffix=""        -- ^ metavar suffix for multiple options
-  , prefDisambiguate=False    -- ^ automatically disambiguate abbreviations (default: False)
-  , prefShowHelpOnError=False -- ^ always show help text on parse errors (default: False)
-  , prefBacktrack=True        -- ^ backtrack to parent parser when a subcommand fails (default: True)
-  , prefColumns=80            -- ^ number of columns in the terminal, used to format the help page (default: 80)
-  }
+    &= program progname
+    &= summary progversion
+    &= details proghelpsuffix
 
 main :: IO ()
 main = do
   -- parse args
-  rawargs <- getArgs
-  args <- handleParseResult (execParserPure parserprefs argsinfo rawargs) >>= extraArgsChecks
-  when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
-  let tfargs =    if list args then ["--list"] else []
+  args' <- cmdArgs argdefs >>= checkArgs
+  -- some of the cmdargs-parsed "arguments" may be test-framework options following --,
+  -- separate those out
+  let (tfopts', realargs) = partition ("-" `isPrefixOf`) $ testpaths args'
+      args = args'{testpaths=realargs}
+      tfopts = tfopts'
+               ++ if list args then ["--list"] else []
                ++ if color args then [] else ["--plain"]
                ++ if hide_successes args then ["--hide-successes"] else []
                ++ ["--select-tests="++s | s <- include args]
                ++ if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else []
-               ++ if threads args > 1 then ["--threads=" ++ show (threads args)] else []
+               ++ if threads args > 0 then ["--threads=" ++ show (threads args)] else []
+
+  when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
 
   -- gather test files
   testfiles' <- nub . concat <$> mapM
@@ -159,12 +130,24 @@ main = do
 
   -- parse test files
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
-  testparseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
+  parseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
 
-  -- list or run tests
-  when (debug args) $ printf "calling test-framework:\n"
+  -- run tests
+  when (debug args) $ printf "running tests:\n"
   unless (debug_parse args) $
-    flip defaultMainWithArgs tfargs $ concatMap (hUnitTestToTests . testFileParseToHUnitTest args) testparseresults
+    defaultMainWithArgs (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults) tfopts
+
+-- | Additional argument checking.
+checkArgs :: Args -> IO Args
+checkArgs args = do
+  when (help_format args) $ printf formathelp >> exitSuccess
+  when (null $ testpaths args) $
+       warn $ printf "Please specify at least one test file or directory, eg: %s tests" progname
+  return args
+
+-- | Show a message, usage string, and terminate with exit status 1.
+warn :: String -> IO ()
+warn s = putStrLn s >> exitWith (ExitFailure 1)
 
 
 -- running tests
