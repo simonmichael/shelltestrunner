@@ -58,7 +58,7 @@ formathelp = unlines [
   ,"ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT"
   ,""
   ,"All parts are optional except the command line."
-  ,"When unspecified, stdout/stderr/exit status are not tested."
+  ,"When unspecified, stdout/stderr/exit status are tested for emptiness."
   ,""
   ,"The <<< delimiter is optional for the first input in a file."
   ,"Without it, input begins at the first non-blank/comment line."
@@ -111,7 +111,7 @@ data Args = Args {
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     list        = def     &= help "List all parsed tests by name"
+     list        = def     &= help "List all parsed tests and stop"
     ,all_        = def     &= help "Don't truncate output, even if large"
     ,color       = def     &= help "Show colored output if your terminal supports it"
     ,diff        = def     &= name "d" &= help "Show expected output mismatches in diff format"
