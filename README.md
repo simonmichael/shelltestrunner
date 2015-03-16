@@ -14,7 +14,7 @@ If you have a testing situation such as this<sup><small>1</small></sup>,
 we at Joyful Corp. can help.
 
 **shelltestrunner** is a command-line tool for testing other command-line
-programs, or general shell commands, on (eg) GNU/Linux, Mac and Windows.
+programs, or general shell commands, on (eg) Unix, Mac and Windows.
 
 It reads tests which specify a command to run, some input, and the
 expected stdout, stderr, and exit status output.  It can run tests in
@@ -27,195 +27,235 @@ software released under GPLv3+.
 </a>
 
 
-## Getting started
+## Quick start
 
 ---------------------------------|--------------------------------------
 Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | **`apt-get install shelltestrunner`**
 Gentoo:                          | **`emerge shelltestrunner`**
 Elsewhere:<br><br><br>           | Get [GHC](http://haskell.org/ghc) and cabal (or the [Haskell Platform](http://haskell.org/platform)),<br>ensure `~/.cabal/bin` is in your $PATH,<br>**`cabal install shelltestrunner`**
 
-Tests are kept in files with the `.test` suffix by default. Here's a simple test file:
+Tests are kept in files with the `.test` suffix by default. Here's a simple test file, `true.test`:
 
 ```bash
-# echo, given no input, prints nothing and terminates normally
-echo
->>>= 0
+# true, given no input, prints nothing on stdout or stderr and
+# terminates with exit status 0.
+$$$ true
+
+# false gives exit status 1.
+$$$ false
+>>>= 1
 ```
 
-and another, containing two more tests:
+Here's another test file, `cat.test`. Here, the first test group has
+two tests sharing the same input ("foo"):
 
 ```bash
-# cat copies its input to stdout, nothing appears on stderr, exit status is 0
-cat
+# 1a. cat copies its input to stdout
 <<<
 foo
+$$$ cat
 >>>
 foo
->>>2
->>>= 0
 
-# cat prints an error containing "unrecognized option" if given a bad flag
-cat --no-such-flag
->>>2 /unrecognized option/
+# 1b. echo prints a newline instead.
+# We add an explicit >>>2 (or >>>=) to delimit the whitespace, which
+# would otherwise be ignored.
+$$$ echo
+>>> 
+
+>>>2
+
+# 2. cat, given a bad flag, prints a platform-specific error and
+# exits with non-zero status
+$$$ cat --no-such-flag
+>>>2 /(unrecognized|illegal) option/
 >>>= !0
 ```
 
-Run the tests:
-
+The `<<<` and `>>>` delimiters can often be omitted, so the above can also be written as:
 ```bash
-$ shelltest echo.test cat.test
-:echo.test: [OK]
-:cat.test:1: [OK]
-:cat.test:2: [OK]
+foo
+$$$ cat
+foo
 
-         Test Cases  Total      
- Passed  3           3          
- Failed  0           0          
- Total   3           3          
+$$$ echo
+
+>>>2
+
+$$$ cat --no-such-flag
+>>>2 /(unrecognized|illegal) option/
+>>>= !0
 ```
 
-That's it!
+To run the tests, specify the files or a parent folder:
+
+```bash
+$ shelltest *.test  # (or shelltest .)
+:cat.test:1: [OK]
+:cat.test:2: [OK]
+:cat.test:3: [OK]
+:true.test:1: [OK]
+:true.test:2: [OK]
+
+         Test Cases  Total      
+ Passed  5           5          
+ Failed  0           0          
+ Total   5           5          
+```
+
+## Usage
+
+`shelltest` accepts one or more test file or directory arguments.
+A directory means all files below it which have the test file suffix,
+normally `.test`.
+
+**Command-line options:**
+```bash
+$ shelltest --help
+shelltest 1.9.98
+```
+```
+shelltest [OPTIONS] [TESTFILES|TESTDIRS]
+
+Common flags:
+  -l --list             List all parsed tests by name
+  -a --all              Don't truncate output, even if large
+  -c --color            Show colored output if your terminal supports it
+  -d --diff             Show expected output mismatches in diff format
+  -p --precise          Show expected/actual output precisely (eg whitespace)
+  -h --hide-successes   Show only test failures
+  -i --include=PAT      Include tests whose name contains this glob pattern
+  -x --exclude=STR      Exclude test files whose path contains STR
+     --execdir          Run tests from within the test file's directory
+     --extension=EXT    File suffix of test files (default: .test)
+  -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
+  -o --timeout=SECS     Number of seconds a test may run (default: no limit)
+  -j --threads=N        Number of threads for running tests (default: 1)
+     --debug            Show debug info, for troubleshooting
+     --debug-parse      Show test file parsing info and stop
+     --help-format      Describe the test file format
+  -? --help             Display help message
+  -V --version          Print version information
+     --numeric-version  Print just the version number
+```
+
+Test commands run from within your current directory by default;
+with `--execdir` they run from the directory where they are defined, instead.
+
+`--include` selects only tests whose name (file name plus intra-file sequence number) matches a
+[.gitignore-style pattern](https://batterseapower.github.io/test-framework#the-console-test-runner),
+while `--exclude` skips tests based on their file path.
+These can be used eg to focus on a particular test, or to skip tests intended for a different platform.
+
+`-w/--with` replaces the first word of all test commands with something
+else, which can be useful for testing alternate versions of a
+program. Commands which have been prefixed by an extra space will
+not be affected by this option.
+
+`--hide-successes` gives quieter output, reporting only failed tests.
+
+An example:
+````bash
+$ shelltest tests -i args -c -j8 -o1 --hide
+````
+This runs
+
+- the tests defined in any `*.test` file in or below the `tests/` directory
+- whose names contain "`args`"
+- in colour if possible
+- with up to 8 tests running in parallel
+- allowing no more than 1 second for each test
+- showing only the failures (long flags like `--hide-successes` can be abbreviated)
 
 ## Test format
 
-<!-- Two formats are supported: -->
+Test files contain one or more test groups. A test group consists of
+some lines of standard input and one or more tests.  Each test
+consists of a one-line shell command and optional expected standard
+output, error output and/or numeric exit status, separated by
+delimiters.  Use `shelltestrunner --help-format` to see a quick
+reference:
 
-<!-- ### Old format -->
-
-Test files contain one or more tests, which look like this:
 ```bash
-# optional comment
-a one-line shell command
+# COMMENTS OR BLANK LINES
 <<<
-zero or more lines of standard input
+INPUT
+$$$ COMMAND LINE
 >>>
-zero or more lines of expected standard output (or /REGEXP/ added to the previous line)
+EXPECTED OUTPUT (OR >>> /REGEX/)
 >>>2
-zero or more lines of expected standard error output (or /REGEXP/ added to the previous line)
->>>= STATUS (or /REGEXP/)
+EXPECTED STDERR (OR >>>2 /REGEX/)
+>>>= EXPECTED EXIT STATUS (OR >>>= /REGEX/)
+# COMMENTS OR BLANK LINES
+ADDITIONAL TESTS FOR THIS INPUT
+ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
 ```
 
-The command and the final exit status line are required; the other parts are optional.
+All parts are optional except the command line.
+When unspecified, stdout/stderr/exit status are tested for emptiness.
 
-A `/REGEXP/` pattern may be used instead of specifying the full
-output, in which case a match anywhere in the output allows the test
-to pass. The regular expression syntax is
+There are some additional conveniences:
+
+The `<<<` delimiter is optional for the first input in a file.
+Without it, input begins at the first non-blank/comment line.
+Input ends at the `$$$` delimiter. You can't put a comment before the first `$$$`.
+
+The `>>>` delimiter is optional except when matching via regex.
+Expected output/stderr extends to the next `>>>2` or `>>>=` if present,
+or to the last non-blank/comment line before the next `<<<` or `$$$` or file end.
+
+Two spaces between `$$$` and the command protects it from -w/--with (see below).
+
+`/REGEX/` regular expression patterns may be used instead of
+specifying the expected output in full. The regex syntax is
 [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa)'s, plus
-you can put `!` before `/REGEXP/` to negate the match.
+you can put `!` before `/REGEX/` to negate the match.
 
-`STATUS` is a numeric [exit status](http://en.wikipedia.org/wiki/Exit_status)
-or a `/REGEXP/`. Again, use a `!` prefix to negate the match. Eg `!0` matches an unsuccessful exit.
+The [exit status](http://en.wikipedia.org/wiki/Exit_status) is a
+number, normally 0 for a successful exit.  This too can be prefixed
+with `!` to negate the match, or you can use a `/REGEX/`.
 
-Comment lines beginning with `#` may be used between tests, but not within them.
+### Old (1.x) format
+
+This format is also supported for backward compatibility, but
+deprecated.  Test files contain one or more individual tests, each
+consisting of a one-line shell command, optional expected standard
+output and/or error output, and a (required) exit status.
+
+```bash
+# COMMENTS OR BLANK LINES
+COMMAND LINE
+<<<
+INPUT
+>>>
+EXPECTED OUTPUT (OR >>> /REGEXP/)
+>>>2
+EXPECTED STDERR (OR >>>2 /REGEXP/)
+>>>= EXPECTED EXIT STATUS (OR >>>= /REGEXP/)
+```
+
+A space before the command protects it from -w/--with.
 
 Here
-[are](https://github.com/simonmichael/shelltestrunner/tree/master/tests)
+[are](https://github.com/simonmichael/shelltestrunner/tree/master/)
 [some](https://github.com/simonmichael/hledger/tree/master/tests)
 <!-- [more](https://github.com/yesodweb/yesod/tree/master/yesod/test) -->
 [real](https://github.com/bjpop/berp/tree/master/test/regression)
 [world](https://github.com/magthe/cblrepo/tree/master/tests)
 [examples](http://code.google.com/p/eddie/source/browse/#hg%2Ftests).
 
-<!--
-### New format (1.4+)
-
-Test files contain one or more test groups consisting of:
-
-- optional standard input, following `<` or `<<<`
-- one or more tests. A test consists of:
-
-  - a one-line command, beginning with `$` or `$$$`
-  - optional standard output (following `>` or `>>>`) and/or standard error output (following `>2` or `>>>2`) specifications
-  - an optional exit status specification (following `>=` or `>>>=`)
--->
-
-
-## Usage
-
-`shelltest` accepts one or more test file or directory arguments.
-A directory means all files below it which have the test file suffix (`.test`, by default).
-
-**Command-line options:**
-```bash
-$ shelltest --help
-```
-```
-shelltest [OPTIONS] [TESTFILES|TESTDIRS]
-
-Common flags:
-  -a --all              Show all failure output, even if large
-  -c --color            Show colored output if your terminal supports it
-  -d --diff             Show failures in diff format
-  -p --precise          Show failure output precisely (good for whitespace)
-  -x --exclude=STR      Exclude test files whose path contains STR
-     --execdir          Run tests from within the test file’s directory
-     --extension=EXT    Filename suffix of test files (default: .test)
-  -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
-     --debug            Show debug info, for troubleshooting
-     --debug-parse      Show test file parsing info and stop
-     --help-format      Display test format help
-  -? --help             Display help message
-  -V --version          Print version information
-     --numeric-version  Print just the version number
-
-     -- TFOPTIONS       Set extra test-framework options like -j/--threads,
-                        -t/--select-tests, -o/--timeout, --hide-successes.
-                        Use -- --help for a list. Avoid spaces.
-```
-
-Test commands normally run within your current directory; `--execdir`
-makes them run within the directory where they are defined, instead.
-
-`-w/--with` replaces the first word of all test commands with something
-else, which can be useful for testing alternate versions of a
-program. Test commands which have been indented by one or more spaces will
-not be affected by this option.
-
-`--exclude` can be useful to avoid running certain tests, eg
-unix-specific tests when on windows and vice-versa.
-
-The test-framework library provides additional options which you can
-specify after `--` (note: avoid spaces between flags and values here.)
-Run `shelltest -- --help` for a list. Here are some useful ones:
-```
-  -j NUM  --threads=NUMBER    number of threads to use to run tests
-  -o NUM  --timeout=NUMBER    how many seconds a test should be run for before giving up
-  -t PAT  --select-tests=PAT  only tests that match at least one glob pattern given by
-                               an instance of this argument will be run
-          --hide-successes    hide sucessful tests, and only show failures
-````
-
-**Example:**
-
-Run
-
-- the tests defined in any `*.test` file in or below the `tests/` directory (`tests`),
-- in colour if possible (`-c`),
-- whose names<sup><small>2</small></sup> contain "`args`" (`-- -targs`),
-- with up to 8 tests running in parallel (`-- -j8`),
-- allowing no more than 1 second for each test (`-- -o1`),
-- reporting only the failures (`-- --hide-successes`):
-
-````bash
-$ shelltest tests -c -- -targs -j8 -o1 --hide
-````
-
-<a name="note2"><small><sup>2</sup>
-A test's name is what you see when running tests, ie the file name plus the sequence number within the file.
-</small></a>
 
 ## Contributing
-
-The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
-([changelog](http://hackage.haskell.org/package/shelltestrunner/changelog)).
-The [code](https://github.com/simonmichael/shelltestrunner)
-and [issues](https://github.com/simonmichael/shelltestrunner/issues)
-are on github.
 
 <div id="donate-buttons" style="float:right; padding-left:1em;">
 <a title="Donate via Gittip" href="https://www.gittip.com/simonmichael"><img src="/site/gittip.png" alt="Gittip"></a>
 <a style="margin-left:1em;" title="Donate via Paypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2PLCMR67L4G3E"><img src="/site/paypal.gif" alt="Paypal"></a>
 </div>
+The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
+([changelog](http://hackage.haskell.org/package/shelltestrunner/changelog)).
+The [code](https://github.com/simonmichael/shelltestrunner)
+and [issues](https://github.com/simonmichael/shelltestrunner/issues)
+are on github.
 Feedback, testing, code, documentation, packaging, blogging are most welcome.
 Here's the
 <!-- [2012 user survey](https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3) -->
@@ -225,7 +265,9 @@ Here's the
 
 ## Credits
 
-[Simon Michael](http://joyful.com) wrote shelltestrunner, inspired by John Wiegley's test system for Ledger.
+[Simon Michael](http://joyful.com) wrote shelltestrunner,
+which was originally hledger's test tool, which was
+inspired by John Wiegley's test system for Ledger.
 
 Code contributors include:
 John Macfarlane,

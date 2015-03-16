@@ -1,0 +1,7 @@
+# true, given no input, prints nothing on stdout or stderr and
+# terminates with exit status 0.
+$$$ true
+
+# false gives exit status 1.
+$$$ false
+>>>= 1

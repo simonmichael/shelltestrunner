@@ -1,13 +1,19 @@
-# cat copies its input to stdout, nothing appears on stderr, exit code is 0
-cat
+# 1a. cat copies its input to stdout
 <<<
 foo
+$$$ cat
 >>>
 foo
->>>2
->>>= 0
 
-# cat complains about a bad flag. Look for a regular expression in stderr output.
-cat --no-such-flag
->>>2 /unrecognized option/
+# 1b. echo prints a newline instead. We add an explicit >>>2 (or >>>=) to
+# delimit this whitespace output.
+$$$ echo
+>>>
+
+>>>2
+
+# 2. cat prints an error containing "unrecognized option" and exits with
+# non-zero status if given a bad flag
+$$$ cat --no-such-flag
+>>>2 /(unrecognized|illegal) option/
 >>>= !0
