@@ -50,7 +50,7 @@ executable shelltest
     safe,
     test-framework       >= 0.3.2 && < 0.9,
     test-framework-hunit >= 0.2   && < 0.4,
-    utf8-string          >= 0.3.5 && < 0.4
+    utf8-string          >= 0.3.5 && < 1.1
 
   ghc-options: -threaded -W -fwarn-tabs
 
