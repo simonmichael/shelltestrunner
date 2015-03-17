@@ -219,11 +219,16 @@ The [exit status](http://en.wikipedia.org/wiki/Exit_status) is a
 number, normally 0 for a successful exit.  This too can be prefixed
 with `!` to negate the match, or you can use a `/REGEX/`.
 
-<h3>Old (1.x) format</h3>
+<h3>Format 2b (short delimiters)</h3>
 
-Another format is supported for backward compatibility.  Here, test
-files contain one or more individual tests, each consisting of a
-one-line shell command, optional input, expected standard output
+If the above fails to parse a file, shelltestrunner will try test format 2b,
+which is just the same but with short delimiters: `<` `$` `>` `>2` `>=`.
+
+<h3>Format 1 (deprecated)</h3>
+
+Finally, it will try 1.x's format for backward compatibility.
+Here, test files contain one or more individual tests, each consisting
+of a one-line shell command, optional input, expected standard output
 and/or error output, and a (required) exit status.
 
 ```bash

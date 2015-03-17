@@ -1,0 +1,21 @@
+# File format 2b - same as format 2, but with short delimiters.
+
+AA
+$  cat
+AA
+
+# test 2
+$  cat
+> /A/
+>2
+>= 0
+
+# test 3
+<
+A
+$  cat
+> /A/
+>2
+>=
+
+#

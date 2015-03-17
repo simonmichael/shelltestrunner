@@ -1,0 +1,4 @@
+# handle a totally empty test file
+$ shelltest /dev/null
+> /Total +0/
+

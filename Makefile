@@ -9,7 +9,9 @@ PREFERMACUSRLIBFLAGS=-L/usr/lib
 BUILDFLAGS=-idist/build/autogen -threaded -W -fwarn-tabs $(PREFERMACUSRLIBFLAGS) # -Wall
 PROGNAME=shelltest
 # when running tests, use the latest version to test itself
-SHELLTEST=./$(PROGNAME) --with ./$(PROGNAME)
+SHELLTEST=./$(PROGNAME) --with ./$(PROGNAME) -j8
+TESTFILES=tests.format*/*.test
+HSFILES=*.hs Utils/*.hs
 
 ######################################################################
 # BUILD
@@ -35,12 +37,12 @@ test: testunix
 
 # run cross-platform and unix-specific tests
 testunix: build
-	$(SHELLTEST) tests.format1 tests.format1.unix tests.format2 tests.format2.unix -j8
+	$(SHELLTEST) tests.format1 tests.format1.unix tests.format2 tests.format2.unix tests.format2b tests.format2b.unix
 
 # run cross-platform and windows-specific tests
 # (though if you are able to run make on windows, you may be able to/have to use testunix)
 testwindows:
-	$(SHELLTEST) tests.format1 tests.format1.windows tests.format2 tests.format2.windows -j8
+	$(SHELLTEST) tests.format1 tests.format1.windows tests.format2 tests.format2.windows tests.format2b tests.format2b.windows
 
 # run tests with a specific GHC version
 test-ghc-%: shelltest.ghcall
@@ -188,9 +190,6 @@ showcodechanges:
 TAG=hasktags -e
 
 tag: TAGS
-
-HSFILES=*.hs Utils/*.hs
-TESTFILES=tests*/*.test
 
 TAGS: $(HSFILES) $(TESTFILES) *.md Makefile
 	$(TAG) $(HSFILES) $(TESTFILES) *.md Makefile

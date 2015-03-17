@@ -41,8 +41,10 @@ proghelpsuffix = [
   ]
 formathelp :: String
 formathelp = unlines [
-   "--------------------------------------"
-  ,"shelltestrunner test file format:"
+   "shelltestrunner tries these formats, in order:"
+  ,""
+  ,"--------------------------------------"
+  ,"Test format 2"
   ,""
   ,"# COMMENTS OR BLANK LINES"
   ,"<<<"
@@ -73,7 +75,12 @@ formathelp = unlines [
   ,"!/REGEX/ negates a regular expression match."
   ,""
   ,"--------------------------------------"
-  ,"Old 1.x test file format (deprecated):"
+  ,"Test format 2b"
+  ,""
+  ,"Same as above, but with short delimiters: < $ > >2 >="
+  ,""
+  ,"--------------------------------------"
+  ,"Test format 1 (deprecated)"
   ,""
   ,"# COMMENTS OR BLANK LINES"
   ,"COMMAND LINE"

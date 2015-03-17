@@ -1,0 +1,5 @@
+# with --help, output should contain usage
+# and exit code should be 0
+$ shelltest --help
+> /Common flags:/
+

@@ -1,0 +1,13 @@
+# 0. utf8-encoded unicode in filename should be fine
+# 1. in command field:
+$  echo проверка
+> //
+
+# 2. in output field:
+$  echo проверка
+проверка
+
+# 3. in regexp:
+$  echo проверка
+> /проверка/
+

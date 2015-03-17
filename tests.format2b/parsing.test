@@ -1,0 +1,12 @@
+# misc. testfile parsing tests
+# 1. can we regexp-match a forward slash ?
+$  echo /
+> /\//
+
+# 2. can we handle an empty regexp ?
+$  echo
+> //
+
+# 3. or a regexp followed by a comment ?
+$  echo
+> // # comment

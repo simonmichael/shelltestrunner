@@ -1,0 +1,5 @@
+# test "mac will hang if input is specified and stdin is not read" fix
+dummy input
+$  echo
+
+>= 0

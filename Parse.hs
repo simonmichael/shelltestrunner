@@ -42,8 +42,13 @@ ptrace s a | showParserDebugOutput = Utils.ptrace $ s ++ ": " ++ show a
 shelltestfile :: Parser [ShellTest]
 shelltestfile = do
   ptrace_ "shelltestfile 0"
-  ts <- (do first <- try (format2testgroup False)
-            rest <- many $ try (format2testgroup True)
+  ts <- try (do first <- try (format2testgroup False)
+                rest <- many $ try (format2testgroup True)
+                return $ concat $ first : rest
+        )
+        <|>
+        (do first <- try (format2btestgroup False)
+            rest <- many $ try (format2btestgroup True)
             return $ concat $ first : rest
         )
         <|>
@@ -56,7 +61,8 @@ shelltestfile = do
   return ts
 
 
--- format 1 (shelltestrunner 1.0+)
+----------------------------------------------------------------------
+-- format 1 (shelltestrunner 1.x)
 -- each test specifies its input; missing test parts are not checked
 
 format1test = do
@@ -106,6 +112,7 @@ expectedexitcode1 = (try $ do
   fromMaybe anyMatcher <$> (optionMaybe $ choice [regexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher])
  ) <?> "expected exit status"
 
+----------------------------------------------------------------------
 -- format 2
 -- input first, then tests; missing test parts are implicitly checked
 
@@ -204,6 +211,104 @@ delimiterNotNewTest = do
   -- ptrace_ "    delimiterNotNewTest 0"
   choice [try (string ">>>2"), try (string ">>>="), string ">>>"]
 
+----------------------------------------------------------------------
+-- format 2b
+-- Like format 2 but with short delimiters.
+-- XXX duplication
+format2btestgroup :: Bool -> Parser [ShellTest]
+format2btestgroup inputRequiresDelimiter = do
+  ptrace " format2btestgroup 0" inputRequiresDelimiter
+  skipMany whitespaceorcommentline
+  ptrace_ " format2btestgroup 1"
+  let startdelims | inputRequiresDelimiter = ["<"]
+                  | otherwise              = ["<", ""]
+      enddelims = ["$","<"]
+  i <- optionMaybe (linesBetween startdelims enddelims) <?> "input"
+  ptrace " format2btestgroup i" i
+  ts <- many1 $ try (format2btest i)
+  ptrace " format2btestgroup ." ts
+  return ts
+
+format2btest :: Maybe String -> Parser ShellTest
+format2btest i = do
+  ptrace_ "  format2btest 0"
+  skipMany whitespaceorcommentline
+  ptrace_ "  format2btest 1"
+  c <- command2b <?> "command line"
+  ptrace "  format2btest c" c
+  nullstdout <- nullLinesMatcher . sourceLine <$> getPosition
+  o <- maybe (Just nullstdout) Just <$> optionMaybe expectedoutput2b <?> "expected output"
+  ptrace "  format2btest o" o
+  nullstderr <- nullLinesMatcher . sourceLine <$> getPosition
+  e <- maybe (Just $ nullstderr) Just <$> optionMaybe expectederror2b <?> "expected error output"
+  ptrace "  format2btest e" e
+  x <- fromMaybe nullStatusMatcher <$> optionMaybe expectedexitcode2b <?> "expected exit status"
+  ptrace "  format2btest x" x
+  when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
+  f <- sourceName . statePos <$> getParserState
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  ptrace "  format2btest ." t
+  return t
+
+command2b :: Parser TestCommand
+command2b = string "$" >> optional (char ' ') >> (fixedcommand <|> replaceablecommand)
+
+-- In format 2b, >>> is used only with /REGEX/, also don't consume the
+-- whitespace/comments immediately preceding a following test.
+expectedoutput2b :: Parser Matcher
+expectedoutput2b = (try $ do
+  try (string ">" >> whitespace >> (regexmatcher <|> negativeregexmatcher))
+  <|> (optional (string ">" >> whitespaceline) >> linesmatcher2b <?> "expected output")
+ )
+
+-- Don't consume the whitespace/comments immediately preceding a
+-- following test.
+expectederror2b :: Parser Matcher
+expectederror2b = (try $ do
+  ptrace_ "   expectederror2b 0"
+  string ">2" >> whitespace
+  ptrace_ "   expectederror2b 1"
+  m <- (regexmatcher <|> negativeregexmatcher)
+       <|>
+       (newline >> linesmatcher2b <?> "expected error output")
+  ptrace "   expectederror2b ." m
+  return m
+ )
+
+expectedexitcode2b :: Parser Matcher
+expectedexitcode2b = (try $ do
+  string ">="
+  whitespace
+  fromMaybe anyMatcher <$> (optionMaybe $ choice [regexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher])
+ ) <?> "expected exit status"
+
+-- The format 2b lines matcher consumes lines until one of these:
+-- 1. another section delimiter in this test (>, >2, >=)
+-- 2. the next test's start delimiter (<, $), or the start of blank/comment lines preceding it
+-- 3. end of file, or the start of blank/comment lines preceding it
+linesmatcher2b :: Parser Matcher
+linesmatcher2b = do
+  ptrace_ "    linesmatcher2b 0"
+  ln <- sourceLine <$> getPosition
+  ls <- unlines <$> 
+        line `manyTill` lookAhead (choice' [delimiterNotNewTest2b
+                                           ,many whitespaceorcommentline >> delimiterNewTest2b
+                                           ,many whitespaceorcommentline >> eofasstr])
+        <?> "lines of output"
+  ptrace "    linesmatcher2b ." ls
+  return $ Lines ln ls
+
+delimiterNewTest2b = do
+  -- ptrace_ "     delimiterNewTest 0"
+  choice [string "$", string "<"]
+
+delimiterNotNewTest2b = do
+  -- ptrace_ "    delimiterNotNewTest 0"
+  choice [try (string ">2"), try (string ">="), string ">"]
+
+----------------------------------------------------------------------
+-- common
+
 linesBetween :: [String] -> [String] -> Parser String
 linesBetween startdelims enddelims = do
   let delimp "" = string ""
@@ -211,9 +316,6 @@ linesBetween startdelims enddelims = do
   Utils.choice' $ map delimp startdelims
   let end = choice $ (map (try . string) enddelims) ++ [eofasstr]
   unlines <$> line `manyTill` lookAhead end
-
-
--- common
 
 fixedcommand,replaceablecommand :: Parser TestCommand
 fixedcommand = many1 whitespacechar >> line >>= return . FixedCommand

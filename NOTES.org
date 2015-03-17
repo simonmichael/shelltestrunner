@@ -3,8 +3,8 @@
 ** real-world testing
 ** bump to 2.0
 ** wishlist
-*** optional lighter delimiters (< $ > >2 >=)
-*** customisable delimiters
+*** customisable delimiters ?
+*** ledger test support ?
 *** -j without arg
 *** --list should respect -i (-- -t)
 *** disable -- TFOPTS passthrough ?
