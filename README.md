@@ -243,6 +243,7 @@ EXPECTED STDERR (OR >>>2 /REGEXP/)
 >>>= EXPECTED EXIT STATUS (OR >>>= /REGEXP/)
 ```
 
+When not specified, stdout/stderr are ignored.
 A space before the command protects it from -w/--with.
 
 Here
