@@ -1,19 +1,19 @@
-# 1a. cat copies its input to stdout
+# cat copies its input to stdout
 <<<
 foo
 $$$ cat
 >>>
 foo
 
-# 1b. echo prints a newline instead. We add an explicit >>>2 (or >>>=) to
-# delimit this whitespace output.
+# or, given a bad flag, prints a platform-specific error and exits with non-zero status
+$$$ cat --no-such-flag
+>>>2 /(unrecognized|illegal) option/
+>>>= !0
+
+# echo prints a newline instead.
+# We add an explicit >>>2 (or >>>=) to delimit the whitespace, which
+# would otherwise be ignored
 $$$ echo
 >>>
 
 >>>2
-
-# 2. cat prints an error containing "unrecognized option" and exits with
-# non-zero status if given a bad flag
-$$$ cat --no-such-flag
->>>2 /(unrecognized|illegal) option/
->>>= !0

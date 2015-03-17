@@ -35,10 +35,9 @@ shelltestrunner is free software released under GPLv3+.
 ---------------------------------|--------------------------------------
 Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | **`apt-get install shelltestrunner`**
 Gentoo:                          | **`emerge shelltestrunner`**
-Elsewhere:<br><br><br>           | Get [GHC](http://haskell.org/ghc) and cabal (or the [Haskell Platform](http://haskell.org/platform)),<br>ensure `~/.cabal/bin` is in your $PATH,<br>**`cabal install shelltestrunner`**
+Elsewhere:                       | [Get haskell](http://www.stackage.org/install), **`cabal install shelltestrunner`**
 
-Tests are kept in files with the `.test` suffix by default. Here's a
-simple test file, `true.test`, containing two tests:
+Here's a simple test file, `true.test`, containing two tests:
 
 ```bash
 # true, given no input, prints nothing on stdout or stderr and
@@ -50,30 +49,28 @@ $$$ false
 >>>= 1
 ```
 
-Here's another test file, `cat.test`. Here, the first two tests are
-in a group and share the same input (`foo`):
+Here's another test file, `cat.test`, with three tests sharing the same input (`foo`):
 
 ```bash
-# 1a. cat copies its input to stdout
+# cat copies its input to stdout
 <<<
 foo
 $$$ cat
 >>>
 foo
 
-# 1b. echo prints a newline instead.
-# We add an explicit >>>2 (or >>>=) to delimit the whitespace, which
-# would otherwise be ignored.
-$$$ echo
->>> 
-
->>>2
-
-# 2. cat, given a bad flag, prints a platform-specific error and
-# exits with non-zero status
+# or, given a bad flag, prints a platform-specific error and exits with non-zero status
 $$$ cat --no-such-flag
 >>>2 /(unrecognized|illegal) option/
 >>>= !0
+
+# echo prints a newline instead.
+# We add an explicit >>>2 (or >>>=) to delimit the whitespace, which
+# would otherwise be ignored
+$$$ echo
+>>>
+
+>>>2
 ```
 
 The `<<<` and `>>>` delimiters can often be omitted, so the above can also be written as:
@@ -82,13 +79,14 @@ foo
 $$$ cat
 foo
 
-$$$ echo
-
->>>2
-
 $$$ cat --no-such-flag
 >>>2 /(unrecognized|illegal) option/
 >>>= !0
+
+$$$ echo
+>>>
+
+>>>2
 ```
 
 To run the tests, specify the files or a parent folder:
@@ -174,8 +172,8 @@ This runs
 ## Test format
 
 Test files contain one or more test groups. A test group consists of
-some lines of standard input and one or more tests.  Each test
-consists of a one-line shell command and optional expected standard
+some optional standard input and one or more tests.  Each test
+is a one-line shell command followed by optional expected standard
 output, error output and/or numeric exit status, separated by
 delimiters.  Use `shelltestrunner --help-format` to see a quick
 reference:
@@ -196,7 +194,8 @@ ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
 ```
 
 All parts are optional except the command line.
-When unspecified, stdout/stderr/exit status are tested for emptiness.
+If not specified, stdout and stderr are expected to be empty
+and exit status is expected to be zero.
 
 There are some additional conveniences:
 
@@ -221,10 +220,10 @@ with `!` to negate the match, or you can use a `/REGEX/`.
 
 <h3>Old (1.x) format</h3>
 
-This format is also supported for backward compatibility, but
-deprecated.  Test files contain one or more individual tests, each
-consisting of a one-line shell command, optional expected standard
-output and/or error output, and a (required) exit status.
+Another format is supported for backward compatibility.  Here, test
+files contain one or more individual tests, each consisting of a
+one-line shell command, optional input, expected standard output
+and/or error output, and a (required) exit status.
 
 ```bash
 # COMMENTS OR BLANK LINES

@@ -26,7 +26,7 @@ h1 a, h2 a, h3 a, h4 a, h5 a, h6 a {
 }
 
 #toc {
-    font-size:small;
+    /* font-size:small; */
     /* float:right; */
     /* margin:0 0 1em 1em; */
     /* border:thin solid #ddd; */
