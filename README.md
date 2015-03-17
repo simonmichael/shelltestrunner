@@ -16,13 +16,13 @@ title: shelltestrunner: command-line testing
 *Human or Replicant ??*
 
 If you have a testing situation such as this<sup><small>1</small></sup>,
-we at Joyful Corp. can help!
+we at [Joyful Corp.](http://joyful.com) can help!
 
-**shelltestrunner** is a command-line tool for testing other command-line
-programs, or general shell commands, on (eg) Unix, Mac or Windows.
-It reads tests which specify a command to run, some input, and the
-expected stdout, stderr, and exit status output.  It can run tests in
-parallel, selectively, with a timeout, with color output, etc.
+**shelltestrunner** is a portable command-line tool for testing other
+command-line programs, or general shell commands, on (eg) Unix, Mac or
+Windows.  It reads simple test specifications defining a command to
+run, some input, and the expected output, stderr, and exit status.  It
+can run tests in parallel, selectively, with a timeout, in color, etc.
 shelltestrunner is free software released under GPLv3+.
 
 <a name="note1">
