@@ -10,9 +10,9 @@ $$$ cat --no-such-flag
 >>>2 /(unrecognized|illegal) option/
 >>>= !0
 
-# echo prints a newline instead.
-# We add an explicit >>>2 (or >>>=) to delimit the whitespace, which
-# would otherwise be ignored
+# echo ignores the input and prints a newline.
+# We use an explicit >>>2 (or >>>=) to delimit the whitespace which
+# would otherwise be ignored.
 $$$ echo
 >>>
 

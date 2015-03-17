@@ -67,6 +67,7 @@ formathelp = unlines [
   ,"The >>> delimiter is optional except when matching via regex."
   ,"Expected output/stderr extends to the next >>>2 or >>>= if present,"
   ,"or to the last non-blank/comment line before the next <<< or $$$ or file end."
+  ,">>>= with nothing after it ignores the exit status."
   ,""
   ,"Two spaces between $$$ and the command protects it from -w/--with."
   ,"!/REGEX/ negates a regular expression match."

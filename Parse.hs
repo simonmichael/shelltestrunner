@@ -103,11 +103,12 @@ expectedexitcode1 :: Parser Matcher
 expectedexitcode1 = (try $ do
   string ">>>="
   whitespace
-  choice [regexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher]
+  fromMaybe eolmatcher <$> (optionMaybe $ choice [regexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher])
  ) <?> "expected exit status"
+  where
+    eolmatcher = PositiveRegex "$"
 
-
--- format 2 (shelltestrunner 1.4+)
+-- format 2
 -- input first, then tests; missing test parts are implicitly checked
 
 -- A format 2 test group, optionally with the initial <<< delimiter

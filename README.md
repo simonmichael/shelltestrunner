@@ -64,9 +64,9 @@ $$$ cat --no-such-flag
 >>>2 /(unrecognized|illegal) option/
 >>>= !0
 
-# echo prints a newline instead.
-# We add an explicit >>>2 (or >>>=) to delimit the whitespace, which
-# would otherwise be ignored
+# echo ignores the input and prints a newline.
+# We use an explicit >>>2 (or >>>=) to delimit the whitespace which
+# would otherwise be ignored.
 $$$ echo
 >>>
 
@@ -187,7 +187,7 @@ $$$ COMMAND LINE
 EXPECTED OUTPUT (OR >>> /REGEX/)
 >>>2
 EXPECTED STDERR (OR >>>2 /REGEX/)
->>>= EXPECTED EXIT STATUS (OR >>>= /REGEX/)
+>>>= EXPECTED EXIT STATUS (OR >>>= /REGEX/ OR >>>=)
 # COMMENTS OR BLANK LINES
 ADDITIONAL TESTS FOR THIS INPUT
 ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
@@ -206,6 +206,7 @@ Input ends at the `$$$` delimiter. You can't put a comment before the first `$$$
 The `>>>` delimiter is optional except when matching via regex.
 Expected output/stderr extends to the next `>>>2` or `>>>=` if present,
 or to the last non-blank/comment line before the next `<<<` or `$$$` or file end.
+`>>>=` with nothing after it ignores the exit status.
 
 Two spaces between `$$$` and the command protects it from -w/--with (see below).
 
