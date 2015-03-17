@@ -103,10 +103,8 @@ expectedexitcode1 :: Parser Matcher
 expectedexitcode1 = (try $ do
   string ">>>="
   whitespace
-  fromMaybe eolmatcher <$> (optionMaybe $ choice [regexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher])
+  fromMaybe anyMatcher <$> (optionMaybe $ choice [regexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher])
  ) <?> "expected exit status"
-  where
-    eolmatcher = PositiveRegex "$"
 
 -- format 2
 -- input first, then tests; missing test parts are implicitly checked
@@ -151,6 +149,8 @@ format2test i = do
 nullLinesMatcher n = Lines n ""
 
 nullStatusMatcher  = Numeric "0"
+
+anyMatcher = PositiveRegex ""
 
 command2 :: Parser TestCommand
 command2 = string "$$$" >> optional (char ' ') >> (fixedcommand <|> replaceablecommand)
