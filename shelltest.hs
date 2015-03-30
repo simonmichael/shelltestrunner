@@ -33,7 +33,9 @@ import System.Directory (doesDirectoryExist)
 import System.FilePath (takeDirectory)
 import System.FilePath.Find (findWithHandler, (==?), always)
 import qualified System.FilePath.Find as Find (extension)
+#if !MIN_VERSION_base(4,8,0)
 import Control.Applicative ((<$>))
+#endif
 import Data.Algorithm.Diff
 
 import PlatformString (fromPlatformString, toPlatformString)
