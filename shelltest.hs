@@ -225,11 +225,10 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
   let outputMatch = maybe True (o_actual `matches`) o_expected
   let errorMatch = maybe True (e_actual `matches`) e_expected
   let exitCodeMatch = show x_actual `matches` x_expected
-  let matches = [outputMatch, errorMatch, exitCodeMatch]
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError $ unwords $ filter (not . null) [e_actual, printf "Command: '%s' Exit code: %i" cmd x_actual] -- XXX still a test failure; should be an error
    else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
-             if any not matches
+             if any not [outputMatch, errorMatch, exitCodeMatch]
                then printf "Command:\n%s\n" cmd
                else ""
             ,if outputMatch
