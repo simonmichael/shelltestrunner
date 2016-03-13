@@ -25,7 +25,6 @@ import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
 import Text.Parsec
 
-import Paths_shelltestrunner (version)
 import Import
 import Utils
 import Types
@@ -34,7 +33,7 @@ import Parse
 
 progname, progversion :: String
 progname = "shelltest"
-progversion = progname ++ " " ++ showVersion version
+progversion = progname ++ " " ++ "1.9.98"
 proghelpsuffix :: [String]
 proghelpsuffix = [
    -- keep this bit synced with options width
