@@ -207,7 +207,7 @@ testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorP
 
 shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
-                                    stderrExpected=e_expected,exitCodeExpected=x_expected} = 
+                                    stderrExpected=e_expected,exitCodeExpected=x_expected} =
  n ~: do
   let e = with args
       cmd = case (e,c) of (_:_, ReplaceableCommand s) -> e ++ " " ++ dropWhile (/=' ') s
@@ -250,7 +250,7 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
 runCommandWithInput :: Maybe FilePath -> String -> Maybe String -> IO (String, String, Int)
 runCommandWithInput wd cmd input = do
   -- this has to be done carefully
-  (ih,oh,eh,ph) <- runInteractiveCommandInDir wd cmd 
+  (ih,oh,eh,ph) <- runInteractiveCommandInDir wd cmd
   when (isJust input) $ forkIO (hPutStr ih $ fromJust input) >> return ()
   o <- newEmptyMVar
   e <- newEmptyMVar
@@ -263,8 +263,8 @@ runCommandWithInput wd cmd input = do
 
 runInteractiveCommandInDir :: Maybe FilePath -> String ->  IO (Handle, Handle, Handle, ProcessHandle)
 runInteractiveCommandInDir wd cmd = do
-   (mb_in, mb_out, mb_err, p) <- 
-      createProcess $ 
+   (mb_in, mb_out, mb_err, p) <-
+      createProcess $
          (shell cmd) { cwd = wd
                      , std_in  = CreatePipe
                      , std_out = CreatePipe
@@ -306,4 +306,3 @@ showDiff args@Args{all_=all_,precise=precise} (l,r) ((Second ln) : ds) =
       trim' = if all_ then id else trim
       show' = if precise then show else id
 showDiff args (l,r) ((Both _ _) : ds) = showDiff args (l+1,r+1) ds
-
