@@ -1,0 +1,9 @@
+*.hi
+*.o
+/TAGS
+_*
+/shelltest
+/shelltest.exe
+/t.test
+/.idea
+/.stack-work
