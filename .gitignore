@@ -9,6 +9,8 @@ _*
 #/shelltest.hs.1
 t.test
 .idea/
+*.iml
 .stack-work/
 dist/
 patches/
+*.org
