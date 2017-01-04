@@ -107,6 +107,7 @@ data Args = Args {
     ,diff        :: Bool
     ,precise     :: Bool
     ,hide_successes :: Bool
+    ,xmlout      :: String
     ,include     :: [String]
     ,exclude     :: [String]
     ,execdir     :: Bool
@@ -127,6 +128,7 @@ argdefs = Args {
     ,diff        = def     &= name "d" &= help "Show expected output mismatches in diff format"
     ,precise     = def     &= help "Show expected/actual output precisely (eg whitespace)"
     ,hide_successes = def  &= help "Show only test failures"
+    ,xmlout      = def     &= typ "FILE" &= help "Specify file to store test results in xml format."
     ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
@@ -158,6 +160,8 @@ main = do
                ++ (["--select-tests="++s | s <- include args])
                ++ (if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else [])
                ++ (if threads args > 0 then ["--threads=" ++ show (threads args)] else [])
+               ++ (if not (xmlout args == []) then ["--jxml=" ++ (xmlout args)] else [""])
+
 
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
 
