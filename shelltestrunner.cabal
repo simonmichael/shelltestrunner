@@ -17,7 +17,7 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      stable
-tested-with:    GHC==7.8.2
+tested-with:    GHC==8.0
 cabal-version:  >= 1.6
 build-type:     Simple
 
@@ -32,6 +32,7 @@ extra-source-files:
   tests.format2.windows/*.test
 
 executable shelltest
+  ghc-options: -threaded -W -fwarn-tabs
   main-is: shelltest.hs
   other-modules:
     Import
@@ -39,7 +40,6 @@ executable shelltest
     Utils.Debug
     Types
     Parse
-
   build-depends:
     base                 >= 4     && < 5,
     Diff                 >= 0.2.0 && < 0.4,
@@ -57,8 +57,6 @@ executable shelltest
     test-framework-hunit >= 0.2   && < 0.4,
     utf8-string          >= 0.3.5 && < 1.1
 
-  ghc-options: -threaded -W -fwarn-tabs
-
 source-repository head
-  type:     darcs
-  location: http://hub.darcs.net/simon/shelltestrunner
+  type:     git
+  location: https://github.com/simonmichael/shelltestrunner
