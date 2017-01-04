@@ -69,18 +69,18 @@ site:
 	hakyll-std build
 	hakyll-std build
 
-cleansite:
+site-clean:
 	hakyll-std clean
 
-# re-copy/render files on change, also serve them on port 8000
+# serve html, re-generating on file change
 # preview allows remote clients unlike the newer watch command
-previewsite:
-	hakyll-std preview -p 8010
+site-preview:
+	hakyll-std preview --port 8010
 
 #VIEWHTML=firefox
 VIEWHTML=open
 
-viewsite: site
+site-view: site
 	$(VIEWHTML) _site/index.html
 
 # build haddock docs
