@@ -246,13 +246,12 @@ EXPECTED STDERR (OR >>>2 /REGEXP/)
 When not specified, stdout/stderr are ignored.
 A space before the command protects it from -w/--with.
 
-Here
-[are](https://github.com/simonmichael/shelltestrunner/tree/master/)
-[some](https://github.com/simonmichael/hledger/tree/master/tests)
-<!-- [more](https://github.com/yesodweb/yesod/tree/master/yesod/test) -->
-[real](https://github.com/bjpop/berp/tree/master/test/regression)
-[world](https://github.com/magthe/cblrepo/tree/master/tests)
-[examples](http://code.google.com/p/eddie/source/browse/#hg%2Ftests).
+[Here](https://github.com/simonmichael/shelltestrunner/tree/master/tests.format1)
+[are](https://github.com/simonmichael/shelltestrunner/tree/master/tests.format2)
+[some](https://github.com/simonmichael/shelltestrunner/tree/master/tests.format2b)
+[real](https://github.com/simonmichael/hledger/tree/master/tests)
+[world](https://github.com/bjpop/berp/tree/master/test/regression)
+[examples](https://github.com/magthe/cblrepo/tree/master/tests).
 
 
 ## Contribute
