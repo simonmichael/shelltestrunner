@@ -160,7 +160,7 @@ main = do
                ++ (["--select-tests="++s | s <- include args])
                ++ (if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else [])
                ++ (if threads args > 0 then ["--threads=" ++ show (threads args)] else [])
-               ++ (if not (xmlout args == []) then ["--jxml=" ++ (xmlout args)] else [""])
+               ++ (if not (xmlout args == []) then ["--jxml=" ++ (xmlout args)] else [])
 
 
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
