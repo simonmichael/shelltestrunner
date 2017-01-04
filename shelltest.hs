@@ -12,7 +12,6 @@ where
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
 import Data.Algorithm.Diff
-import Data.Version (showVersion)
 import System.Console.CmdArgs
 import System.Directory (doesDirectoryExist)
 import System.FilePath (takeDirectory)
