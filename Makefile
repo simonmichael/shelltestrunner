@@ -66,16 +66,16 @@ docs: site haddock
 # (twice, to help it link index.html)
 .PHONY: site
 site:
-	hakyll build
-	hakyll build
+	hakyll-std build
+	hakyll-std build
 
 cleansite:
-	hakyll clean
+	hakyll-std clean
 
 # re-copy/render files on change, also serve them on port 8000
 # preview allows remote clients unlike the newer watch command
 previewsite:
-	hakyll preview
+	hakyll-std preview -p 8010
 
 #VIEWHTML=firefox
 VIEWHTML=open
