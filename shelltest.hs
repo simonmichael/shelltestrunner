@@ -225,7 +225,7 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
   let exitCodeMatch = show x_actual `matches` x_expected
   if (x_actual == 127) -- catch bad executable - should work on posix systems at least
    then ioError $ userError $ unwords $ filter (not . null) [e_actual, printf "Command: '%s' Exit code: %i" cmd x_actual] -- XXX still a test failure; should be an error
-   else assertString $ addnewline $ intercalate "\n" $ filter (not . null) [
+   else assertString $ concat $ filter (not . null) [
              if any not [outputMatch, errorMatch, exitCodeMatch]
                then printf "Command:\n%s\n" cmd
                else ""
@@ -239,8 +239,6 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
               then ""
               else showExpectedActual args{diff=False} "exit code" x_expected (show x_actual)
             ]
-       where addnewline "" = ""
-             addnewline s  = "\n"++s
 
 -- | Run a shell command line, passing it standard input if provided,
 -- and return the standard output, standard error output and exit code.
