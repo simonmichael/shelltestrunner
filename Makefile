@@ -187,12 +187,37 @@ showcodechanges:
 # emacstags:
 # 	rm -f TAGS; hasktags -e *hs *.cabal tests/*.test
 
-TAG=hasktags -e
+tag: ghcitag
 
-tag: TAGS
+# make ctags (.tags) and emacs (TAGS) tag files using GHCI.
+# GHCI because hasktags's output doesn't seem to suit Atom, and ctags
+# doesn't support haskell. Different filenames because OSX. 
+# Atom will use .tags, Emacs will use TAGS.
+# Tags haskell files only. Regenerates tag files every time.
+GHCI=stack exec -- ghci
+ghcitag:
+	echo :quit | $(GHCI) -ghci-script maketags.ghci
+
+HASKTAG=hasktags -e
+hasktag: TAGS
 
 TAGS: $(HSFILES) $(TESTFILES) *.md Makefile
-	$(TAG) $(HSFILES) $(TESTFILES) *.md Makefile
+	$(HASKTAG) -o $@ $(HSFILES) $(TESTFILES) *.md Makefile
+
+# CTAG=ctags \
+# 	--extra=f \
+# 	--exclude='.*' \
+# 	--exclude='_*' \
+# 	--exclude='*~' \
+# #	--exclude='TAGS' \
+#	$(CTAG) -f $@ -R $^
+ctag: .tags
+
+.tags: $(HSFILES) $(TESTFILES) *.md Makefile
+
+# TAGNONJS=$(TAG) --langmap=php:+.inc --langmap=html:+.tpl --php-kinds=cidf --html-kinds=a --javascript-kinds=
+# TAGJS=$(TAG) -f TAGS-js --php-kinds=j --html-kinds=f
+
 
 clean:
 	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`
