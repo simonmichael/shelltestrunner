@@ -1,8 +1,7 @@
 *.hi
 *.o
 TAGS
-TAGS.ghci
-.tags
+ctags
 _*
 /shelltest
 /shelltest.exe
