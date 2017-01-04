@@ -1,5 +1,5 @@
 ---
-title: shelltestrunner: command-line testing
+title: "shelltestrunner: command-line testing"
 ---
 
 <a href="http://github.com/simonmichael/shelltestrunner">
@@ -32,6 +32,7 @@ shelltestrunner is free software released under GPLv3+.
 
 ## Quick start
 
+|
 ---------------------------------|--------------------------------------
 Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | **`apt-get install shelltestrunner`**
 Gentoo:                          | **`emerge shelltestrunner`**
@@ -256,10 +257,6 @@ A space before the command protects it from -w/--with.
 
 ## Contribute
 
-<div id="donate-buttons" style="float:right; padding-left:1em;">
-<a title="Donate via Gittip" href="https://www.gittip.com/simonmichael"><img src="/site/gittip.png" alt="Gittip"></a>
-<a style="margin-left:1em;" title="Donate via Paypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2PLCMR67L4G3E"><img src="/site/paypal.gif" alt="Paypal"></a>
-</div>
 The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
 ([changelog](http://hackage.haskell.org/package/shelltestrunner/changelog)).
 The [code](https://github.com/simonmichael/shelltestrunner)
@@ -271,6 +268,10 @@ Here's the
 [2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).
 [Email](mailto:simon@joyful.com?subject=shelltestrunner) or
 [chat](irc://irc.freenode.net/#haskell) me (`sm` on irc.freenode.net).
+
+<div id="donate-buttons">
+<a title="Donate via Paypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2PLCMR67L4G3E"><img src="/site/paypal.gif" alt="Paypal"></a>
+</div>
 
 ## Credits
 
