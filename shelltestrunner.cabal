@@ -40,6 +40,8 @@ executable shelltest
     Utils.Debug
     Types
     Parse
+    Preprocessor
+
   build-depends:
     base                 >= 4     && < 5,
     Diff                 >= 0.2.0 && < 0.4,

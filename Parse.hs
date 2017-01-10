@@ -10,11 +10,23 @@ import Import
 import Types
 import Utils hiding (dbg, ptrace)
 import qualified Utils
+import Preprocessor
 
+
+
+parseFromFileWithPreprocessor :: (Parser [ShellTest]) -> PreProcessor -> FilePath -> IO (Either ParseError [ShellTest])
+parseFromFileWithPreprocessor p preproc fname = do
+       input <- readFile fname
+       let processed = preprocess preproc input
+       case processed of Right text -> return (runParser p () fname text)
+                         (Left err)  -> return (Left err) -- To make haskell happy.
+
+
+-- parseFromFile
 -- | Parse this shell test file, optionally logging debug output.
-parseShellTestFile :: Bool -> FilePath -> IO (Either ParseError [ShellTest])
-parseShellTestFile debug f = do
-  p <- parseFromFile shelltestfile f
+parseShellTestFile :: Bool -> PreProcessor -> FilePath -> IO (Either ParseError [ShellTest])
+parseShellTestFile debug preProcessor f = do
+  p <- parseFromFileWithPreprocessor shelltestfile preProcessor f
   case p of
     Right ts -> do
            let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
