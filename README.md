@@ -293,6 +293,7 @@ Trygve Laugstøl,
 Iustin Pop,
 Sergei Trofimovich,
 Andrés Sicard-Ramírez,
+Taavi Väljaots,
 John Chee.
 
 shelltestrunner depends on several fine libraries, in particular Max
