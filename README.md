@@ -127,6 +127,10 @@ Common flags:
   -d --diff             Show expected output mismatches in diff format
   -p --precise          Show expected/actual output precisely (eg whitespace)
   -h --hide-successes   Show only test failures
+     --xmlout=FILE      Specify file to store test results in xml format.
+  -D --defmacro=D=DEF   Specify a macro that is evaluated by preprocessor
+                        before the test files are parsed. D stands for macro
+                        definition that is replaced with the value of DEF.
   -i --include=PAT      Include tests whose name contains this glob pattern
   -x --exclude=STR      Exclude test files whose path contains STR
      --execdir          Run tests from within the test file's directory
@@ -150,6 +154,8 @@ with `--execdir` they run from the directory where they are defined, instead.
 while `--exclude` skips tests based on their file path.
 These can be used eg to focus on a particular test, or to skip tests intended for a different platform.
 
+`-D/--defmacro` defines a macro that is replaced by preprocessor before any tests are parsed and run.
+
 `-w/--with` replaces the first word of all test commands with something
 else, which can be useful for testing alternate versions of a
 program. Commands which have been prefixed by an extra space will
@@ -159,7 +165,7 @@ not be affected by this option.
 
 An example:
 ````bash
-$ shelltest tests -i args -c -j8 -o1 --hide
+$ shelltest tests -i args -c -j8 -o1 -DCONF_FILE=test/myconf.cfq --hide-successes
 ````
 This runs
 
@@ -168,6 +174,7 @@ This runs
 - in colour if possible
 - with up to 8 tests running in parallel
 - allowing no more than 1 second for each test
+- replaces macro `CONF_FILE` in all the tests with `test/myconf.cfq`
 - showing only the failures (long flags like `--hide-successes` can be abbreviated)
 
 ## Test format
