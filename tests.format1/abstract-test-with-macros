@@ -1,0 +1,6 @@
+# Abstract test with unresolved macros.
+
+$exe $in
+>>> /$out/
+>>>= 0
+

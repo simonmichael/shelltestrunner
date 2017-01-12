@@ -1,0 +1,4 @@
+#
+# 4. a bad testfile should fail
+./shelltest -D\$exe=echo "-D\$in=My message" "-D\$out=My message" tests.format1/abstract-test-with-macros
+>>>= 0
