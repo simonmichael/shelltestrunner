@@ -3,7 +3,7 @@ where
 
 import Import
 import Utils
-
+import Text.Parsec
   
 data ShellTest = ShellTest {
      command          :: TestCommand
@@ -52,3 +52,8 @@ showMatcher (Numeric s)         = s
 showMatcher (NegativeNumeric s) = "!"++ s
 showMatcher (Lines _ s)         = s
 
+
+type Macro = (String, String)
+
+data PreProcessor = NoPreprocess |
+                    PreProcessor [(String -> Either ParseError String)]

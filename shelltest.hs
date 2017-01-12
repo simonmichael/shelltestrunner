@@ -28,6 +28,7 @@ import Import
 import Utils
 import Types
 import Parse
+import Preprocessor
 
 
 progname, progversion :: String
@@ -106,6 +107,7 @@ data Args = Args {
     ,precise     :: Bool
     ,hide_successes :: Bool
     ,xmlout      :: String
+    ,defmacro    :: [String]
     ,include     :: [String]
     ,exclude     :: [String]
     ,execdir     :: Bool
@@ -127,6 +129,7 @@ argdefs = Args {
     ,precise     = def     &= help "Show expected/actual output precisely (eg whitespace)"
     ,hide_successes = def  &= help "Show only test failures"
     ,xmlout      = def     &= typ "FILE" &= help "Specify file to store test results in xml format."
+    ,defmacro    = def  &= name "D" &= typ "D=DEF" &= help "Specify a macro that is evaluated by preprocessor before the test files are parsed. D stands for macro definition that is replaced with the value of DEF."
     ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
     ,execdir     = def     &= help "Run tests from within the test file's directory"
@@ -173,11 +176,13 @@ main = do
                                  (testpaths args)
   let testfiles = filter (not . \p -> any (`isInfixOf` p) (exclude args)) testfiles'
       excluded = length testfiles' - length testfiles
+      macros = (getMacros (defmacro args))
+      preprocessor = createMacroPreProcessor macros
   when (excluded > 0) $ printf "Excluding %d test files\n" excluded
 
   -- parse test files
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
-  parseresults <- mapM (parseShellTestFile (debug args || debug_parse args)) testfiles
+  parseresults <- mapM (parseShellTestFile (debug args || debug_parse args) preprocessor) testfiles
 
   -- run tests
   when (debug args) $ printf "running tests:\n"
