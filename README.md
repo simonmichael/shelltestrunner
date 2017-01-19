@@ -1,3 +1,4 @@
+<!-- these disrupt the readme on github
 ---
 title: "shelltestrunner: command-line testing"
 ---
@@ -5,10 +6,10 @@ title: "shelltestrunner: command-line testing"
 <a href="http://github.com/simonmichael/shelltestrunner">
 <img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
 </a>
-
+-->
 <div id=title>
-<h1>Command-line testing</h1>
 <img src="site/title2.png">
+<h1>Command-line testing</h1>
 </div>
 
 * toc
