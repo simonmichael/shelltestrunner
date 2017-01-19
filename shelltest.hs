@@ -80,7 +80,7 @@ formathelp = unlines [
   ,"Same as above, but with short delimiters: < $ > >2 >="
   ,""
   ,"--------------------------------------"
-  ,"Test format 1 (deprecated)"
+  ,"Test format 1"
   ,""
   ,"# COMMENTS OR BLANK LINES"
   ,"COMMAND LINE"

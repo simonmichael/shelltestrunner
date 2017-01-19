@@ -1,6 +1,6 @@
 unreleased
 
-  * new test format allowing input re-use and a lighter syntax
+  * new test formats allowing input re-use and/or a lighter syntax
   * shelltest --list ... lists the tests found
   * replace the test-framework options with native ones
   * show the command when tests fail (John Chee)

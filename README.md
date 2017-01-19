@@ -38,7 +38,7 @@ Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | **`apt-get install shelltestrunner`**
 Gentoo:                          | **`emerge shelltestrunner`**
 Elsewhere:                       | [Get haskell](http://www.stackage.org/install), **`cabal install shelltestrunner`**
 
-Here's a simple test file, `true.test`, containing two tests:
+Here's a simple test file, `true.test`, containing two tests (using [format 2](#test-format)):
 
 ```bash
 # true, given no input, prints nothing on stdout or stderr and
@@ -146,8 +146,9 @@ Common flags:
      --numeric-version  Print just the version number
 ```
 
-Test commands run from within your current directory by default;
-with `--execdir` they run from the directory where they are defined, instead.
+Test commands are run with `/bin/sh` on POSIX systems and with `CMD` on Windows.
+By default, they are run in the directory in which you ran `shelltest`;
+with `--execdir` they will run in each test file's directory instead.
 
 `--include` selects only tests whose name (file name plus intra-file sequence number) matches a
 [.gitignore-style pattern](https://batterseapower.github.io/test-framework#the-console-test-runner),
@@ -179,12 +180,22 @@ This runs
 
 ## Test format
 
+Several test formats are supported at the moment (in shelltestrunner 2.0 alpha);
+`shelltestrunner --help-format` shows a quick reference.
+Format 1 is the original and most used,
+format 2 allows multiple tests to share the same input,
+and format 2b uses shorter delimiters.
+These last two are not final and [may change](https://github.com/simonmichael/shelltestrunner/issues/4)
+before shelltestrunner 2.0.
+
+
+### Format 2
+
 Test files contain one or more test groups. A test group consists of
 some optional standard input and one or more tests.  Each test
 is a one-line shell command followed by optional expected standard
 output, error output and/or numeric exit status, separated by
-delimiters.  Use `shelltestrunner --help-format` to see a quick
-reference:
+delimiters.
 
 ```bash
 # COMMENTS OR BLANK LINES
@@ -227,14 +238,29 @@ The [exit status](http://en.wikipedia.org/wiki/Exit_status) is a
 number, normally 0 for a successful exit.  This too can be prefixed
 with `!` to negate the match, or you can use a `/REGEX/`.
 
-<h3>Format 2b (short delimiters)</h3>
+### Format 2b
 
-If the above fails to parse a file, shelltestrunner will try test format 2b,
-which is just the same but with short delimiters: `<` `$` `>` `>2` `>=`.
+If shelltestrunner can't parse the file with format 2, it will try format 2b,
+which is just the same but with shorter delimiters:
+```bash
+# COMMENTS OR BLANK LINES
+<
+INPUT
+$ COMMAND LINE
+>
+EXPECTED OUTPUT (OR > /REGEX/)
+>2
+EXPECTED STDERR (OR >2 /REGEX/)
+>= EXPECTED EXIT STATUS (OR >= /REGEX/ OR >=)
+# COMMENTS OR BLANK LINES
+ADDITIONAL TESTS FOR THIS INPUT
+ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
+```
 
-<h3>Format 1 (deprecated)</h3>
+### Format 1
 
-Finally, it will try 1.x's format for backward compatibility.
+And if that fails, it will try format 1. This is the original format
+used by shelltestrunner 1 (ie, up to version 1.3.x).
 Here, test files contain one or more individual tests, each consisting
 of a one-line shell command, optional input, expected standard output
 and/or error output, and a (required) exit status.
@@ -283,7 +309,7 @@ Here's the
 ## Credits
 
 [Simon Michael](http://joyful.com) wrote shelltestrunner,
-which was originally hledger's test tool, which was
+originally for testing hledger,
 inspired by John Wiegley's test system for Ledger.
 
 Code contributors include:
