@@ -2,7 +2,7 @@
 {- |
 
 shelltest - for testing command-line programs. See shelltestrunner.cabal.
-(c) Simon Michael 2009-2014, released under GNU GPLv3 or later.
+(c) Simon Michael 2009-2017, released under GNU GPLv3 or later.
 
 -}
 
