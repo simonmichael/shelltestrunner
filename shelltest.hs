@@ -206,7 +206,7 @@ warn s = putStrLn s >> exitWith (ExitFailure 1)
 
 testFileParseToHUnitTest :: Args -> Either ParseError [ShellTest] -> Test.HUnit.Test
 testFileParseToHUnitTest args (Right ts) = TestList $ map (shellTestToHUnitTest args) ts
-testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: assertFailure $ show e
+testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: (assertFailure :: (String -> IO ())) $ show e
 
 shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
