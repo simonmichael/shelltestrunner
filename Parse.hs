@@ -11,15 +11,18 @@ import Types
 import Utils hiding (dbg, ptrace)
 import qualified Utils
 import Preprocessor
-
+import System.IO hiding (stdin)
 
 
 parseFromFileWithPreprocessor :: (Parser [ShellTest]) -> PreProcessor -> FilePath -> IO (Either ParseError [ShellTest])
-parseFromFileWithPreprocessor p preproc fname = do
-       input <- readFile fname
-       let processed = preprocess preproc input
-       case processed of Right text -> return (runParser p () fname text)
-                         (Left err)  -> return (Left err) -- To make haskell happy.
+parseFromFileWithPreprocessor p preproc fname =
+    do
+        h <- openFile fname ReadMode
+        hSetNewlineMode h universalNewlineMode
+        input <- hGetContents h
+        let processed = preprocess preproc input
+        case processed of    Right text -> return (runParser p () fname text)
+                             (Left err) -> return (Left err) -- To make haskell happy.
 
 
 -- parseFromFile
@@ -207,7 +210,7 @@ linesmatcher2 :: Parser Matcher
 linesmatcher2 = do
   ptrace_ "    linesmatcher2 0"
   ln <- sourceLine <$> getPosition
-  ls <- unlines <$> 
+  ls <- unlines <$>
         line `manyTill` lookAhead (choice' [delimiterNotNewTest
                                            ,many whitespaceorcommentline >> delimiterNewTest
                                            ,many whitespaceorcommentline >> eofasstr])
@@ -302,7 +305,7 @@ linesmatcher2b :: Parser Matcher
 linesmatcher2b = do
   ptrace_ "    linesmatcher2b 0"
   ln <- sourceLine <$> getPosition
-  ls <- unlines <$> 
+  ls <- unlines <$>
         line `manyTill` lookAhead (choice' [delimiterNotNewTest2b
                                            ,many whitespaceorcommentline >> delimiterNewTest2b
                                            ,many whitespaceorcommentline >> eofasstr])
