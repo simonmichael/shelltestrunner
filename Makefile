@@ -21,14 +21,18 @@ HSFILES=*.hs Utils/*.hs
 build:
 	stack build
 
-shelltest.ghc-%: shelltest.hs
-	ghc-$* --make $(BUILDFLAGS) $(PROGNAME).hs -o $@ -outputdir .ghc-$*
+# Try build/test/bench/haddock with several stack resolvers/GHC versions.
+# Not all of these work on all platforms, eg 7.8 on OSX Sierra.
+build-with-resolvers: \
+	build-with-resolver-nightly \
+	build-with-resolver-lts-9 \
+	build-with-resolver-lts-8 \
+	build-with-resolver-lts-6 \
+	#build-with-resolver-lts-2 \
 
-shelltest.ghcall: \
-	shelltest.ghc-7.4.1 \
-	shelltest.ghc-7.2.2 \
-	shelltest.ghc-7.0.4 \
-	shelltest.ghc-6.12.3 \
+build-with-resolver-%:
+	stack --resolver=$* clean
+	stack --resolver=$* --install-ghc build --test --bench --haddock --no-haddock-deps
 
 test: testunix
 
