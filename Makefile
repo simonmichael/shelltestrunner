@@ -9,7 +9,8 @@ PREFERMACUSRLIBFLAGS=-L/usr/lib
 BUILDFLAGS=-idist/build/autogen -threaded -W -fwarn-tabs $(PREFERMACUSRLIBFLAGS) # -Wall
 PROGNAME=shelltest
 # when running tests, use the latest version to test itself
-LATESTBUILD=`stack exec which shelltest`
+LOCAL_INSTALL=$(shell stack path --local-install-root)
+LATESTBUILD=$(LOCAL_INSTALL)/bin/$(PROGNAME)
 SHELLTEST=$(LATESTBUILD) --with $(LATESTBUILD) -j8
 TESTFILES=tests.format*/*.test
 HSFILES=*.hs Utils/*.hs

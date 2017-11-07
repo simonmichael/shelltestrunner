@@ -46,7 +46,7 @@ executable shelltest
     base                 >= 4     && < 5,
     Diff                 >= 0.2.0 && < 0.4,
     filemanip            >= 0.3   && < 0.4,
-    HUnit                            < 1.6,
+    HUnit                            < 1.7,
     cmdargs              >= 0.7   && < 0.11,
     directory            >= 1.0,
     filepath             >= 1.0,
