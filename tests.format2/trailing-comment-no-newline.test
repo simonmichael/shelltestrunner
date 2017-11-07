@@ -1,4 +1,5 @@
 $$$  echo
-
+>>> /(
+)|(.*ECHO is on.*)/
 >>>= 0
 # comment

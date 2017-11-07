@@ -1,5 +1,5 @@
 # 1 Abstract test with unresolved macros. Test is run by macros.test.
-$ $exe $in
-> /$out/
+$ {exe} {in}
+> /{out}/
 >= 0
 

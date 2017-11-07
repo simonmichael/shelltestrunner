@@ -10,6 +10,7 @@ unreleased
   * new parameter -D for macros
   * test files with Windows line endings will work on unix
   * resolving of shelltest executable with stack fixed on Windows
+  * some tests containing echo without options fixed on Windows
 
 1.3.4 (2014/5/28)
 
