@@ -3,70 +3,84 @@
 # ensure some locale is set, required by ghc executables
 export LANG=en_US.UTF-8
 
-# flag(s) to work around ghc vs. macports issue on mac, if needed
-PREFERMACUSRLIBFLAGS=-L/usr/lib
+# the shelltest executable built with default stack resolver/ghc version
+DEFAULTEXE=$(shell stack path --local-install-root)/bin/shelltest
 
-BUILDFLAGS=-idist/build/autogen -threaded -W -fwarn-tabs $(PREFERMACUSRLIBFLAGS) # -Wall
-PROGNAME=shelltest
-# when running tests, use the latest version to test itself
-LOCAL_INSTALL=$(shell stack path --local-install-root)
-LATESTBUILD=$(LOCAL_INSTALL)/bin/$(PROGNAME)
-SHELLTEST=$(LATESTBUILD) --with $(LATESTBUILD) -j8
-TESTFILES=tests.format*/*.test
-HSFILES=*.hs Utils/*.hs
+# use the built version to run its own shell tests, set default flags
+SHELLTEST=$(DEFAULTEXE) --with $(DEFAULTEXE) --exclude /_ -j16 --hide-successes
 
-######################################################################
+# files to tag
+TESTFILES=tests/format*/*.test
+HSFILES=src/*.hs src/Utils/*.hs
+
+# Several stack resolvers/ghc versions to try building/testing with.
+# Not all of these work on all platforms, eg ghc 7.8 on OSX Sierra.
+# | lts    | ghc    |
+# | 10     | 8.2.2  |
+# | 9,8    | 8.0.2  |
+# | 7      | 8.0.1  |
+# | 6,5,4  | 7.10.3 |
+# | 3      | 7.10.2 |
+# | 2,1    | 7.8.4  |
+RESOLVERS=\
+	nightly \
+	lts-10 \
+	lts-9 \
+	lts-6 \
+
 # BUILD
 
+# build with default resolver/ghc version
 build:
 	stack build
 
-# Try build/test/bench/haddock with several stack resolvers/GHC versions.
-# Not all of these work on all platforms, eg 7.8 on OSX Sierra.
-build-with-resolvers: \
-	build-with-resolver-nightly \
-	build-with-resolver-lts-9 \
-	build-with-resolver-lts-8 \
-	build-with-resolver-lts-6 \
-	#build-with-resolver-lts-2 \
+# build, run any unit tests/benchmarks, and check haddock with several ghc versions
+build-with-resolvers: $(foreach r,$(RESOLVERS),build-with-resolver-$r)
 
 build-with-resolver-%:
-	stack --resolver=$* clean
-	stack --resolver=$* --install-ghc build --test --bench --haddock --no-haddock-deps
+	stack --resolver=$* build --test --bench --haddock --no-haddock-deps
+#	stack --resolver=$* clean  # needed for more thorough test ?
+
+# REPL
+
+ghci:
+	stack ghci # -fdefer-type-errors
+
+# TEST
 
 test: testunix
 
-# run cross-platform and unix-specific tests
+# run cross-platform and unix-specific shell tests with default shelltest build
 testunix: build
-	$(SHELLTEST) tests.format1 tests.format1.unix tests.format2 tests.format2.unix tests.format2b tests.format2b.unix
+	$(SHELLTEST) tests -x .windows
 
-# run cross-platform and windows-specific tests
-# (though if you are able to run make on windows, you may be able to/have to use testunix)
+# run cross-platform and windows-specific shell tests
+# (though if you are running make on windows, you may be able to, or have to, use testunix)
 testwindows:
-	$(SHELLTEST) tests.format1 tests.format1.windows tests.format2 tests.format2.windows tests.format2b tests.format2b.windows
+	$(SHELLTEST) tests -x .unix
 
-# run tests with a specific GHC version
-test-ghc-%: shelltest.ghcall
-	@echo; echo testing shelltest built with ghc-$*
-	@(./shelltest.ghc-$* --with ./shelltest.ghc-$* tests* --exclude windows -j8 --hide-successes \
-	&& echo $@ PASSED) || echo $@ FAILED
+# run shell tests with several ghc versions
+# test-with-resolvers: build-with-resolvers $(foreach r,$(RESOLVERS),test-with-resolver-$r)
 
-test-ghcall: \
-	test-ghc-7.4.1 \
-	test-ghc-7.2.2 \
-	test-ghc-7.0.4 \
-	test-ghc-6.12.3 \
+# test-with-resolver-%:
+# 	echo $(stack --resolver=$* path --local-install-root)/bin/shelltest tests
 
-ghci:
-	ghci -idist/build/autogen shelltest.hs -fdefer-type-errors
+# 	@echo; echo testing shelltest built with ghc-$*
+# 	@(./shelltest.ghc-$* --with ./shelltest.ghc-$* tests* --exclude windows -j8 --hide-successes \
+# 	&& echo $@ PASSED) || echo $@ FAILED
 
-######################################################################
-# DOC
+# DOCS
 
-# called on each darcs commit
 commithook: site
 
-docs: site haddock
+docs: site #haddock
+
+# # build haddock docs
+# haddock:
+# 	cabal configure && cabal haddock --executables
+
+# viewhaddock: docs
+# 	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html
 
 # build website using my standard site build script
 # (twice, to help it link index.html)
@@ -89,27 +103,18 @@ VIEWHTML=open
 site-view: site
 	$(VIEWHTML) _site/index.html
 
-# build haddock docs
-haddock:
-	cabal configure && cabal haddock --executables
-
-viewhaddock: docs
-	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html
-
-######################################################################
 # MISC
 
-showloc:
+loc:
 	@echo Current lines of code including tests:
-	@sloccount *.hs | grep haskell:
-	@echo
+	@sloccount src | grep haskell:
 
-tag: $(HSFILES) $(TESTFILES) *.md Makefile
+tag: $(HSFILES) #$(TESTFILES) *.md Makefile
 	hasktags -e -o TAGS $^
 	hasktags -c -o ctags $^
 
-clean:
-	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`
+# clean:
+# 	rm -f `find . -name "*.o" -o -name "*.hi" -o -name "*~" -o -name "darcs-amend-record*" -o -name "*-darcs-backup*"`
 
-Clean: clean
-	rm -f TAGS _cache #_site $(EXE)
+# Clean: clean
+# 	rm -f TAGS _cache #_site $(EXE)
