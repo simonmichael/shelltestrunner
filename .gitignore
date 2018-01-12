@@ -13,3 +13,5 @@ t.test
 dist/
 patches/
 *.org
+.idea*
+t.*
