@@ -10,7 +10,7 @@ $$$ shelltest
 #>>> /Total +0/
 
 # 3. a bad executable with testfiles should fail
-$$$ shelltest --with nosuchexe tests.format2/args.test
+$$$ shelltest --with nosuchexe tests/format2/args.test
 >>> /user error/
 >>>= 1
 

@@ -1,4 +1,4 @@
-# Test file format 2 - one or more test groups, which are input followed by one or more tests.
+# Test file format 2 - one or more test groups, which are input followed by one or more tests/
 #
 # See --help-format/shelltest.hs. Last copied 2015/3/16:
 #  "--------------------------------------"
