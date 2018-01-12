@@ -1,0 +1,6 @@
+Functional tests for shelltest itself. 
+
+The test files (*.test) are grouped in directories by format.
+Platform-specific tests also have their own directories.  The files
+and tests should be kept in sync across formats, differing only in
+format.
