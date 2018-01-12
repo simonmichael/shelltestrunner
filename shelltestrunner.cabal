@@ -17,30 +17,34 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       http://joyful.com/shelltestrunner
 bug-reports:    mailto:simon@joyful.com
 stability:      stable
-tested-with:    GHC==7.10.3, GHC==8.0.2, GHC==8.2.1 
+tested-with:    GHC==7.10.3, GHC==8.0.2, GHC==8.2.2
 cabal-version:  >= 1.6
 build-type:     Simple
 
 extra-tmp-files:
 extra-source-files:
   CHANGES
-  tests.format1/*.test
-  tests.format1.unix/*.test
-  tests.format1.windows/*.test
-  tests.format2/*.test
-  tests.format2.unix/*.test
-  tests.format2.windows/*.test
+  tests/format1/*.test
+  tests/format1.unix/*.test
+  tests/format1.windows/*.test
+  tests/format2/*.test
+  tests/format2.unix/*.test
+  tests/format2.windows/*.test
+  tests/format2b/*.test
+  tests/format2b.unix/*.test
+  tests/format2b.windows/*.test
 
 executable shelltest
   ghc-options: -threaded -W -fwarn-tabs
   main-is: shelltest.hs
+  hs-source-dirs: src
   other-modules:
     Import
-    Utils
-    Utils.Debug
-    Types
     Parse
     Preprocessor
+    Types
+    Utils
+    Utils.Debug
 
   build-depends:
     base                 >= 4     && < 5,
