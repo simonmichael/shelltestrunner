@@ -28,6 +28,10 @@ RESOLVERS=\
 	lts-9 \
 	lts-6 \
 
+default: build
+
+# commithook: site
+
 # BUILD
 
 # build with default resolver/ghc version
@@ -71,9 +75,24 @@ testwindows:
 
 # DOCS
 
-commithook: site
+PANDOC=pandoc -f gfm -s -M pagetitle:'shelltestrunner - Easy, repeatable testing of CLI programs/commands'
 
-docs: site #haddock
+# convert any markdown files to html
+html: $(patsubst %.md,%.html,$(wildcard *.md)) Makefile
+
+# generate html from a md file
+%.html: %.md #index.tmpl
+	$(PANDOC) $< -o $@ #--template index.tmpl 
+
+# regenerate html files when the corresponding markdown file changes
+liverender:
+	ls *.md | entr make html
+
+# reload the page in a browser viewing http://localhost:10000/README.html (eg) when the file changes
+livereload:
+	livereloadx -p 10000 --static .
+
+# docs: site #haddock
 
 # # build haddock docs
 # haddock:
@@ -82,26 +101,11 @@ docs: site #haddock
 # viewhaddock: docs
 # 	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html
 
-# build website using my standard site build script
-# (twice, to help it link index.html)
-.PHONY: site
-site:
-	hakyll-std build
-	hakyll-std build
-
-site-clean:
-	hakyll-std clean
-
-# serve html, re-generating on file change
-# preview allows remote clients unlike the newer watch command
-site-preview:
-	hakyll-std preview --port 8010
-
 #VIEWHTML=firefox
-VIEWHTML=open
+#VIEWHTML=open
 
-site-view: site
-	$(VIEWHTML) _site/index.html
+# site-view: site
+# 	$(VIEWHTML) _site/index.html
 
 # MISC
 
