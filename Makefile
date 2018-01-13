@@ -38,6 +38,9 @@ default: build
 build:
 	stack build
 
+install:
+	stack install
+
 # build, run any unit tests/benchmarks, and check haddock with several ghc versions
 build-with-resolvers: $(foreach r,$(RESOLVERS),build-with-resolver-$r)
 
