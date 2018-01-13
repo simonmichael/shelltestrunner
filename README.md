@@ -1,151 +1,126 @@
-<!-- these disrupt the readme on github
----
-title: "shelltestrunner: command-line testing"
----
-
-<a href="http://github.com/simonmichael/shelltestrunner">
-<img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" />
-</a>
--->
-<div id=title>
+<div align=center>
+<h1 style="margin:0;">Easy, repeatable testing of CLI programs/commands</h1>
 <img src="site/title2.png">
-<h1 style="margin:0;">Command line testing</h1>
+
+  [Install](#install)
+| [Usage](#usage)
+| [Options](#options)
+| [Test formats](#test-formats)
+| [Support/Contribute](#supportcontribute)
+| [Credits](#credits)
 </div>
 
-* toc
+**shelltestrunner** (executable: `shelltest`) is a portable
+command-line tool for testing command-line programs, or general shell
+commands, released under GPLv3+.  It reads simple test specifications
+defining a command to run, some input, and the expected output,
+stderr, and exit status.  It can run tests in parallel, selectively,
+with a timeout, in color, include or exclude particular tests, etc. 
+Projects using it include
+[hledger](http://hledger.org),
+[Agda](http://wiki.portal.chalmers.se/agda),
+and
+[berp](https://github.com/bjpop/berp).
 
-*Human or Replicant ??*
+## Install
 
-If you have a testing situation such as this<sup><small>1</small></sup>,
-we at [Joyful Corp.](http://joyful.com) can help!
+There may be a new-enough 
+[packaged version](https://repology.org/metapackage/shelltestrunner/badges)
+on your platform. Eg:
 
-**shelltestrunner** is a portable command-line tool for testing
-command-line programs, or general shell commands , on (eg) Unix, Mac or
-Windows.  It reads simple test specifications defining a command to
-run, some input, and the expected output, stderr, and exit status.  It
-can run tests in parallel, selectively, with a timeout, in color, etc.
-shelltestrunner is free software released under GPLv3+.
+|||
+|----------------|---------------------------------------
+| Debian/Ubuntu: | **`apt install shelltestrunner`**
+| Gentoo:        | **`emerge shelltestrunner`**
 
-<a name="note1">
-<small><sup>1</sup> expressed on the command line</small>
-</a>
+Or, build the latest release on any major platform:
 
-
-## Quick start
-
-|
----------------------------------|--------------------------------------
-Debian,&nbsp;Ubuntu:&nbsp;&nbsp; | **`apt-get install shelltestrunner`**
-Gentoo:                          | **`emerge shelltestrunner`**
-Elsewhere:                       | [Get haskell](http://www.stackage.org/install), **`cabal install shelltestrunner`**
-
-Here's a simple test file, `true.test`, containing two tests (using [format 2](#test-format)):
-
-```bash
-# true, given no input, prints nothing on stdout or stderr and
-# terminates with exit status 0.
-$$$ true
-
-# false gives exit status 1.
-$$$ false
->>>= 1
-```
-
-Here's another test file, `cat.test`, with three tests sharing the same input (`foo`):
-
-```bash
-# cat copies its input to stdout
-<<<
-foo
-$$$ cat
->>>
-foo
-
-# or, given a bad flag, prints a platform-specific error and exits with non-zero status
-$$$ cat --no-such-flag
->>>2 /(unrecognized|illegal) option/
->>>= !0
-
-# echo ignores the input and prints a newline.
-# We use an explicit >>>2 (or >>>=) to delimit the whitespace which
-# would otherwise be ignored.
-$$$ echo
->>>
-
->>>2
-```
-
-The `<<<` and `>>>` delimiters can often be omitted, so the above can also be written as:
-```bash
-foo
-$$$ cat
-foo
-
-$$$ cat --no-such-flag
->>>2 /(unrecognized|illegal) option/
->>>= !0
-
-$$$ echo
->>>
-
->>>2
-```
-
-To run the tests, specify the files or a parent folder:
-
-```bash
-$ shelltest *.test  # (or shelltest .)
-:cat.test:1: [OK]
-:cat.test:2: [OK]
-:cat.test:3: [OK]
-:true.test:1: [OK]
-:true.test:2: [OK]
-
-         Test Cases  Total      
- Passed  5           5          
- Failed  0           0          
- Total   5           5          
-```
+|||
+|----------------|---------------------------------------
+| stack:         | **[get stack](https://haskell-lang.org/get-started)**, **`stack install shelltestrunner-1.3.5`**
+| cabal:         | **`cabal update; cabal install shelltestrunner-1.3.5`**
 
 ## Usage
 
+Here's a minimal test file containing one shell test:
+
+    $ cat echo.test
+    # A comment. Testing bash's builtin "echo" command (if /bin/sh is bash)
+    echo
+    >>>= 0
+
+They're called "shell test" because any shell (`/bin/sh` on POSIX, `CMD` on Windows)
+command line can be tested.
+Each test begins with the command to test, followed by optional stdin input, 
+expected stdout and/or stderr output, and ends with the expected exit status.
+Here's another file containing two tests:
+
+    $ cat cat.test
+    # Test that the "cat" program copies its input to stdout, 
+    # nothing appears on stderr, and exit status is 0.
+    cat
+    <<<
+    foo
+    >>>
+    foo
+    >>>2
+    >>>= 0
+    
+    # Test that cat prints an error containing "unrecognized option" 
+    # (and exits with non-zero status) if given a bad flag.
+    cat --no-such-flag
+    >>>2 /unrecognized option/
+    >>>= !0
+
+To run these tests:
+
+    $ shelltest echo.test cat.test
+    :echo.test: [OK]
+    :cat.test:1: [OK]
+    :cat.test:2: [OK]
+
+             Test Cases  Total      
+     Passed  3           3          
+     Failed  0           0          
+     Total   3           3          
+
+That's the basics! 
+There are also some alternate test formats you'll read about below.
+
+## Options
+
+    $ shelltest --help
+    shelltest 1.9.98
+
+    shelltest [OPTIONS] [TESTFILES|TESTDIRS]
+
+    Common flags:
+      -l --list             List all parsed tests by name
+      -a --all              Don't truncate output, even if large
+      -c --color            Show colored output if your terminal supports it
+      -d --diff             Show expected output mismatches in diff format
+      -p --precise          Show expected/actual output precisely (eg whitespace)
+      -h --hide-successes   Show only test failures
+         --xmlout=FILE      Specify file to store test results in xml format.
+      -D --defmacro=D=DEF   Specify a macro that is evaluated by preprocessor
+                            before the test files are parsed. D stands for macro
+                            definition that is replaced with the value of DEF.
+      -i --include=PAT      Include tests whose name contains this glob pattern
+      -x --exclude=STR      Exclude test files whose path contains STR
+         --execdir          Run tests from within the test file's directory
+         --extension=EXT    File suffix of test files (default: .test)
+      -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
+      -o --timeout=SECS     Number of seconds a test may run (default: no limit)
+      -j --threads=N        Number of threads for running tests (default: 1)
+         --debug            Show debug info, for troubleshooting
+         --debug-parse      Show test file parsing info and stop
+         --help-format      Describe the test file format
+      -? --help             Display help message
+      -V --version          Print version information
+         --numeric-version  Print just the version number
+
 `shelltest` accepts one or more test file or directory arguments.
-A directory means all files below it which have the test file suffix,
-normally `.test`.
-
-**Command-line options:**
-```bash
-$ shelltest --help
-shelltest 1.9.98
-```
-```
-shelltest [OPTIONS] [TESTFILES|TESTDIRS]
-
-Common flags:
-  -l --list             List all parsed tests by name
-  -a --all              Don't truncate output, even if large
-  -c --color            Show colored output if your terminal supports it
-  -d --diff             Show expected output mismatches in diff format
-  -p --precise          Show expected/actual output precisely (eg whitespace)
-  -h --hide-successes   Show only test failures
-     --xmlout=FILE      Specify file to store test results in xml format.
-  -D --defmacro=D=DEF   Specify a macro that is evaluated by preprocessor
-                        before the test files are parsed. D stands for macro
-                        definition that is replaced with the value of DEF.
-  -i --include=PAT      Include tests whose name contains this glob pattern
-  -x --exclude=STR      Exclude test files whose path contains STR
-     --execdir          Run tests from within the test file's directory
-     --extension=EXT    File suffix of test files (default: .test)
-  -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
-  -o --timeout=SECS     Number of seconds a test may run (default: no limit)
-  -j --threads=N        Number of threads for running tests (default: 1)
-     --debug            Show debug info, for troubleshooting
-     --debug-parse      Show test file parsing info and stop
-     --help-format      Describe the test file format
-  -? --help             Display help message
-  -V --version          Print version information
-     --numeric-version  Print just the version number
-```
+A directory means all files below it named `*.test` (customisable with `--extension`).
 
 Test commands are run with `/bin/sh` on POSIX systems and with `CMD` on Windows.
 By default, they are run in the directory in which you ran `shelltest`;
@@ -165,32 +140,62 @@ not be affected by this option.
 
 `--hide-successes` gives quieter output, reporting only failed tests.
 
-An example:
-````bash
-$ shelltest tests -i args -c -j8 -o1 -DCONF_FILE=test/myconf.cfq --hide-successes
-````
-This runs
+Long flags can be abbreviated to a unique prefix.
+ 
 
-- the tests defined in any `*.test` file in or below the `tests/` directory
+For example, the command:
+
+    $ shelltest tests -i args -c -j8 -o1 -DCONF_FILE=test/myconf.cfq --hide
+
+- runs the tests defined in any `*.test` file in or below the `tests/` directory
 - whose names contain "`args`"
 - in colour if possible
 - with up to 8 tests running in parallel
 - allowing no more than 1 second for each test
-- replaces macro `CONF_FILE` in all the tests with `test/myconf.cfq`
-- showing only the failures (long flags like `--hide-successes` can be abbreviated)
+- replacing the text "`CONF_FILE`" in all tests with "`test/myconf.cfq`"
+- reporting only the failures.
 
-## Test format
+## Test formats
 
-Several test formats are supported at the moment (in shelltestrunner 2.0 alpha);
+At present several test file formats are supported, and experimentation continues.
+The current formats will remain supported or have a migration path.
 `shelltestrunner --help-format` shows a quick reference.
-Format 1 is the original and most used,
-format 2 allows multiple tests to share the same input,
-and format 2b uses shorter delimiters.
-These last two are not final and [may change](https://github.com/simonmichael/shelltestrunner/issues/4)
-before shelltestrunner 2.0.
+shelltestrunner tries to parse test files using the formats below, in this order: 
+format 2, format 3, format 1.
 
+### Format 1
+
+This is the original format used by shelltestrunner up to version
+1.3.x.  Test files contain one or more individual tests, each
+consisting of a one-line shell command, optional input, expected
+standard output and/or error output, and a (required) exit status.
+
+Syntax:
+
+    # COMMENTS OR BLANK LINES
+    COMMAND LINE
+    <<<
+    INPUT
+    >>>
+    EXPECTED OUTPUT (OR >>> /REGEXP/)
+    >>>2
+    EXPECTED STDERR (OR >>>2 /REGEXP/)
+    >>>= EXPECTED EXIT STATUS (OR >>>= /REGEXP/)
+
+When not specified, stdout/stderr are ignored.
+A space before the command protects it from -w/--with.
+
+Examples: 
+[shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format1),
+[hledger](https://github.com/simonmichael/hledger/tree/master/tests),
+[berp](https://github.com/bjpop/berp/tree/master/test/regression),
+[cblrepo](https://github.com/magthe/cblrepo/tree/master/tests).
 
 ### Format 2
+
+Format 2 allows multiple tests to share the same input (shelltestrunner 1.9+).
+
+Syntax:
 
 Test files contain one or more test groups. A test group consists of
 some optional standard input and one or more tests.  Each test
@@ -198,22 +203,20 @@ is a one-line shell command followed by optional expected standard
 output, error output and/or numeric exit status, separated by
 delimiters.
 
-```bash
-# COMMENTS OR BLANK LINES
-<<<
-INPUT
-$$$ COMMAND LINE
->>>
-EXPECTED OUTPUT (OR >>> /REGEX/)
->>>2
-EXPECTED STDERR (OR >>>2 /REGEX/)
->>>= EXPECTED EXIT STATUS (OR >>>= /REGEX/ OR >>>=)
-# COMMENTS OR BLANK LINES
-ADDITIONAL TESTS FOR THIS INPUT
-ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
-```
+    # COMMENTS OR BLANK LINES
+    <<<
+    INPUT
+    $$$ COMMAND LINE
+    >>>
+    EXPECTED OUTPUT (OR >>> /REGEX/)
+    >>>2
+    EXPECTED STDERR (OR >>>2 /REGEX/)
+    >>>= EXPECTED EXIT STATUS (OR >>>= /REGEX/ OR >>>=)
+    # COMMENTS OR BLANK LINES
+    ADDITIONAL TESTS FOR THIS INPUT
+    ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
 
-All parts are optional except the command line.
+All test parts are optional except the command line.
 If not specified, stdout and stderr are expected to be empty
 and exit status is expected to be zero.
 
@@ -239,69 +242,80 @@ The [exit status](http://en.wikipedia.org/wiki/Exit_status) is a
 number, normally 0 for a successful exit.  This too can be prefixed
 with `!` to negate the match, or you can use a `/REGEX/`.
 
-### Format 2b
+Examples:
 
-If shelltestrunner can't parse the file with format 2, it will try format 2b,
-which is just the same but with shorter delimiters:
-```bash
-# COMMENTS OR BLANK LINES
-<
-INPUT
-$ COMMAND LINE
->
-EXPECTED OUTPUT (OR > /REGEX/)
->2
-EXPECTED STDERR (OR >2 /REGEX/)
->= EXPECTED EXIT STATUS (OR >= /REGEX/ OR >=)
-# COMMENTS OR BLANK LINES
-ADDITIONAL TESTS FOR THIS INPUT
-ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
-```
+    # cat copies its input to stdout
+    <<<
+    foo
+    $$$ cat
+    >>>
+    foo
 
-### Format 1
+    # or, given a bad flag, prints a platform-specific error and exits with non-zero status
+    $$$ cat --no-such-flag
+    >>>2 /(unrecognized|illegal) option/
+    >>>= !0
 
-And if that fails, it will try format 1. This is the original format
-used by shelltestrunner 1 (ie, up to version 1.3.x).
-Here, test files contain one or more individual tests, each consisting
-of a one-line shell command, optional input, expected standard output
-and/or error output, and a (required) exit status.
+    # echo ignores the input and prints a newline.
+    # We use an explicit >>>2 (or >>>=) to delimit the whitespace which
+    # would otherwise be ignored.
+    $$$ echo
+    >>>
 
-```bash
-# COMMENTS OR BLANK LINES
-COMMAND LINE
-<<<
-INPUT
->>>
-EXPECTED OUTPUT (OR >>> /REGEXP/)
->>>2
-EXPECTED STDERR (OR >>>2 /REGEXP/)
->>>= EXPECTED EXIT STATUS (OR >>>= /REGEXP/)
-```
+    >>>2
 
-When not specified, stdout/stderr are ignored.
-A space before the command protects it from -w/--with.
+The `<<<` and `>>>` delimiters can often be omitted, so the above can also be written as:
 
-[Here](https://github.com/simonmichael/shelltestrunner/tree/master/tests.format1)
-[are](https://github.com/simonmichael/shelltestrunner/tree/master/tests.format2)
-[some](https://github.com/simonmichael/shelltestrunner/tree/master/tests.format2b)
-[real](https://github.com/simonmichael/hledger/tree/master/tests)
-[world](https://github.com/bjpop/berp/tree/master/test/regression)
-[examples](https://github.com/magthe/cblrepo/tree/master/tests).
+    foo
+    $$$ cat
+    foo
+
+    $$$ cat --no-such-flag
+    >>>2 /(unrecognized|illegal) option/
+    >>>= !0
+
+    $$$ echo
+    >>>
+
+    >>>2
+
+### Format 3
+
+Format 3 is like format 2, but with shorter delimiters: < > >2 >= (shelltestrunner 1.9+).
+
+Syntax:
+
+    # COMMENTS OR BLANK LINES
+    <
+    INPUT
+    $ COMMAND LINE
+    >
+    EXPECTED OUTPUT (OR > /REGEX/)
+    >2
+    EXPECTED STDERR (OR >2 /REGEX/)
+    >= EXPECTED EXIT STATUS (OR >= /REGEX/ OR >=)
+    # COMMENTS OR BLANK LINES
+    ADDITIONAL TESTS FOR THIS INPUT
+    ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
+
+Examples: 
+[shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format3)
 
 
-## Contribute
+## Support/Contribute
 
-The released version is on [hackage](http://hackage.haskell.org/package/shelltestrunner)
-([changelog](http://hackage.haskell.org/package/shelltestrunner/changelog)).
-The [code](https://github.com/simonmichael/shelltestrunner)
-and [issues](https://github.com/simonmichael/shelltestrunner/issues)
-are on github.
-Feedback, testing, code, documentation, packaging, blogging are most welcome.
-Here's the
-<!-- [2012 user survey](https://docs.google.com/spreadsheet/viewform?formkey=dGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE6MA#gid=3) -->
+|||
+|----------------------|--------------------------------------------------|
+| Released version:    | http://hackage.haskell.org/package/shelltestrunner
+| Changelog:           | http://hackage.haskell.org/package/shelltestrunner/changelog
+| Code                 | https://github.com/simonmichael/shelltestrunner
+| Issues               | https://github.com/simonmichael/shelltestrunner/issues
+| IRC                  | http://webchat.freenode.net?channels=shelltestrunner
+<!-- | Email                | [simon@joyful.com](mailto:simon@joyful.com?subject=[shelltestrunner]) -->
+
 [2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).
-[Email](mailto:simon@joyful.com?subject=shelltestrunner) or
-[chat](irc://irc.freenode.net/#haskell) me (`sm` on irc.freenode.net).
+
+Feedback, testing, code, documentation, packaging, blogging, and funding are most welcome.
 
 <div id="donate-buttons">
 <a title="Donate via Paypal" href="https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=2PLCMR67L4G3E"><img src="/site/paypal.gif" alt="Paypal"></a>
@@ -310,8 +324,7 @@ Here's the
 ## Credits
 
 [Simon Michael](http://joyful.com) wrote shelltestrunner,
-originally for testing hledger,
-inspired by John Wiegley's test system for Ledger.
+inspired by John Wiegley's tests for Ledger.
 
 Code contributors include:
 John Macfarlane,
