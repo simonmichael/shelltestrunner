@@ -6,8 +6,8 @@ export LANG=en_US.UTF-8
 # the shelltest executable built with default stack resolver/ghc version
 DEFAULTEXE=$(shell stack path --local-install-root)/bin/shelltest
 
-# use the built version to run its own shell tests, set default flags
-SHELLTEST=$(DEFAULTEXE) --with $(DEFAULTEXE) --exclude /_ -j16 --hide-successes
+# default flags when running shelltest
+SHELLTEST=$(DEFAULTEXE) --exclude /_ -j16 --hide-successes
 
 # files to tag
 TESTFILES=tests/format*/*.test
@@ -55,16 +55,19 @@ ghci:
 
 # TEST
 
-test: testunix
+test: testunix testexamples
 
 # run cross-platform and unix-specific shell tests with default shelltest build
 testunix: build
-	$(SHELLTEST) tests -x .windows
+	$(SHELLTEST) tests -x /examples -x .windows -w $(DEFAULTEXE)
 
 # run cross-platform and windows-specific shell tests
 # (though if you are running make on windows, you may be able to, or have to, use testunix)
 testwindows:
-	$(SHELLTEST) tests -x .unix
+	$(SHELLTEST) tests -x /examples -x .unix -w $(DEFAULTEXE)
+
+testexamples: build
+	$(SHELLTEST) tests/examples
 
 # run shell tests with several ghc versions
 # test-with-resolvers: build-with-resolvers $(foreach r,$(RESOLVERS),test-with-resolver-$r)

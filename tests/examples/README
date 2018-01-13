@@ -1,0 +1,6 @@
+The examples from the project README as shelltests.
+Copy/pasted by hand for now, should be kept in sync.
+
+To watch for errors:
+
+$ ls *.test | entr shelltest . -j16 --hide

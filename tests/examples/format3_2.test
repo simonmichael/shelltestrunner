@@ -1,0 +1,12 @@
+foo
+$ cat
+foo
+
+$ cat --no-such-flag
+>2 /(unrecognized|illegal) option/
+>= !0
+
+$ echo
+>
+
+>2

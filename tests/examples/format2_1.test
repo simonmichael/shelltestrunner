@@ -1,0 +1,19 @@
+# cat copies its input to stdout
+<<<
+foo
+$$$ cat
+>>>
+foo
+
+# or, given a bad flag, prints a platform-specific error and exits with non-zero status
+$$$ cat --no-such-flag
+>>>2 /(unrecognized|illegal) option/
+>>>= !0
+
+# echo ignores the input and prints a newline.
+# We need the >>>= (or a >>>2) to delimit the whitespace which
+# would otherwise be ignored.
+$$$ echo
+>>>
+
+>>>2

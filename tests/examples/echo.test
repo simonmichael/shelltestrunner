@@ -1,0 +1,3 @@
+# A comment. Testing bash's builtin "echo" command (if /bin/sh is bash)
+echo
+>>>= 0
