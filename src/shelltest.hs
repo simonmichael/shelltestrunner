@@ -33,7 +33,7 @@ import Preprocessor
 
 progname, progversion :: String
 progname = "shelltest"
-progversion = progname ++ " " ++ "1.9.98"
+progversion = progname ++ " " ++ "1.9"
 proghelpsuffix :: [String]
 proghelpsuffix = [
    -- keep this bit synced with options width
