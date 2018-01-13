@@ -1,0 +1,3 @@
+# 1. Test if macros are replaced and tests are successful.
+shelltest -D{exe}=echo "-D{in}=My message" "-D{out}=My message" -D{doNotExist}=null tests/format3/abstract-test-with-macros
+>>>= 0

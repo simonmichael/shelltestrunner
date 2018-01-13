@@ -62,8 +62,8 @@ shelltestfile = do
                 return $ concat $ first : rest
         )
         <|>
-        (do first <- try (format2btestgroup False)
-            rest <- many $ try (format2btestgroup True)
+        (do first <- try (format3testgroup False)
+            rest <- many $ try (format3testgroup True)
             return $ concat $ first : rest
         )
         <|>
@@ -227,97 +227,97 @@ delimiterNotNewTest = do
   choice [try (string ">>>2"), try (string ">>>="), string ">>>"]
 
 ----------------------------------------------------------------------
--- format 2b
+-- format 3
 -- Like format 2 but with short delimiters.
 -- XXX duplication
-format2btestgroup :: Bool -> Parser [ShellTest]
-format2btestgroup inputRequiresDelimiter = do
-  ptrace " format2btestgroup 0" inputRequiresDelimiter
+format3testgroup :: Bool -> Parser [ShellTest]
+format3testgroup inputRequiresDelimiter = do
+  ptrace " format3testgroup 0" inputRequiresDelimiter
   skipMany whitespaceorcommentline
-  ptrace_ " format2btestgroup 1"
+  ptrace_ " format3testgroup 1"
   let startdelims | inputRequiresDelimiter = ["<"]
                   | otherwise              = ["<", ""]
       enddelims = ["$","<"]
   i <- optionMaybe (linesBetween startdelims enddelims) <?> "input"
-  ptrace " format2btestgroup i" i
-  ts <- many1 $ try (format2btest i)
-  ptrace " format2btestgroup ." ts
+  ptrace " format3testgroup i" i
+  ts <- many1 $ try (format3test i)
+  ptrace " format3testgroup ." ts
   return ts
 
-format2btest :: Maybe String -> Parser ShellTest
-format2btest i = do
-  ptrace_ "  format2btest 0"
+format3test :: Maybe String -> Parser ShellTest
+format3test i = do
+  ptrace_ "  format3test 0"
   skipMany whitespaceorcommentline
-  ptrace_ "  format2btest 1"
-  c <- command2b <?> "command line"
-  ptrace "  format2btest c" c
+  ptrace_ "  format3test 1"
+  c <- command3 <?> "command line"
+  ptrace "  format3test c" c
   nullstdout <- nullLinesMatcher . sourceLine <$> getPosition
-  o <- maybe (Just nullstdout) Just <$> optionMaybe expectedoutput2b <?> "expected output"
-  ptrace "  format2btest o" o
+  o <- maybe (Just nullstdout) Just <$> optionMaybe expectedoutput3 <?> "expected output"
+  ptrace "  format3test o" o
   nullstderr <- nullLinesMatcher . sourceLine <$> getPosition
-  e <- maybe (Just $ nullstderr) Just <$> optionMaybe expectederror2b <?> "expected error output"
-  ptrace "  format2btest e" e
-  x <- fromMaybe nullStatusMatcher <$> optionMaybe expectedexitcode2b <?> "expected exit status"
-  ptrace "  format2btest x" x
+  e <- maybe (Just $ nullstderr) Just <$> optionMaybe expectederror3 <?> "expected error output"
+  ptrace "  format3test e" e
+  x <- fromMaybe nullStatusMatcher <$> optionMaybe expectedexitcode3 <?> "expected exit status"
+  ptrace "  format3test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
   let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
-  ptrace "  format2btest ." t
+  ptrace "  format3test ." t
   return t
 
-command2b :: Parser TestCommand
-command2b = string "$" >> optional (char ' ') >> (fixedcommand <|> replaceablecommand)
+command3 :: Parser TestCommand
+command3 = string "$" >> optional (char ' ') >> (fixedcommand <|> replaceablecommand)
 
--- In format 2b, >>> is used only with /REGEX/, also don't consume the
+-- In format 3, >>> is used only with /REGEX/, also don't consume the
 -- whitespace/comments immediately preceding a following test.
-expectedoutput2b :: Parser Matcher
-expectedoutput2b = (try $ do
+expectedoutput3 :: Parser Matcher
+expectedoutput3 = (try $ do
   try (string ">" >> whitespace >> (regexmatcher <|> negativeregexmatcher))
-  <|> (optional (string ">" >> whitespaceline) >> linesmatcher2b <?> "expected output")
+  <|> (optional (string ">" >> whitespaceline) >> linesmatcher3 <?> "expected output")
  )
 
 -- Don't consume the whitespace/comments immediately preceding a
 -- following test.
-expectederror2b :: Parser Matcher
-expectederror2b = (try $ do
-  ptrace_ "   expectederror2b 0"
+expectederror3 :: Parser Matcher
+expectederror3 = (try $ do
+  ptrace_ "   expectederror3 0"
   string ">2" >> whitespace
-  ptrace_ "   expectederror2b 1"
+  ptrace_ "   expectederror3 1"
   m <- (regexmatcher <|> negativeregexmatcher)
        <|>
-       (newline >> linesmatcher2b <?> "expected error output")
-  ptrace "   expectederror2b ." m
+       (newline >> linesmatcher3 <?> "expected error output")
+  ptrace "   expectederror3 ." m
   return m
  )
 
-expectedexitcode2b :: Parser Matcher
-expectedexitcode2b = (try $ do
+expectedexitcode3 :: Parser Matcher
+expectedexitcode3 = (try $ do
   string ">="
   whitespace
   fromMaybe anyMatcher <$> (optionMaybe $ choice [regexmatcher, try negativeregexmatcher, numericmatcher, negativenumericmatcher])
  ) <?> "expected exit status"
 
--- The format 2b lines matcher consumes lines until one of these:
+-- The format 3 lines matcher consumes lines until one of these:
 -- 1. another section delimiter in this test (>, >2, >=)
 -- 2. the next test's start delimiter (<, $), or the start of blank/comment lines preceding it
 -- 3. end of file, or the start of blank/comment lines preceding it
-linesmatcher2b :: Parser Matcher
-linesmatcher2b = do
-  ptrace_ "    linesmatcher2b 0"
+linesmatcher3 :: Parser Matcher
+linesmatcher3 = do
+  ptrace_ "    linesmatcher3 0"
   ln <- sourceLine <$> getPosition
   ls <- unlines <$>
-        line `manyTill` lookAhead (choice' [delimiterNotNewTest2b
-                                           ,many whitespaceorcommentline >> delimiterNewTest2b
+        line `manyTill` lookAhead (choice' [delimiterNotNewTest3
+                                           ,many whitespaceorcommentline >> delimiterNewTest3
                                            ,many whitespaceorcommentline >> eofasstr])
         <?> "lines of output"
-  ptrace "    linesmatcher2b ." ls
+  ptrace "    linesmatcher3 ." ls
   return $ Lines ln ls
 
-delimiterNewTest2b = do
+delimiterNewTest3 = do
   -- ptrace_ "     delimiterNewTest 0"
   choice [string "$", string "<"]
 
-delimiterNotNewTest2b = do
+delimiterNotNewTest3 = do
   -- ptrace_ "    delimiterNotNewTest 0"
   choice [try (string ">2"), try (string ">="), string ">"]
 
