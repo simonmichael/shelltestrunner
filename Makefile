@@ -100,6 +100,16 @@ liverender:
 livereload:
 	livereloadx -p 10000 --static .
 
+LASTTAG=$(shell git describe --tags --abbrev=0)
+
+changes-show: $(call def-help,changes-show, show commits affecting the current directory excluding any hledger package subdirs from the last tag as org nodes newest first )
+	@make changes-show-from-$(LASTTAG)
+
+changes-show-from-%: #$(call def-help,changes-show-from-REV, show commits affecting the current directory excluding any hledger package subdirs from this git revision onward as org nodes newest first )
+	@git log --abbrev-commit --pretty=format:'ORGNODE %s (%an)%n%b%h' $*.. -- . ':!hledger' ':!hledger-*' \
+		| sed -e 's/^\*/-/' -e 's/^ORGNODE/*/' \
+		| sed -e 's/ (Simon Michael)//'
+
 # docs: site #haddock
 
 # # build haddock docs
