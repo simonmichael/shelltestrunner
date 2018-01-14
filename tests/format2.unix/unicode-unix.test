@@ -1,4 +1,6 @@
 # 0. utf8-encoded unicode in filename should be fine
+# XXX file renamed from unicode-ß-unix.test to appease hackage (non-utf8-encoded ?)
+#
 # 1. in command field:
 $$$  echo проверка
 >>> //
