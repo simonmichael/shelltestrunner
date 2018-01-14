@@ -42,9 +42,8 @@ Or, build the latest release on any major platform:
 
 ## Usage
 
-Here's a minimal test file containing one shell test:
+Here's a minimal test file containing one shell test: <!-- keep synced with tests/examples -->
 
-    $ cat echo.test
     # A comment. Testing bash's builtin "echo" command (if /bin/sh is bash)
     echo
     >>>= 0
@@ -55,7 +54,6 @@ Each test begins with the command to test, followed by optional stdin input,
 expected stdout and/or stderr output, and ends with the expected exit status.
 Here's another file containing two tests:
 
-    $ cat cat.test
     # Test that the "cat" program copies its input to stdout, 
     # nothing appears on stderr, and exit status is 0.
     cat
@@ -66,10 +64,10 @@ Here's another file containing two tests:
     >>>2
     >>>= 0
     
-    # Test that cat prints an error containing "unrecognized option" 
-    # (and exits with non-zero status) if given a bad flag.
+    # Test that cat prints an error containing "unrecognized option" or
+    # "illegal option" and exits with non-zero status if given a bad flag.
     cat --no-such-flag
-    >>>2 /unrecognized option/
+    >>>2 /(unrecognized|illegal) option/
     >>>= !0
 
 To run these tests:
@@ -91,11 +89,11 @@ There are also some alternate test formats you'll read about below.
 
     $ shelltest --help
     shelltest 1.9
-
+    
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
-
+    
     Common flags:
-      -l --list             List all parsed tests by name
+      -l --list             List all parsed tests and stop
       -a --all              Don't truncate output, even if large
       -c --color            Show colored output if your terminal supports it
       -d --diff             Show expected output mismatches in diff format
@@ -114,11 +112,10 @@ There are also some alternate test formats you'll read about below.
       -j --threads=N        Number of threads for running tests (default: 1)
          --debug            Show debug info, for troubleshooting
          --debug-parse      Show test file parsing info and stop
-         --help-format      Describe the test file format
       -? --help             Display help message
       -V --version          Print version information
          --numeric-version  Print just the version number
-
+    
 `shelltest` accepts one or more test file or directory arguments.
 A directory means all files below it named `*.test` (customisable with `--extension`).
 
@@ -157,20 +154,24 @@ For example, the command:
 
 ## Test formats
 
-At present several test file formats are supported, and experimentation continues.
-The current formats will remain supported or have a migration path.
-`shelltestrunner --help-format` shows a quick reference.
-shelltestrunner tries to parse test files using the formats below, in this order: 
-format 2, format 3, format 1.
+shelltestrunner 1.9 adds some experimental new test file formats, described below.
+These need more real-world testing and may evolve further, but they will remain supported or will have a migration path.
+
+| Format name | Description                                                                  | Delimiters, in order       |
+|-------------|------------------------------------------------------------------------------|----------------------------|
+| format 1    | command first, exit status is required                                       | `(none) <<< >>> >>>2 >>>=` |
+| format 2    | input first, can be reused by multiple tests, some delimiters can be omitted | `<<<    $$$ >>> >>>2 >>>=` |
+| format 3    | like format 2, but with shorter delimiters                                   | `<      $   >   >2   >=`   |
+
+shelltestrunner tries to parse each file first with format 2, then format 3, then format 1.
+All tests within a file should use the same format.
+I suggest choosing format 3 (short delimiters), switching to format 2 when longer delimiters are needed.
 
 ### Format 1
 
-This is the original format used by shelltestrunner up to version
-1.3.x.  Test files contain one or more individual tests, each
-consisting of a one-line shell command, optional input, expected
-standard output and/or error output, and a (required) exit status.
-
-Syntax:
+Test files contain one or more individual tests, each consisting of a
+one-line shell command, optional input, expected standard output
+and/or error output, and a (required) exit status.
 
     # COMMENTS OR BLANK LINES
     COMMAND LINE
@@ -186,6 +187,7 @@ When not specified, stdout/stderr are ignored.
 A space before the command protects it from -w/--with.
 
 Examples: 
+[above](#usage),
 [shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format1),
 [hledger](https://github.com/simonmichael/hledger/tree/master/tests),
 [berp](https://github.com/bjpop/berp/tree/master/test/regression),
@@ -193,15 +195,14 @@ Examples:
 
 ### Format 2
 
-Format 2 allows multiple tests to share the same input (shelltestrunner 1.9+).
+(shelltestrunner 1.9+) 
+This improves on format 1 in two ways: it allows tests to reuse the
+same input, and it allows delimiters to often be omitted.
 
-Syntax:
-
-Test files contain one or more test groups. A test group consists of
-some optional standard input and one or more tests.  Each test
-is a one-line shell command followed by optional expected standard
-output, error output and/or numeric exit status, separated by
-delimiters.
+Test files contain one or more test groups. 
+A test group consists of some optional standard input and one or more tests.
+Each test is a one-line shell command followed by optional expected standard output, 
+error output and/or numeric exit status, separated by delimiters.
 
     # COMMENTS OR BLANK LINES
     <<<
@@ -220,7 +221,7 @@ All test parts are optional except the command line.
 If not specified, stdout and stderr are expected to be empty
 and exit status is expected to be zero.
 
-There are some additional conveniences:
+Two spaces between `$$$` and the command protects it from -w/--with.
 
 The `<<<` delimiter is optional for the first input in a file.
 Without it, input begins at the first non-blank/comment line.
@@ -229,10 +230,6 @@ Input ends at the `$$$` delimiter. You can't put a comment before the first `$$$
 The `>>>` delimiter is optional except when matching via regex.
 Expected output/stderr extends to the next `>>>2` or `>>>=` if present,
 or to the last non-blank/comment line before the next `<<<` or `$$$` or file end.
-`>>>=` with nothing after it ignores the exit status.
-
-Two spaces between `$$$` and the command protects it from -w/--with (see below).
-
 `/REGEX/` regular expression patterns may be used instead of
 specifying the expected output in full. The regex syntax is
 [regex-tdfa](http://hackage.haskell.org/package/regex-tdfa)'s, plus
@@ -240,9 +237,12 @@ you can put `!` before `/REGEX/` to negate the match.
 
 The [exit status](http://en.wikipedia.org/wiki/Exit_status) is a
 number, normally 0 for a successful exit.  This too can be prefixed
-with `!` to negate the match, or you can use a `/REGEX/`.
+with `!` to negate the match, or you can use a `/REGEX/` pattern.
+A `>>>=` with nothing after it ignores the exit status.
 
-Examples:
+Examples: <!-- keep synced with tests/examples -->
+
+All delimiters explicit:
 
     # cat copies its input to stdout
     <<<
@@ -257,14 +257,14 @@ Examples:
     >>>= !0
 
     # echo ignores the input and prints a newline.
-    # We use an explicit >>>2 (or >>>=) to delimit the whitespace which
+    # We need the >>>= (or a >>>2) to delimit the whitespace which
     # would otherwise be ignored.
     $$$ echo
     >>>
 
-    >>>2
+    >>>=
 
-The `<<<` and `>>>` delimiters can often be omitted, so the above can also be written as:
+Non-required `<<<` and `>>>` delimiters omitted:
 
     foo
     $$$ cat
@@ -275,15 +275,13 @@ The `<<<` and `>>>` delimiters can often be omitted, so the above can also be wr
     >>>= !0
 
     $$$ echo
-    >>>
 
-    >>>2
+    >>>=
 
 ### Format 3
 
-Format 3 is like format 2, but with shorter delimiters: < > >2 >= (shelltestrunner 1.9+).
-
-Syntax:
+(shelltestrunner 1.9+)
+The same as format 2, but with more convenient short delimiters: < $ > >2 >=.
 
     # COMMENTS OR BLANK LINES
     <
@@ -298,9 +296,46 @@ Syntax:
     ADDITIONAL TESTS FOR THIS INPUT
     ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT
 
-Examples: 
-[shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format3)
+Examples: <!-- keep synced with tests/examples -->
 
+All delimiters explicit:
+
+    # cat copies its input to stdout
+    <
+    foo
+    $ cat
+    >
+    foo
+
+    # or, given a bad flag, prints a platform-specific error and exits with non-zero status
+    $ cat --no-such-flag
+    >2 /(unrecognized|illegal) option/
+    >= !0
+
+    # echo ignores the input and prints a newline.
+    # We use an explicit >= (or >2) to delimit the whitespace which
+    # would otherwise be ignored.
+    $ echo
+    >
+
+    >=
+
+Non-required `<` and `>` delimiters omitted:
+
+    foo
+    $ cat
+    foo
+
+    $ cat --no-such-flag
+    >2 /(unrecognized|illegal) option/
+    >= !0
+
+    $ echo
+    >
+
+    >2
+
+[shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format3)
 
 ## Support/Contribute
 
@@ -310,7 +345,7 @@ Examples:
 | Changelog:           | http://hackage.haskell.org/package/shelltestrunner/changelog
 | Code                 | https://github.com/simonmichael/shelltestrunner
 | Issues               | https://github.com/simonmichael/shelltestrunner/issues
-| IRC                  | http://webchat.freenode.net?channels=shelltestrunner
+| IRC                  | http://webchat.freenode.net?channels=shelltestrunner <!-- or /msg sm -->
 <!-- | Email                | [simon@joyful.com](mailto:simon@joyful.com?subject=[shelltestrunner]) -->
 
 [2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).

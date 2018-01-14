@@ -9,4 +9,4 @@ $ cat --no-such-flag
 $ echo
 >
 
->2
+>=
