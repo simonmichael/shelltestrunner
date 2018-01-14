@@ -362,13 +362,13 @@ Feedback, testing, code, documentation, packaging, blogging, and funding are mos
 inspired by John Wiegley's tests for Ledger.
 
 Code contributors include:
-John Macfarlane,
-Bernie Pope,
-Trygve Laugstøl,
-Iustin Pop,
-Sergei Trofimovich,
-Andrés Sicard-Ramírez,
 Taavi Väljaots,
+John Macfarlane,
+Andrés Sicard-Ramírez,
+Iustin Pop,
+Trygve Laugstøl,
+Bernie Pope,
+Sergei Trofimovich,
 John Chee.
 
 shelltestrunner depends on several fine libraries, in particular Max
