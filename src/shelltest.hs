@@ -36,67 +36,14 @@ progname = "shelltest"
 progversion = progname ++ " " ++ "1.9"
 proghelpsuffix :: [String]
 proghelpsuffix = [
-   -- keep this bit synced with options width
-  ]
-formathelp :: String
-formathelp = unlines [
-   "shelltestrunner tries these formats, in order:"
+   "shelltest file formats, tried in this order:"
   ,""
-  ,"--------------------------------------"
-  ,"Test format 2"
+  ,"Description                                            Delimiters, in order"    
+  ,"------------------------------------------------------ ------------------------"
+  ,"v2 input then multiple tests; some delimiters optional <<<    $$$ >>> >>>2 >>>="
+  ,"v3 same as v2, but with short delimiters               <      $   >   >2   >="  
+  ,"v1 command first; exit status is required              (none) <<< >>> >>>2 >>>="
   ,""
-  ,"# COMMENTS OR BLANK LINES"
-  ,"<<<"
-  ,"INPUT"
-  ,"$$$ COMMAND LINE"
-  ,">>>"
-  ,"EXPECTED OUTPUT (OR >>> /REGEX/)"
-  ,">>>2"
-  ,"EXPECTED STDERR (OR >>>2 /REGEX/)"
-  ,">>>= EXPECTED EXIT STATUS (OR >>>= /REGEX/)"
-  ,"# COMMENTS OR BLANK LINES"
-  ,"ADDITIONAL TESTS FOR THIS INPUT"
-  ,"ADDITIONAL TEST GROUPS WITH DIFFERENT INPUT"
-  ,""
-  ,"All parts are optional except the command line."
-  ,"If not specified, stdout and stderr are expected to be empty"
-  ,"and exit status is expected to be zero."
-  ,""
-  ,"The <<< delimiter is optional for the first input in a file."
-  ,"Without it, input begins at the first non-blank/comment line."
-  ,"Input ends at the $$$ delimiter. You can't put a comment before the first $$$."
-  ,""
-  ,"The >>> delimiter is optional except when matching via regex."
-  ,"Expected output/stderr extends to the next >>>2 or >>>= if present,"
-  ,"or to the last non-blank/comment line before the next <<< or $$$ or file end."
-  ,">>>= with nothing after it ignores the exit status."
-  ,""
-  ,"Two spaces between $$$ and the command protects it from -w/--with."
-  ,"!/REGEX/ negates a regular expression match."
-  ,""
-  ,"--------------------------------------"
-  ,"Test format 3"
-  ,""
-  ,"Same as format 2, but with short delimiters: < $ > >2 >="
-  ,""
-  ,"--------------------------------------"
-  ,"Test format 1"
-  ,""
-  ,"# COMMENTS OR BLANK LINES"
-  ,"COMMAND LINE"
-  ,"<<<"
-  ,"INPUT"
-  ,">>>"
-  ,"EXPECTED OUTPUT (OR >>> /REGEXP/)"
-  ,">>>2"
-  ,"EXPECTED STDERR (OR >>>2 /REGEXP/)"
-  ,">>>= EXPECTED EXIT STATUS (OR >>>= /REGEXP/)"
-  ,""
-  ,"All parts are optional except the command line and final >>>= line."
-  ,"When not specified, stdout/stderr are ignored."
-  ,"A space before the command protects it from -w/--with."
-  ,""
-  ,"--------------------------------------"
   ]
 
 data Args = Args {
@@ -117,7 +64,6 @@ data Args = Args {
     ,threads     :: Int
     ,debug       :: Bool
     ,debug_parse :: Bool
-    ,help_format :: Bool
     ,testpaths   :: [FilePath]
     } deriving (Show, Data, Typeable)
 
@@ -139,7 +85,6 @@ argdefs = Args {
     ,threads     = def     &= name "j" &= typ "N" &= help "Number of threads for running tests (default: 1)"
     ,debug       = def     &= help "Show debug info, for troubleshooting"
     ,debug_parse = def     &= help "Show test file parsing info and stop"
-    ,help_format = def     &= explicit &= name "help-format" &= help "Describe the test file format"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
     &= program progname
@@ -192,7 +137,6 @@ main = do
 -- | Additional argument checking.
 checkArgs :: Args -> IO Args
 checkArgs args = do
-  when (help_format args) $ printf formathelp >> exitSuccess
   when (null $ testpaths args) $
        warn $ printf "Please specify at least one test file or directory, eg: %s tests" progname
   return args
