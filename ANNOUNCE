@@ -1,17 +1,41 @@
-I'm pleased to announce the release of shelltestrunner 1.3. New in this release:
+I'm pleased to announce a new release of shelltestrunner! 
 
-  * support latest Diff, cmdargs, test-framework; tested with GHC 7.6.1 (Magnus Therning)
+shelltestrunner (executable: shelltest) is a portable
+command-line tool for testing command-line programs, or general shell
+commands, released under GPLv3+.  It reads simple test specifications
+defining a command to run, some input, and the expected output,
+stderr, and exit status.  It can run tests in parallel, selectively,
+with a timeout, in color, etc. 
+Projects using it include hledger, Agda, and berp.
 
-  * fix unicode handling on GHC >= 7.2
+The last release was 1.3.5, in 2015. The new version is 1.9, which 
+has substantial improvements and is recommended for all users. 
+More real-world testing and contributions will help us deliver 2.0.  
 
-shelltestrunner tests command-line programs (or arbitrary shell commands.)
-It reads simple declarative tests specifying a command, some input, and
-the expected output, and can run them run in parallel, selectively, with a
-timeout, in color, and/or with differences highlighted. shelltestrunner
-has been tested on gnu/linux, mac and windows; projects using it include
-hledger, berp, cblrepo and eddie. shelltestrunner is free software
-released under GPLv3+.
+New in 1.9 (2018/1/14):
 
-Home: http://joyful.com/shelltestrunner
+* two new test file formats, allowing input re-use and lighter syntax
+* new -l/--list flag lists the tests found
+* new -D/--defmacro option allows text substitution (Taavi Valjaots)
+* new --xmlout option saves test results as xml (Taavi Valjaots)
+* tests with Windows line endings now also work on unix (Taavi Valjaots)
+* shelltestrunner's tests should now pass on Windows (Taavi Valjaots)
+* flags formerly passed through to test-framework are now built in
+* >>>= with nothing after it now matches any exit status
+* failure messages now show the test command (John Chee)
+* include shelltestrunner's tests in cabal sdist archive (Iustin Pop)
+* build with latest deps and stackage resolvers
+* shelltestrunner's code and home page have moved to github
 
-Install: $ cabal install shelltestrunner
+Thanks to release contributors Taavi Valjaots, Andrés Sicard-Ramírez, 
+Iustin Pop and John Chee.
+
+Install: 
+
+$ stack install shelltestrunner-1.9
+
+or:
+
+$ cabal update && cabal install shelltestrunner-1.9
+
+Home, docs: https://github.com/simonmichael/shelltestrunner

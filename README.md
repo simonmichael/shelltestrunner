@@ -15,7 +15,7 @@ command-line tool for testing command-line programs, or general shell
 commands, released under GPLv3+.  It reads simple test specifications
 defining a command to run, some input, and the expected output,
 stderr, and exit status.  It can run tests in parallel, selectively,
-with a timeout, in color, include or exclude particular tests, etc. 
+with a timeout, in color, etc. 
 Projects using it include
 [hledger](http://hledger.org),
 [Agda](http://wiki.portal.chalmers.se/agda),

@@ -3,13 +3,14 @@
 * two new test file formats have been added, allowing input re-use and lighter syntax
 * new -l/--list flag lists the tests found
 * new -D/--defmacro option allows text substitution (Taavi Valjaots)
-* new --xmlout option writes xml formatted test results to a file (Taavi Valjaots)
+* new --xmlout option saves test results as xml (Taavi Valjaots)
 * tests with Windows line endings now also work on unix (Taavi Valjaots)
 * shelltestrunner's tests should now pass on Windows (Taavi Valjaots)
 * flags formerly passed through to test-framework are now built in
 * >>>= with nothing after it now matches any exit status
 * failure messages now show the test command (John Chee)
 * include shelltestrunner's tests in cabal sdist archive (Iustin Pop)
+* build with latest deps and stackage resolvers
 * shelltestrunner's code and home page have moved to github
 
 1.3.5 (2015/3/30)
