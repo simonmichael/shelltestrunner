@@ -12,17 +12,19 @@ data ShellTest = ShellTest {
     ,stderrExpected   :: Maybe Matcher
     ,exitCodeExpected :: Matcher
     ,testname         :: String
+    ,lineNumber       :: Int
     }
 
 instance Show ShellTest where
-    show ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
-        printf "ShellTest {command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s, testname = %s}"
+    show ShellTest{testname=n,command=c,lineNumber=ln,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x} =
+        printf "ShellTest {command = %s, stdin = %s, stdoutExpected = %s, stderrExpected = %s, exitCodeExpected = %s, testname = %s, lineNumber = %s}"
                    (show c)
                    (maybe "Nothing" (show.trim) i)
                    (show $ show <$> o)
                    (show $ show <$> e)
                    (show x)
                    (show $ trim n)
+                   (show ln)
 
 data TestCommand = ReplaceableCommand String
                  | FixedCommand String

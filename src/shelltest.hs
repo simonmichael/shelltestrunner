@@ -154,7 +154,7 @@ testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorP
 
 shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
 shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
-                                    stderrExpected=e_expected,exitCodeExpected=x_expected} =
+                                    stderrExpected=e_expected,exitCodeExpected=x_expected,lineNumber=ln} =
  n ~: do
   let e = with args
       cmd = case (e,c) of (_:_, ReplaceableCommand s) -> e ++ " " ++ dropWhile (/=' ') s
@@ -176,7 +176,7 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
    then ioError $ userError $ unwords $ filter (not . null) [e_actual, printf "Command: '%s' Exit code: %i" cmd x_actual] -- XXX still a test failure; should be an error
    else assertString $ concat $ filter (not . null) [
              if any not [outputMatch, errorMatch, exitCodeMatch]
-               then printf "Command:\n%s\n" cmd
+               then printf "Command (at line %s):\n%s\n" (show ln) cmd
                else ""
             ,if outputMatch
               then ""

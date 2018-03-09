@@ -84,6 +84,7 @@ format1test = do
   ptrace_ " format1test 0"
   skipMany whitespaceorcommentline
   ptrace_ " format1test 1"
+  ln <- sourceLine <$> getPosition
   c <- command1 <?> "command line"
   ptrace " format1test c" c
   i <- optionMaybe input1 <?> "input"
@@ -96,7 +97,7 @@ format1test = do
   ptrace " format1test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
-  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln}
   ptrace " format1test ." t
   return t
 
@@ -152,6 +153,7 @@ format2test i = do
   ptrace_ "  format2test 0"
   skipMany whitespaceorcommentline
   ptrace_ "  format2test 1"
+  ln <- sourceLine <$> getPosition
   c <- command2 <?> "command line"
   ptrace "  format2test c" c
   nullstdout <- nullLinesMatcher . sourceLine <$> getPosition
@@ -164,7 +166,7 @@ format2test i = do
   ptrace "  format2test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
-  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln}
   ptrace "  format2test ." t
   return t
 
@@ -249,6 +251,7 @@ format3test i = do
   ptrace_ "  format3test 0"
   skipMany whitespaceorcommentline
   ptrace_ "  format3test 1"
+  ln <- sourceLine <$> getPosition
   c <- command3 <?> "command line"
   ptrace "  format3test c" c
   nullstdout <- nullLinesMatcher . sourceLine <$> getPosition
@@ -261,7 +264,7 @@ format3test i = do
   ptrace "  format3test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
-  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x}
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln}
   ptrace "  format3test ." t
   return t
 
