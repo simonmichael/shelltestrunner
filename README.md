@@ -190,6 +190,7 @@ Examples:
 [above](#usage),
 [shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format1),
 [hledger](https://github.com/simonmichael/hledger/tree/master/tests),
+[Agda](https://github.com/agda/agda/tree/master/src/size-solver/test),
 [berp](https://github.com/bjpop/berp/tree/master/test/regression),
 [cblrepo](https://github.com/magthe/cblrepo/tree/master/tests).
 
