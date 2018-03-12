@@ -1,0 +1,9 @@
+# 1. Test if macros are replaced and tests are successful.
+shelltest tests/format1/one-failing-test
+>>> /.*Command [(]at line 8[)].*
+.*plahh.*
+.*Expected stdout.*
+.*slahh.*
+.*Got stdout.*
+.*plahh.*/
+>>>= 1

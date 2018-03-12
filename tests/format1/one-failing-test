@@ -1,0 +1,15 @@
+# Note that this file is called from 'failure-line.test'
+# This should be fine.
+ echo "plahh"
+>>> /plahh/
+>>>= 0
+
+# This should be broken.
+ echo "plahh"
+>>> /slahh/
+>>>= 0
+
+# This should be fine.
+ echo "plahh"
+>>> /plahh/
+>>>= 0
