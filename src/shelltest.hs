@@ -73,7 +73,7 @@ argdefs = Args {
     ,color       = def     &= help "Show colored output if your terminal supports it"
     ,diff        = def     &= name "d" &= help "Show expected output mismatches in diff format"
     ,precise     = def     &= help "Show expected/actual output precisely (eg whitespace)"
-    ,hide_successes = def  &= help "Show only test failures"
+    ,hide_successes = def  &= explicit &= name "hide-successes" &= help "Show only test failures"
     ,xmlout      = def     &= typ "FILE" &= help "Specify file to store test results in xml format."
     ,defmacro    = def  &= name "D" &= typ "D=DEF" &= help "Specify a macro that is evaluated by preprocessor before the test files are parsed. D stands for macro definition that is replaced with the value of DEF."
     ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern"
@@ -87,6 +87,7 @@ argdefs = Args {
     ,debug_parse = def     &= help "Show test file parsing info and stop"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
+    &= helpArg [explicit, name "help", name "h"]
     &= program progname
     &= summary progversion
     &= details proghelpsuffix
