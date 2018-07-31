@@ -215,6 +215,7 @@ runInteractiveCommandInDir wd cmd = do
                      , std_in  = CreatePipe
                      , std_out = CreatePipe
                      , std_err = CreatePipe }
+   -- these should all be Just since we used CreatePipe
    return (fromJust mb_in, fromJust mb_out, fromJust mb_err, p)
 
 hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
