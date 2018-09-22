@@ -390,7 +390,8 @@ line = (anyChar `manyTill` newline) <?> "rest of line"
 whitespacechar = oneOf " \t"
 whitespace = many whitespacechar
 whitespaceline = try (newline >> return "") <|> try (whitespacechar >> whitespacechar `manyTill` newlineoreof)
-commentline = try (whitespace >> char '#' >> lineoreof) <?> "comments"
+-- a line beginning with optional whitespace and #, or beginning with one or more * (an org node)
+commentline = try ((many1 (char '*') <|> (whitespace >> many1 (char '#'))) >> lineoreof) <?> "comments"
 whitespaceorcommentline = commentline <|> whitespaceline
 whitespaceorcommentlineoreof = choice [eofasstr, commentline, whitespaceline]
 eofasstr = eof >> return ""
