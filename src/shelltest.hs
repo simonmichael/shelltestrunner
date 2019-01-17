@@ -48,6 +48,8 @@ proghelpsuffix = [
 
 data Args = Args {
      list        :: Bool
+    ,include     :: [String]
+    ,exclude     :: [String]
     ,all_        :: Bool
     ,color       :: Bool
     ,diff        :: Bool
@@ -55,8 +57,6 @@ data Args = Args {
     ,hide_successes :: Bool
     ,xmlout      :: String
     ,defmacro    :: [String]
-    ,include     :: [String]
-    ,exclude     :: [String]
     ,execdir     :: Bool
     ,extension   :: String
     ,with        :: String
@@ -68,23 +68,23 @@ data Args = Args {
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
-     list        = def     &= help "List all parsed tests and stop"
-    ,all_        = def     &= help "Don't truncate output, even if large"
-    ,color       = def     &= help "Show colored output if your terminal supports it"
-    ,diff        = def     &= name "d" &= help "Show expected output mismatches in diff format"
-    ,precise     = def     &= help "Show expected/actual output precisely (eg whitespace)"
-    ,hide_successes = def  &= explicit &= name "hide-successes" &= help "Show only test failures"
-    ,xmlout      = def     &= typ "FILE" &= help "Specify file to store test results in xml format."
-    ,defmacro    = def  &= name "D" &= typ "D=DEF" &= help "Specify a macro that is evaluated by preprocessor before the test files are parsed. D stands for macro definition that is replaced with the value of DEF."
-    ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern"
+     list        = def     &= help "List the names of all tests found"
+    ,include     = def     &= name "i" &= typ "PAT" &= help "Include tests whose name contains this glob pattern (eg: -i1 -i{4,5,6})"
     ,exclude     = def     &= name "x" &= typ "STR" &= help "Exclude test files whose path contains STR"
-    ,execdir     = def     &= help "Run tests from within the test file's directory"
+    ,all_        = def     &= help "Show all output without truncating, even if large"
+    ,color       = def     &= help "Show colored output if your terminal supports it"
+    ,diff        = def     &= name "d" &= help "Show differences between expected/actual output"
+    ,precise     = def     &= help "Show expected/actual output precisely, with quoting"
+    ,hide_successes = def  &= explicit &= name "hide-successes" &= help "Show only test failures"
+    ,xmlout      = def     &= typ "FILE" &= help "Save test results to FILE in XML format."
+    ,defmacro    = def  &= name "D" &= typ "D=DEF" &= help "Define a macro D to be replaced by DEF while parsing test files."
+    ,execdir     = def     &= help "Run tests from within each test file's directory"
     ,extension   = ".test" &= typ "EXT" &= help "File suffix of test files (default: .test)"
-    ,with        = def     &= typ "EXECUTABLE" &= help "Replace the first word of (unindented) test commands"
+    ,with        = def     &= typ "EXE" &= help "Replace the first word of test commands with EXE (unindented commands only)"
     ,timeout     = def     &= name "o" &= typ "SECS" &= help "Number of seconds a test may run (default: no limit)"
     ,threads     = def     &= name "j" &= typ "N" &= help "Number of threads for running tests (default: 1)"
-    ,debug       = def     &= help "Show debug info, for troubleshooting"
-    ,debug_parse = def     &= help "Show test file parsing info and stop"
+    ,debug       = def     &= help "Show debug info while running"
+    ,debug_parse = def     &= help "Show test file parsing results and stop"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     }
     &= helpArg [explicit, name "help", name "h"]
