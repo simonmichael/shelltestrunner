@@ -1,0 +1,19 @@
+# test content beginning with delimiter characters
+
+ echo "<"
+>>>
+<
+>>>2
+>>>= 0
+
+ echo ">"
+>>>
+>
+>>>2
+>>>= 0
+
+ echo "$"
+>>>
+$
+>>>2
+>>>= 0

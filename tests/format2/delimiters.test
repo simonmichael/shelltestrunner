@@ -1,0 +1,13 @@
+# test content beginning with delimiter characters
+
+<
+$
+$$$  cat
+<
+$
+
+$$$  echo ">"
+>>>
+>
+>>>2
+>>>= 0
