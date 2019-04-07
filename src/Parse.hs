@@ -374,7 +374,7 @@ linesmatcher1 = do
   ln <- sourceLine <$> getPosition
   (Lines ln . unlines <$>) (line `manyTill` (lookAhead delimiter)) <?> "lines of output"
 
-delimiter = choice [string "$$$", string "<<<", try (string ">>>2"), try (string ">>>="), string ">>>", eofasstr]
+delimiter = choice' [string "$$$", string "<<<", string ">>>2", string ">>>=", string ">>>", eofasstr]
 
 -- longdelims = ["<<<", "$$$", ">>>2", ">>>=", ">>>"]
 -- shortdelims = ["<", "$", ">2", ">=", ">"]
