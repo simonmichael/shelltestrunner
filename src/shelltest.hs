@@ -18,7 +18,7 @@ import System.FilePath (takeDirectory)
 import System.FilePath.Find (findWithHandler, (==?), always)
 import qualified System.FilePath.Find as Find (extension)
 import System.IO (Handle, hGetContents, hPutStr)
-import System.Process (StdStream (CreatePipe), shell, createProcess, CreateProcess (..), waitForProcess, ProcessHandle)
+import System.Process (StdStream (CreatePipe), shell, proc, createProcess, CreateProcess (..), waitForProcess, ProcessHandle)
 import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
@@ -62,6 +62,7 @@ data Args = Args {
     ,with        :: String
     ,timeout     :: Int
     ,threads     :: Int
+    ,shell_cmd   :: Maybe FilePath
     ,debug       :: Bool
     ,debug_parse :: Bool
     ,testpaths   :: [FilePath]
@@ -83,6 +84,7 @@ argdefs = Args {
     ,with        = def     &= typ "EXE" &= help "Replace the first word of test commands with EXE (unindented commands only)"
     ,timeout     = def     &= name "o" &= typ "SECS" &= help "Number of seconds a test may run (default: no limit)"
     ,threads     = def     &= name "j" &= typ "N" &= help "Number of threads for running tests (default: 1)"
+    ,shell_cmd   = def     &= name "shell" &= typ "FILE" &= help "The shell to use (must accept -c CMD; default: /bin/sh)"
     ,debug       = def     &= help "Show debug info while running"
     ,debug_parse = def     &= help "Show test file parsing results and stop"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
@@ -165,7 +167,7 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
       trim' = if all_ args then id else trim
   when (debug args) $ do
     printf "actual command was: %s\n" (show cmd)
-  (o_actual, e_actual, x_actual) <- runCommandWithInput dir cmd i
+  (o_actual, e_actual, x_actual) <- runCommandWithInput (shell_cmd args) dir cmd i
   when (debug args) $ do
     printf "actual stdout was : %s\n" (show $ trim' o_actual)
     printf "actual stderr was : %s\n" (show $ trim' e_actual)
@@ -193,10 +195,10 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
 -- | Run a shell command line, passing it standard input if provided,
 -- and return the standard output, standard error output and exit code.
 -- Note on unix, at least with ghc 6.12, command (and filepath) are assumed to be utf8-encoded.
-runCommandWithInput :: Maybe FilePath -> String -> Maybe String -> IO (String, String, Int)
-runCommandWithInput wd cmd input = do
+runCommandWithInput :: Maybe FilePath -> Maybe FilePath -> String -> Maybe String -> IO (String, String, Int)
+runCommandWithInput sh wd cmd input = do
   -- this has to be done carefully
-  (ih,oh,eh,ph) <- runInteractiveCommandInDir wd cmd
+  (ih,oh,eh,ph) <- runInteractiveCommandInDir sh wd cmd
   when (isJust input) $ forkIO (hPutStr ih $ fromJust input) >> return ()
   o <- newEmptyMVar
   e <- newEmptyMVar
@@ -207,16 +209,18 @@ runCommandWithInput wd cmd input = do
   e_actual <- takeMVar e
   return (o_actual, e_actual, x_actual)
 
-runInteractiveCommandInDir :: Maybe FilePath -> String ->  IO (Handle, Handle, Handle, ProcessHandle)
-runInteractiveCommandInDir wd cmd = do
+runInteractiveCommandInDir :: Maybe FilePath -> Maybe FilePath -> String ->  IO (Handle, Handle, Handle, ProcessHandle)
+runInteractiveCommandInDir sh wd cmd = do
    (mb_in, mb_out, mb_err, p) <-
       createProcess $
-         (shell cmd) { cwd = wd
-                     , std_in  = CreatePipe
-                     , std_out = CreatePipe
-                     , std_err = CreatePipe }
+         run { cwd = wd
+             , std_in  = CreatePipe
+             , std_out = CreatePipe
+             , std_err = CreatePipe }
    -- these should all be Just since we used CreatePipe
    return (fromJust mb_in, fromJust mb_out, fromJust mb_err, p)
+   where
+      run = maybe (shell cmd) (\shcmd -> proc shcmd ["-c", cmd]) sh
 
 hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
 hGetContentsStrictlyAnd h f = hGetContents h >>= \s -> length s `seq` f s
