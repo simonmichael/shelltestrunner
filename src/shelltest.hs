@@ -84,7 +84,7 @@ argdefs = Args {
     ,with        = def     &= typ "EXE" &= help "Replace the first word of test commands with EXE (unindented commands only)"
     ,timeout     = def     &= name "o" &= typ "SECS" &= help "Number of seconds a test may run (default: no limit)"
     ,threads     = def     &= name "j" &= typ "N" &= help "Number of threads for running tests (default: 1)"
-    ,shell_cmd   = def     &= name "shell" &= typ "FILE" &= help "The shell to use (must accept -c CMD; default: /bin/sh)"
+    ,shell_cmd   = def     &= explicit &= name "shell" &= typ "EXE" &= help "The shell program to use (must accept -c CMD; default: /bin/sh on POSIX, cmd.exe on Windows)"
     ,debug       = def     &= help "Show debug info while running"
     ,debug_parse = def     &= help "Show test file parsing results and stop"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
