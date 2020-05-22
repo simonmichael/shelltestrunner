@@ -16,3 +16,4 @@ patches/
 .idea*
 t.*
 *.html
+/stack.yaml.lock
