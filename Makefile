@@ -57,19 +57,23 @@ ghci:
 
 # TEST
 
-test: testunix testexamples
+test: testunix testexamples testbash
 
 # run cross-platform and unix-specific shell tests with default shelltest build
 testunix: build
-	$(SHELLTEST) tests -x /examples -x .windows -w $(DEFAULTEXE)
+	$(SHELLTEST) tests -x /bash -x /examples -x .windows -w $(DEFAULTEXE)
 
 # run cross-platform and windows-specific shell tests
 # (though if you are running make on windows, you may be able to, or have to, use testunix)
 testwindows:
-	$(SHELLTEST) tests -x /examples -x .unix -w $(DEFAULTEXE)
+	$(SHELLTEST) tests -x /bash -x /examples -x .unix -w $(DEFAULTEXE)
 
 testexamples: build
 	$(SHELLTEST) tests/examples
+
+testbash: build
+	! $(SHELLTEST) tests/bash
+	$(SHELLTEST) tests/bash --shell /bin/bash
 
 # run shell tests with several ghc versions
 # test-with-resolvers: build-with-resolvers $(foreach r,$(RESOLVERS),test-with-resolver-$r)
