@@ -1,0 +1,9 @@
+# Test bash-only <( ... ) syntax.
+# This only works when run with --shell /bin/bash
+diff <( echo foo ) <( echo bar )
+>>>
+1c1
+< foo
+---
+> bar
+>>>= 1

@@ -71,8 +71,11 @@ testwindows:
 testexamples: build
 	$(SHELLTEST) tests/examples
 
+# run tests that require --shell /bin/bash
 testbash: build
+	@echo fail when run with /bin/sh
 	! $(SHELLTEST) tests/bash
+	@echo succeed when run with /bin/bash
 	$(SHELLTEST) tests/bash --shell /bin/bash
 
 # run shell tests with several ghc versions
@@ -94,7 +97,7 @@ html: $(patsubst %.md,%.html,$(wildcard *.md)) Makefile
 
 # generate html from a md file
 %.html: %.md #index.tmpl
-	$(PANDOC) $< -o $@ #--template index.tmpl 
+	$(PANDOC) $< -o $@ #--template index.tmpl
 
 # regenerate html files when the corresponding markdown file changes
 liverender:
