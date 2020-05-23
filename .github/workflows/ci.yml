@@ -11,5 +11,4 @@ jobs:
       run: stack build
     - name: Run tests
       run: |
-        export PATH="$(dirname "$(stack exec -- which ghc)"):$PATH"
         make test
