@@ -14,7 +14,7 @@ import Preprocessor
 import System.IO hiding (stdin)
 
 
-parseFromFileWithPreprocessor :: (Parser [ShellTest]) -> PreProcessor -> FilePath -> IO (Either ParseError [ShellTest])
+parseFromFileWithPreprocessor :: Parser [ShellTest] -> PreProcessor -> FilePath -> IO (Either ParseError [ShellTest])
 parseFromFileWithPreprocessor p preproc fname =
     do
         h <- openFile fname ReadMode
@@ -69,11 +69,12 @@ shelltestfile = do
         <|>
         (many $ try format1test)
   ptrace_ "shelltestfile 1"
-  skipMany whitespaceorcommentline
+  trailingComments <- many whitespaceorcommentline
   ptrace_ "shelltestfile 2"
   eof
-  ptrace "shelltestfile ." ts
-  return ts
+  let ts' = appendTrailingComments trailingComments ts
+  ptrace "shelltestfile ." ts'
+  return ts'
 
 
 ----------------------------------------------------------------------
@@ -82,7 +83,7 @@ shelltestfile = do
 
 format1test = do
   ptrace_ " format1test 0"
-  skipMany whitespaceorcommentline
+  comments <- many whitespaceorcommentline
   ptrace_ " format1test 1"
   ln <- sourceLine <$> getPosition
   c <- command1 <?> "command line"
@@ -97,7 +98,7 @@ format1test = do
   ptrace " format1test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
-  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln}
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln,comments=comments,trailingComments=[]}
   ptrace " format1test ." t
   return t
 
@@ -151,7 +152,7 @@ format2testgroup inputRequiresDelimiter = do
 format2test :: Maybe String -> Parser ShellTest
 format2test i = do
   ptrace_ "  format2test 0"
-  skipMany whitespaceorcommentline
+  comments <- many whitespaceorcommentline
   ptrace_ "  format2test 1"
   ln <- sourceLine <$> getPosition
   c <- command2 <?> "command line"
@@ -166,7 +167,7 @@ format2test i = do
   ptrace "  format2test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
-  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln}
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln,comments=comments,trailingComments=[]}
   ptrace "  format2test ." t
   return t
 
@@ -249,7 +250,7 @@ format3testgroup inputRequiresDelimiter = do
 format3test :: Maybe String -> Parser ShellTest
 format3test i = do
   ptrace_ "  format3test 0"
-  skipMany whitespaceorcommentline
+  comments <- many whitespaceorcommentline
   ptrace_ "  format3test 1"
   ln <- sourceLine <$> getPosition
   c <- command3 <?> "command line"
@@ -264,7 +265,7 @@ format3test i = do
   ptrace "  format3test x" x
   when (null (show c) && (isNothing i) && (null $ catMaybes [o,e]) && null (show x)) $ fail ""
   f <- sourceName . statePos <$> getParserState
-  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln}
+  let t = ShellTest{testname=f,command=c,stdin=i,stdoutExpected=o,stderrExpected=e,exitCodeExpected=x,lineNumber=ln,comments=comments,trailingComments=[]}
   ptrace "  format3test ." t
   return t
 
@@ -326,6 +327,11 @@ delimiterNotNewTest3 = do
 
 ----------------------------------------------------------------------
 -- common
+
+appendTrailingComments :: [String] -> [ShellTest] -> [ShellTest]
+appendTrailingComments _ [] = [] -- in this case, trailing comment are discarded
+appendTrailingComments cs ts =
+      init ts ++ [(last ts) { trailingComments = cs }]
 
 linesBetween :: [String] -> [String] -> Parser String
 linesBetween startdelims enddelims = do
@@ -390,8 +396,14 @@ line = (anyChar `manyTill` newline) <?> "rest of line"
 whitespacechar = oneOf " \t"
 whitespace = many whitespacechar
 whitespaceline = try (newline >> return "") <|> try (whitespacechar >> whitespacechar `manyTill` newlineoreof)
+
 -- a line beginning with optional whitespace and #, or beginning with one or more * (an org node)
-commentline = try ((many1 (char '*') <|> (whitespace >> many1 (char '#'))) >> lineoreof) <?> "comments"
+commentline = try (do
+  prefix <- many1 (char '*') <|> (whitespace >> many1 (char '#'))
+  rest <- lineoreof
+  return $ prefix ++ rest
+  ) <?> "comments"
+
 whitespaceorcommentline = commentline <|> whitespaceline
 whitespaceorcommentlineoreof = choice [eofasstr, commentline, whitespaceline]
 eofasstr = eof >> return ""

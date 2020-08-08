@@ -1,0 +1,14 @@
+$$$  false
+>>>= 1
+
+# no comment at begin of file because they are currently not parsed because of shared input
+
+$$$  echo foo
+>>>
+foo
+
+$$$  cat --unknown-option
+>>>2 /option/
+>>>= 1
+
+# comment at end of file
