@@ -1,3 +1,6 @@
+# Test bash-only $'...' syntax.
+# This only works when run with --shell /bin/bash
+# See also: https://github.com/simonmichael/shelltestrunner/issues/15
 echo $'\'o\' `elem` p'
 >>>
 'o' `elem` p
