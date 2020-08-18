@@ -109,4 +109,4 @@ jobs:
         stackyaml: ${{ matrix.plan.stackyaml }}
       run: |
         export PATH=~/.local/bin:$PATH
-        STACKYAML=${{ stackyaml }} make test
+        STACKYAML=$stackyaml make test
