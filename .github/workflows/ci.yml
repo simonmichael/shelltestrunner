@@ -1,14 +1,113 @@
-name: Haskell CI
-on: [push, pull_request]
+name: shelltestrunner CI
+
+on:
+  push:
+    paths:
+      - '.github/workflows/**
+      - 'stack*'
+      - 'src/**'
+      - 'tests/**'
+      - '!**.md'
+      - '!**.1'
+      - '!**.5'
+      - '!**.info'
+      - '!**.txt'
+
+  pull_request:
+    paths:
+      - '.github/workflows/**
+      - 'stack*'
+      - 'src/**'
+      - 'tests/**'
+      - '!**.md'
+      - '!**.1'
+      - '!**.5'
+      - '!**.info'
+      - '!**.txt'
+
+  # Scheduled workflows run on the latest commit on the default or base branch. (master)
+  # schedule:
+  # - cron: "0 07 * * 0"  # sunday midnight pacific
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        plan:
+        # - { ghc: "80"  , stack: "stack --stack-yaml=stack8.0.yaml" }
+        # - { ghc: "82"    , stack: "stack --stack-yaml=stack8.2.yaml" }
+        # - { ghc: "84"  , stack: "stack --stack-yaml=stack8.4.yaml" }
+        # - { ghc: "86"  , stack: "stack --stack-yaml=stack8.6.yaml" }
+        - { ghc: "88"  , stack: "stack --stack-yaml=stack.yaml" }
+        - { ghc: "810" , stack: "stack --stack-yaml=stack8.10.yaml" }
+
     steps:
-    - uses: actions/checkout@v2
-    - name: Setup
-      run: stack setup
-    - name: Build
-      run: stack build
-    - name: Run tests
+
+    - name: Check out
+      uses: actions/checkout@v2
+
+    - name: Cache stack global package db
+      id:   stack-global
+      uses: actions/cache@v2
+      with:
+        path: ~/.stack
+        key: ${{ runner.os }}-stack-global-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
+        restore-keys: |
+             ${{ runner.os }}-stack-global-${{ matrix.plan.ghc }}
+
+    - name: Cache stack-installed programs in ~/.local/bin
+      id:   stack-programs
+      uses: actions/cache@v2
+      with:
+        path: ~/.local/bin
+        key: ${{ runner.os }}-stack-programs-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
+        restore-keys: |
+             ${{ runner.os }}-stack-programs-${{ matrix.plan.ghc }}
+
+    - name: Cache .stack-work
+      uses: actions/cache@v2
+      with:
+        path: .stack-work
+        key: ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}-${{ hashFiles('**.yaml') }}
+        restore-keys: |
+             ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}
+
+    - name: Show stack version
+      # curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C $INSTALLDIR '*/stack'
+      # mkdir -p ~/.local/bin
+      # export PATH=~/.local/bin:$PATH
+      # if [[ ! -x ~/.local/bin/stack ]]; then curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack; fi
+      env:
+        stack: ${{ matrix.plan.stack }}
       run: |
+        $stack --version
+
+    - name: Install GHC
+      env:
+        stack: ${{ matrix.plan.stack }}
+      run: |
+        $stack setup --install-ghc
+
+    - name: Install haskell deps
+      env:
+        stack: ${{ matrix.plan.stack }}
+      run: |
+        $stack build --test --bench --only-dependencies
+        #  --no-terminal
+
+    - name: Build all shelltestrunner modules warning free, optimised and minimised, and run any unit/doc/bench tests
+      env:
+        stack: ${{ matrix.plan.stack }}
+      run: |
+        $stack install --test --bench --force-dirty --ghc-options=-fforce-recomp --ghc-options=-Werror --ghc-options=-split-sections --no-terminal
+
+    - name: Run functional tests (excluding windows tests)
+      env:
+        stack: ${{ matrix.plan.stack }}
+      run: |
+        export PATH=~/.local/bin:$PATH
         make test
+      # $stack exec -- shelltest --execdir -j16 tests -x /bin -x /addons
+      #COLUMNS=80 
