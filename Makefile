@@ -1,110 +1,67 @@
 # shelltestrunner project makefile
 
-# ensure some locale is set, required by ghc executables
-export LANG=en_US.UTF-8
+# ensure a utf8-aware locale is set, required by ghc executables
+export LANG = en_US.UTF-8
 
-# the shelltest executable built with default stack resolver/ghc version
-DEFAULTEXE=$(shell stack path --local-install-root)/bin/shelltest
+# which stack.yaml file (& ghc version) to use, can be overridden by STACK env var
+STACKYAML ?= stack.yaml
 
-# default flags when running shelltest
-SHELLTEST=$(DEFAULTEXE) --exclude /_ -j16 --hide-successes
+# the current base stack command
+STACK = stack --stack-yaml $(STACKYAML)
 
-# files to tag
-TESTFILES=tests/format*/*.test
-HSFILES=src/*.hs src/Utils/*.hs
+# the shelltest executable built with current stack
+SHELLTESTEXE = $(shell $(STACK) path --local-install-root)/bin/shelltest
 
-# Several stack resolvers/ghc versions to try building/testing with.
-# Not all of these work on all platforms, eg ghc 7.8 on OSX Sierra.
-# | lts    | ghc    |
-# | 10     | 8.2.2  |
-# | 9,8    | 8.0.2  |
-# | 7      | 8.0.1  |
-# | 6,5,4  | 7.10.3 |
-# | 3      | 7.10.2 |
-# | 2,1    | 7.8.4  |
-RESOLVERS=\
-	nightly \
-	lts-10 \
-	lts-9 \
-	lts-6 \
+# the base shelltest command with common options
+SHELLTEST=$(SHELLTESTEXE) --exclude /_ -j16 --hide-successes
+
+# standard targets
 
 default: build
 
-# commithook: site
-
-# BUILD
-
-# build with default resolver/ghc version
 build:
-	stack build
+	$(STACK) build
 
 install:
-	stack install
-
-build-all: build-with-resolvers
-
-# build, run any unit tests/benchmarks, and check haddock with several ghc versions
-build-with-resolvers: $(foreach r,$(RESOLVERS),build-with-resolver-$r)
-
-build-with-resolver-%:
-	stack --resolver=$* build --test --bench --haddock --no-haddock-deps
-#	stack --resolver=$* clean  # needed for more thorough test ?
-
-# REPL
+	$(STACK) install
 
 ghci:
-	stack ghci # -fdefer-type-errors
+	$(STACK) ghci
 
-# TEST
+ghcid:
+	$(STACK) exec -- ghcid
 
-test: testunix testexamples testbash
+test: testcross testunix testbash testexamples
 
-# run cross-platform and unix-specific shell tests with default shelltest build
+# tests
+
+# run cross-platform shell tests
+testcross: build
+	@echo; echo "cross-platform tests should succeed:"
+	$(SHELLTEST) -w $(SHELLTESTEXE) tests -x /bash -x /examples -x .windows -x .unix -w $(SHELLTESTEXE)
+
+# run unix-specific shell tests
 testunix: build
-	$(SHELLTEST) tests -x /bash -x /examples -x .windows -w $(DEFAULTEXE)
+	@echo; echo "on unix, unix tests should succeed:"
+	$(SHELLTEST) -w $(SHELLTESTEXE) tests/*.unix
 
-# run cross-platform and windows-specific shell tests
-# (though if you are running make on windows, you may be able to, or have to, use testunix)
-testwindows:
-	$(SHELLTEST) tests -x /bash -x /examples -x .unix -w $(DEFAULTEXE)
+# run windows-specific shell tests
+# (though if you are using make on windows, you may be able to, or may have to, use testunix)
+testwindows: build
+	@echo; echo "on windows, windows tests should succeed:"
+	@$(SHELLTEST) -w $(SHELLTESTEXE) tests/*.windows
 
-testexamples: build
-	$(SHELLTEST) tests/examples
-
-# run tests that require --shell /bin/bash
-# these are expected to fail with the default shell (sh), but we don't need to test that
+# run bash-specific shell tests
 testbash: build
-	@echo bash tests should succeed when run with --shell /bin/bash:
+	@echo; echo "when using bash, bash tests should succeed:"
 	@$(SHELLTEST) tests/bash --shell /bin/bash
 
-# run shell tests with several ghc versions
-# test-with-resolvers: build-with-resolvers $(foreach r,$(RESOLVERS),test-with-resolver-$r)
+# run tests of the README examples
+testexamples: build
+	@echo; echo "README examples should succeed:"
+	@$(SHELLTEST) tests/examples
 
-# test-with-resolver-%:
-# 	echo $(stack --resolver=$* path --local-install-root)/bin/shelltest tests
-
-# 	@echo; echo testing shelltest built with ghc-$*
-# 	@(./shelltest.ghc-$* --with ./shelltest.ghc-$* tests* --exclude windows -j8 --hide-successes \
-# 	&& echo $@ PASSED) || echo $@ FAILED
-
-# DOCS
-
-PANDOC=pandoc -f gfm -s -M pagetitle:'shelltestrunner - Easy, repeatable testing of CLI programs/commands'
-
-# convert any markdown files to html
-html: $(patsubst %.md,%.html,$(wildcard *.md)) Makefile
-
-# generate html from a md file
-%.html: %.md #index.tmpl
-	$(PANDOC) $< -o $@ #--template index.tmpl
-
-# regenerate html files when the corresponding markdown file changes
-liverender:
-	ls *.md | entr make html
-
-# reload the page in a browser viewing http://localhost:10000/README.html (eg) when the file changes
-livereload:
-	livereloadx -p 10000 --static .
+# misc
 
 LASTTAG=$(shell git describe --tags --abbrev=0)
 
@@ -116,26 +73,13 @@ changes-show-from-%: #$(call def-help,changes-show-from-REV, show commits affect
 		| sed -e 's/^\*/-/' -e 's/^ORGNODE/*/' \
 		| sed -e 's/ (Simon Michael)//'
 
-# docs: site #haddock
-
-# # build haddock docs
-# haddock:
-# 	cabal configure && cabal haddock --executables
-
-# viewhaddock: docs
-# 	$(VIEWHTML) dist/doc/html/shelltestrunner/$(EXE)/index.html
-
-#VIEWHTML=firefox
-#VIEWHTML=open
-
-# site-view: site
-# 	$(VIEWHTML) _site/index.html
-
-# MISC
-
 loc:
 	@echo Current lines of code including tests:
 	@sloccount src | grep haskell:
+
+# files to tag
+HSFILES=src/*.hs src/Utils/*.hs
+TESTFILES=tests/format*/*.test
 
 tag: $(HSFILES) #$(TESTFILES) *.md Makefile
 	hasktags -e -o TAGS $^
