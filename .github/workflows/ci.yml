@@ -3,7 +3,7 @@ name: shelltestrunner CI
 on:
   push:
     paths:
-      - '.github/workflows/**
+      - '.github/workflows/**'
       - 'stack*'
       - 'src/**'
       - 'tests/**'
@@ -15,7 +15,7 @@ on:
 
   pull_request:
     paths:
-      - '.github/workflows/**
+      - '.github/workflows/**'
       - 'stack*'
       - 'src/**'
       - 'tests/**'
