@@ -40,8 +40,8 @@ jobs:
         # - { ghc: "82"    , stack: "stack --stack-yaml=stack8.2.yaml" }
         # - { ghc: "84"  , stack: "stack --stack-yaml=stack8.4.yaml" }
         # - { ghc: "86"  , stack: "stack --stack-yaml=stack8.6.yaml" }
-        - { ghc: "88"  , stack: "stack --stack-yaml=stack.yaml" }
-        - { ghc: "810" , stack: "stack --stack-yaml=stack8.10.yaml" }
+        - { ghc: "88"  , stackyaml: "stack.yaml", stack: "stack --stack-yaml=stack.yaml" }
+        - { ghc: "810" , stackyaml: "stack8.10.yaml", stack: "stack --stack-yaml=stack8.10.yaml" }
 
     steps:
 
@@ -106,8 +106,7 @@ jobs:
     - name: Run functional tests (excluding windows tests)
       env:
         stack: ${{ matrix.plan.stack }}
+        stackyaml: ${{ matrix.plan.stackyaml }}
       run: |
         export PATH=~/.local/bin:$PATH
-        make test
-      # $stack exec -- shelltest --execdir -j16 tests -x /bin -x /addons
-      #COLUMNS=80 
+        STACKYAML=${{ stackyaml }} make test
