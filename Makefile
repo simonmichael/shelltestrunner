@@ -72,10 +72,9 @@ testexamples: build
 	$(SHELLTEST) tests/examples
 
 # run tests that require --shell /bin/bash
+# these are expected to fail with the default shell (sh), but we don't need to test that
 testbash: build
-	@echo bash tests should fail when run with /bin/sh:
-	@(! $(SHELLTEST) tests/bash >/dev/null) && echo ok
-	@echo bash tests should succeed when run with /bin/bash:
+	@echo bash tests should succeed when run with --shell /bin/bash:
 	@$(SHELLTEST) tests/bash --shell /bin/bash
 
 # run shell tests with several ghc versions
