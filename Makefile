@@ -73,10 +73,10 @@ testexamples: build
 
 # run tests that require --shell /bin/bash
 testbash: build
-	@echo fail when run with /bin/sh
-	! $(SHELLTEST) tests/bash
-	@echo succeed when run with /bin/bash
-	$(SHELLTEST) tests/bash --shell /bin/bash
+	@echo bash tests should fail when run with /bin/sh:
+	@(! $(SHELLTEST) tests/bash >/dev/null) && echo ok
+	@echo bash tests should succeed when run with /bin/bash:
+	@$(SHELLTEST) tests/bash --shell /bin/bash
 
 # run shell tests with several ghc versions
 # test-with-resolvers: build-with-resolvers $(foreach r,$(RESOLVERS),test-with-resolver-$r)
