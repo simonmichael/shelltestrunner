@@ -26,7 +26,6 @@ parseFromFileWithPreprocessor p preproc fname =
                              (Left err) -> return (Left err) -- To make haskell happy.
 
 
--- parseFromFile
 -- | Parse this shell test file, optionally logging debug output.
 parseShellTestFile :: Bool -> PreProcessor -> FilePath -> IO (Either ParseError [ShellTest])
 parseShellTestFile debug preProcessor f = do
