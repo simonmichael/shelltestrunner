@@ -5,6 +5,7 @@ cat
 foo
 >>>
 foo
+>>>2
 >>>= 0
 
 # Test that cat prints an error containing "unrecognized option" 
