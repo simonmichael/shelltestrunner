@@ -1,0 +1,2 @@
+
+$ shelltest --print=v2 tests/format2/ideal.test | diff -u - tests/format2/ideal.test

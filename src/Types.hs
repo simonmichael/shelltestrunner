@@ -4,9 +4,11 @@ where
 import Import
 import Utils
 import Text.Parsec
-  
+
 data ShellTest = ShellTest {
-     command          :: TestCommand
+     comments         :: [String] -- # COMMENTS OR BLANK LINES before test
+    ,trailingComments :: [String] -- # COMMENTS OR BLANK LINES after the last test
+    ,command          :: TestCommand
     ,stdin            :: Maybe String
     ,stdoutExpected   :: Maybe Matcher
     ,stderrExpected   :: Maybe Matcher
@@ -43,8 +45,8 @@ instance Show Matcher where show = showMatcherTrimmed
 showMatcherTrimmed :: Matcher -> String
 showMatcherTrimmed (PositiveRegex r)   = "/"++(trim r)++"/"
 showMatcherTrimmed (NegativeRegex r)   = "!/"++(trim r)++"/"
-showMatcherTrimmed (Numeric s)         = trim (show s)
-showMatcherTrimmed (NegativeNumeric s) = "!"++ trim (show s)
+showMatcherTrimmed (Numeric s)         = trim s
+showMatcherTrimmed (NegativeNumeric s) = "!"++ trim s
 showMatcherTrimmed (Lines _ s)         = trim s
 
 showMatcher :: Matcher -> String

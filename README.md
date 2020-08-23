@@ -87,34 +87,46 @@ There are also some alternate test formats you'll read about below.
 
 ## Options
 
+<!--
+Command to generate doc:
+shelltest --help | sed -e '/^shelltest file formats/,$d' -e 's/^/    /'
+-->
+
     $ shelltest --help
     shelltest 1.9
     
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
     
     Common flags:
-      -l --list             List all parsed tests and stop
-      -a --all              Don't truncate output, even if large
-      -c --color            Show colored output if your terminal supports it
-      -d --diff             Show expected output mismatches in diff format
-      -p --precise          Show expected/actual output precisely (eg whitespace)
-      -h --hide-successes   Show only test failures
-         --xmlout=FILE      Specify file to store test results in xml format.
-      -D --defmacro=D=DEF   Specify a macro that is evaluated by preprocessor
-                            before the test files are parsed. D stands for macro
-                            definition that is replaced with the value of DEF.
+      -l --list             List the names of all tests found
       -i --include=PAT      Include tests whose name contains this glob pattern
+                            (eg: -i1 -i{4,5,6})
       -x --exclude=STR      Exclude test files whose path contains STR
-         --execdir          Run tests from within the test file's directory
+      -a --all              Show all output without truncating, even if large
+      -c --color            Show colored output if your terminal supports it
+      -d --diff             Show differences between expected/actual output
+         --precise          Show expected/actual output precisely, with quoting
+         --hide-successes   Show only test failures
+         --xmlout=FILE      Save test results to FILE in XML format.
+      -D --defmacro=D=DEF   Define a macro D to be replaced by DEF while parsing
+                            test files.
+         --execdir          Run tests from within each test file's directory
          --extension=EXT    File suffix of test files (default: .test)
-      -w --with=EXECUTABLE  Replace the first word of (unindented) test commands
+      -w --with=EXE         Replace the first word of test commands with EXE
+                            (unindented commands only)
       -o --timeout=SECS     Number of seconds a test may run (default: no limit)
       -j --threads=N        Number of threads for running tests (default: 1)
-         --debug            Show debug info, for troubleshooting
-         --debug-parse      Show test file parsing info and stop
-      -? --help             Display help message
+         --shell=EXE        The shell program to use (must accept -c CMD;
+                            default: /bin/sh on POSIX, cmd.exe on Windows)
+         --debug            Show debug info while running
+         --debug-parse      Show test file parsing results and stop
+    Print test file:
+         --print[=FORMAT]   Print test files in specified format (default: v3).
+    
+      -h --help             Display help message
       -V --version          Print version information
          --numeric-version  Print just the version number
+
     
 `shelltest` accepts one or more test file or directory arguments.
 A directory means all files below it named `*.test` (customisable with `--extension`).
@@ -337,6 +349,26 @@ Non-required `<` and `>` delimiters omitted:
     >2
 
 [shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format3)
+
+## Printing tests
+
+The `--print` option prints tests to stdout.
+This can be used to convert between test formats.
+Format 1, 2, and 3 are supported.
+
+Caveats:
+
+- Comments before the first test in v2/v3 are currently not printed because of
+  the shared input feature which is not yet parsed in detail.
+- Missing newline at EOF will not be preserved.
+- Most tests in tests/, when printed, are not identical because
+  - redundant/empty results like `>= 0`
+  - `>=1` instead of `>= 1`
+  - comments before first test
+  - shared input
+  - no newline at EOF
+  - no tests at all, just comments
+  - no input/output marker `<<<`/`>>>`
 
 ## Support/Contribute
 

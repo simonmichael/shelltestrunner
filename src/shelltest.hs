@@ -28,6 +28,7 @@ import Import
 import Utils
 import Types
 import Parse
+import Print
 import Preprocessor
 
 
@@ -66,6 +67,7 @@ data Args = Args {
     ,debug       :: Bool
     ,debug_parse :: Bool
     ,testpaths   :: [FilePath]
+    ,print_      :: Maybe String
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
@@ -88,6 +90,7 @@ argdefs = Args {
     ,debug       = def     &= help "Show debug info while running"
     ,debug_parse = def     &= help "Show test file parsing results and stop"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
+    ,print_      = def     &= typ "FORMAT" &= opt "v3" &= groupname "Print test file" &= help "Print test files in specified format (default: v3)."
     }
     &= helpArg [explicit, name "help", name "h"]
     &= program progname
@@ -132,10 +135,18 @@ main = do
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
   parseresults <- mapM (parseShellTestFile (debug args || debug_parse args) preprocessor) testfiles
 
-  -- run tests
-  when (debug args) $ printf "running tests:\n"
+  -- run tests / print
   unless (debug_parse args) $
-    defaultMainWithArgs (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults) tfopts
+    if isJust $ print_ args
+      then mapM_ (printShellTestsWithResults args) parseresults
+      else do
+          when (debug args) $ printf "running tests:\n"
+          defaultMainWithArgs (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults) tfopts
+
+
+printShellTestsWithResults :: Args -> Either ParseError [ShellTest] -> IO ()
+printShellTestsWithResults args (Right ts) = mapM_ (prepareShellTest args) ts
+printShellTestsWithResults _ (Left e) = putStrLn $ "*** parse error in " ++ (sourceName $ errorPos e)
 
 -- | Additional argument checking.
 checkArgs :: Args -> IO Args
@@ -144,21 +155,18 @@ checkArgs args = do
        warn $ printf "Please specify at least one test file or directory, eg: %s tests" progname
   return args
 
--- | Show a message, usage string, and terminate with exit status 1.
-warn :: String -> IO ()
-warn s = putStrLn s >> exitWith (ExitFailure 1)
-
-
 -- running tests
 
 testFileParseToHUnitTest :: Args -> Either ParseError [ShellTest] -> Test.HUnit.Test
-testFileParseToHUnitTest args (Right ts) = TestList $ map (shellTestToHUnitTest args) ts
+testFileParseToHUnitTest args (Right ts) = TestList $ map (\t -> testname t ~: prepareShellTest args t) ts
 testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: (assertFailure :: (String -> IO ())) $ show e
 
-shellTestToHUnitTest :: Args -> ShellTest -> Test.HUnit.Test
-shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
-                                    stderrExpected=e_expected,exitCodeExpected=x_expected,lineNumber=ln} =
- n ~: do
+-- | Convert this test to an IO action that either runs the test or prints it
+-- to stdout, depending on the arguments.
+prepareShellTest :: Args -> ShellTest -> IO ()
+prepareShellTest args st@ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
+                       stderrExpected=e_expected,exitCodeExpected=x_expected,lineNumber=ln} =
+ do
   let e = with args
       cmd = case (e,c) of (_:_, ReplaceableCommand s) -> e ++ " " ++ dropWhile (/=' ') s
                           (_, ReplaceableCommand s)   -> s
@@ -175,9 +183,11 @@ shellTestToHUnitTest args ShellTest{testname=n,command=c,stdin=i,stdoutExpected=
   let outputMatch = maybe True (o_actual `matches`) o_expected
   let errorMatch = maybe True (e_actual `matches`) e_expected
   let exitCodeMatch = show x_actual `matches` x_expected
-  if (x_actual == 127) -- catch bad executable - should work on posix systems at least
-   then ioError $ userError $ unwords $ filter (not . null) [e_actual, printf "Command: '%s' Exit code: %i" cmd x_actual] -- XXX still a test failure; should be an error
-   else assertString $ concat $ filter (not . null) [
+  case print_ args of
+    Just format -> printShellTest format st
+    Nothing -> if (x_actual == 127) -- catch bad executable - should work on posix systems at least
+           then ioError $ userError $ unwords $ filter (not . null) [e_actual, printf "Command: '%s' Exit code: %i" cmd x_actual] -- XXX still a test failure; should be an error
+           else assertString $ concat $ filter (not . null) [
              if any not [outputMatch, errorMatch, exitCodeMatch]
                then printf "Command (at line %s):\n%s\n" (show ln) cmd
                else ""

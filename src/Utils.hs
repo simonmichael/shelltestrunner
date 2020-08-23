@@ -66,3 +66,6 @@ replace old new = replace'
                           else h : replace' ts
      len = length old
 
+-- | Show a message, usage string, and terminate with exit status 1.
+warn :: String -> IO ()
+warn s = putStrLn s >> exitWith (ExitFailure 1)
