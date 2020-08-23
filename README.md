@@ -359,31 +359,16 @@ Format 1, 2, and 3 are supported.
 Caveats:
 
 - Comments before the first test in v2/v3 are currently not printed because of
-  the shared input feature which is not yet parsed.
+  the shared input feature which is not yet parsed in detail.
 - Missing newline at EOF will not be preserved.
 - Most tests in tests/, when printed, are not identical because
-  - redundant/empty results
+  - redundant/empty results like `>= 0`
   - `>=1` instead of `>= 1`
   - comments before first test
   - shared input
   - no newline at EOF
   - no tests at all, just comments
   - no input/output marker `<<<`/`>>>`
-
-Planned feature: `--print-with-results` or something like this:
-
-     --actual[=MODE]    Combined with --print, print test files with actual
-                        results (stdout, stderr, exit status). Mode 'all'
-                        prints all actual results (default). Mode 'update'
-                        prints actual results only for non-matching results,
-                        i.e. regular expressions in tests are retained.
-
-which would allow this workflow to update test results:
-
-```
-shelltest --print --actual=update example.test > tmp
-vim -d example.test tmp  # use a diff tool to update test file
-```
 
 ## Support/Contribute
 
