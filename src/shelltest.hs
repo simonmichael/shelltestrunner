@@ -161,7 +161,8 @@ testFileParseToHUnitTest :: Args -> Either ParseError [ShellTest] -> Test.HUnit.
 testFileParseToHUnitTest args (Right ts) = TestList $ map (\t -> testname t ~: prepareShellTest args t) ts
 testFileParseToHUnitTest _ (Left e) = ("parse error in " ++ (sourceName $ errorPos e)) ~: (assertFailure :: (String -> IO ())) $ show e
 
--- | Prepare test as IO action and optionally print it (as specified in args).
+-- | Convert this test to an IO action that either runs the test or prints it
+-- to stdout, depending on the arguments.
 prepareShellTest :: Args -> ShellTest -> IO ()
 prepareShellTest args st@ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o_expected,
                        stderrExpected=e_expected,exitCodeExpected=x_expected,lineNumber=ln} =
