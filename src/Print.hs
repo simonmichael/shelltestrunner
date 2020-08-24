@@ -10,8 +10,8 @@ printShellTest
   :: String               -- ^ Shelltest format. Value of option @--print[=FORMAT]@.
   -> Maybe String         -- ^ Value of option @--actual[=MODE]@. @Nothing@ if option is not given.
   -> ShellTest            -- ^ Test to print
-  -> Either String String -- ^ Non-matching or matching exit status
-  -> Either String String -- ^ Non-matching or matching exit status
+  -> Either String String -- ^ Non-matching or matching stdout
+  -> Either String String -- ^ Non-matching or matching stderr
   -> Either Int Int       -- ^ Non-matching or matching exit status
   -> IO ()
 printShellTest format actualMode ShellTest{command=c,stdin=i,comments=comments,trailingComments=trailingComments,
