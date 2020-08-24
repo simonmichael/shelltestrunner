@@ -4,7 +4,6 @@ where
 import Import
 import Types
 
--- TODO Print output depending on --print=FORMAT (currently only v3)
 -- | Print a shell test considering the @--actual=mode@ option. See CLI
 -- documentation for details on.
 printShellTest
@@ -51,7 +50,7 @@ printShellTest format actualMode ShellTest{command=c,stdin=i,comments=comments,t
           return (o_expected, e_expected, x_expected)
     computeResults (Just mode)
      | mode `isPrefixOf` "all" = return
-         (Just $ Lines 0 $ fromEither o_actual -- TODO what about 0? how is it in parser?
+         (Just $ Lines 0 $ fromEither o_actual
          ,Just $ Lines 0 $ fromEither e_actual
          ,Numeric $ show $ fromEither x_actual)
      | mode `isPrefixOf` "update" = return
@@ -77,7 +76,7 @@ printStdouterr _ Nothing                    = return ()
 printStdouterr _ (Just (Lines _ ""))        = return ()
 printStdouterr _ (Just (Numeric _))         = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
 printStdouterr _ (Just (NegativeNumeric _)) = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
-printStdouterr prefix (Just (Lines _ s))    = printf "%s\n%s\n" prefix s -- TODO trailing \n ?
+printStdouterr prefix (Just (Lines _ s))    = printf "%s\n%s" prefix s
 printStdouterr prefix (Just regex)          = printf "%s %s\n" prefix (show regex)
 
 -- | Print exit status. First arg says 'alwaysPrintEvenIfZero'.
