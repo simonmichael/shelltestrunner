@@ -6,8 +6,11 @@ export LANG = en_US.UTF-8
 # which stack.yaml file (& ghc version) to use, can be overridden by STACK env var
 STACKYAML ?= stack.yaml
 
+# used below and also in tests which run stack (eg large-output.test)
+STACKYAMLOPT = --stack-yaml=$(STACKYAML)
+
 # the current base stack command
-STACK = stack --stack-yaml $(STACKYAML)
+STACK = stack $(STACKYAMLOPT)
 
 # the shelltest executable built with current stack
 SHELLTESTEXE = $(shell $(STACK) path --local-install-root)/bin/shelltest
