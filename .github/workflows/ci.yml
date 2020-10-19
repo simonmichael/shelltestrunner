@@ -74,15 +74,13 @@ jobs:
         restore-keys: |
              ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}
 
-    - name: Show stack version
-      # curl -L https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C $INSTALLDIR '*/stack'
-      # mkdir -p ~/.local/bin
-      # export PATH=~/.local/bin:$PATH
-      # if [[ ! -x ~/.local/bin/stack ]]; then curl -L https://www.stackage.org/stack/linux-x86_64 | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack; fi
-      env:
-        stack: ${{ matrix.plan.stack }}
+    - name: Install stack
       run: |
-        $stack --version
+        mkdir -p ~/.local/bin
+        export PATH=~/.local/bin:$PATH
+        curl -sL https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack
+        # if [[ ! -x ~/.local/bin/stack ]]; then curl -sL https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack; fi
+        stack --version
 
     - name: Install GHC
       env:
