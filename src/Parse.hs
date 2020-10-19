@@ -399,7 +399,7 @@ whitespaceline = try (newline >> return "") <|> try (whitespacechar >> whitespac
 
 -- a line beginning with optional whitespace and #, or beginning with one or more * (an org node)
 commentline = try (do
-  prefix <- many1 (char '*') <|> (whitespace >> many1 (char '#'))
+  prefix <- whitespace >> many1 (char '#')
   rest <- lineoreof
   return $ prefix ++ rest
   ) <?> "comments"
