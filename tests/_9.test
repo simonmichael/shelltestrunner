@@ -1,8 +1,0 @@
-# https://github.com/simonmichael/shelltestrunner/issues/9
-# \n should be passed as-is to echo. 
-# Fails on my mac or travis, but apparently succeeds on another machine..
-echo 'a\nb'
->>>
-a\nb
->>>2
->>>=0
