@@ -23,16 +23,16 @@ printShellTest format ShellTest{command=c,stdin=i,comments=comments,trailingComm
               printComments trailingComments
             "v2" -> do
               printComments comments
-              printCommand "$$$ " c
               printStdin "<<<" i
+              printCommand "$$$ " c
               printStdouterr ">>>" o_expected
               printStdouterr ">>>2" e_expected
               printExitStatus False ">>>=" x_expected
               printComments trailingComments
             "v3" -> do
               printComments comments
-              printCommand "$ "  c
               printStdin "<" i
+              printCommand "$ "  c
               printStdouterr ">" o_expected
               printStdouterr ">2" e_expected
               printExitStatus False ">=" x_expected
