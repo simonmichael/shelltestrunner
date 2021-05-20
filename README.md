@@ -378,7 +378,7 @@ Caveats:
 | Changelog:           | http://hackage.haskell.org/package/shelltestrunner/changelog
 | Code                 | https://github.com/simonmichael/shelltestrunner
 | Issues               | https://github.com/simonmichael/shelltestrunner/issues
-| IRC                  | http://webchat.freenode.net?channels=shelltestrunner <!-- or /msg sm -->
+| Chat                 | Contact sm in the #hledger:matrix.org room on matrix or the #hledger channel on libera.chat
 <!-- | Email                | [simon@joyful.com](mailto:simon@joyful.com?subject=[shelltestrunner]) -->
 
 [2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).
