@@ -68,6 +68,7 @@ data Args = Args {
     ,debug_parse :: Bool
     ,testpaths   :: [FilePath]
     ,print_      :: Maybe String
+    ,actual      :: Maybe String
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
@@ -91,6 +92,7 @@ argdefs = Args {
     ,debug_parse = def     &= help "Show test file parsing results and stop"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     ,print_      = def     &= typ "FORMAT" &= opt "v3" &= groupname "Print test file" &= help "Print test files in specified format (default: v3)."
+    ,actual      = def     &= typ "MODE"   &= opt "all" &= help "Combined with --print, print test files with actual results (stdout, stderr, exit status). This can be used to generate or update tests. Mode 'all' prints all actual results (default). Mode 'update' prints actual results only for non-matching results, i.e. regular expressions in tests are retained."
     }
     &= helpArg [explicit, name "help", name "h"]
     &= program progname
@@ -153,6 +155,8 @@ checkArgs :: Args -> IO Args
 checkArgs args = do
   when (null $ testpaths args) $
        warn $ printf "Please specify at least one test file or directory, eg: %s tests" progname
+  when (isJust (actual args) && not (isJust (print_ args))) $
+       warn "Option --actual can only be used with --print."
   return args
 
 -- running tests
@@ -184,7 +188,7 @@ prepareShellTest args st@ShellTest{testname=n,command=c,stdin=i,stdoutExpected=o
   let errorMatch = maybe True (e_actual `matches`) e_expected
   let exitCodeMatch = show x_actual `matches` x_expected
   case print_ args of
-    Just format -> printShellTest format st
+    Just format -> printShellTest format (actual args) st (mkEither outputMatch o_actual) (mkEither errorMatch e_actual) (mkEither exitCodeMatch x_actual)
     Nothing -> if (x_actual == 127) -- catch bad executable - should work on posix systems at least
            then ioError $ userError $ unwords $ filter (not . null) [e_actual, printf "Command: '%s' Exit code: %i" cmd x_actual] -- XXX still a test failure; should be an error
            else assertString $ concat $ filter (not . null) [
