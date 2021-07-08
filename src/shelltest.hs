@@ -11,6 +11,7 @@ where
 
 import Control.Concurrent (forkIO)
 import Control.Concurrent.MVar (newEmptyMVar, putMVar, takeMVar)
+import Control.Monad (void)
 import Data.Algorithm.Diff
 import System.Console.CmdArgs
 import System.Directory (doesDirectoryExist)
@@ -23,6 +24,9 @@ import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
 import Text.Parsec
+import Test.Hspec (Spec)
+import Test.Hspec.Core.Runner (defaultConfig, runSpec, Config (..))
+import Test.Hspec.Contrib.HUnit (fromHUnitTest)
 
 import Import
 import Utils
@@ -56,6 +60,7 @@ data Args = Args {
     ,diff        :: Bool
     ,precise     :: Bool
     ,hide_successes :: Bool
+    ,fail_fast   :: Bool
     ,xmlout      :: String
     ,defmacro    :: [String]
     ,execdir     :: Bool
@@ -68,6 +73,7 @@ data Args = Args {
     ,debug_parse :: Bool
     ,testpaths   :: [FilePath]
     ,print_      :: Maybe String
+    ,hspec_      :: Bool
     } deriving (Show, Data, Typeable)
 
 argdefs = Args {
@@ -79,6 +85,7 @@ argdefs = Args {
     ,diff        = def     &= name "d" &= help "Show differences between expected/actual output"
     ,precise     = def     &= help "Show expected/actual output precisely, with quoting"
     ,hide_successes = def  &= explicit &= name "hide-successes" &= help "Show only test failures"
+    ,fail_fast   = def     &= explicit &= name "fail-fast" &= help "Only hspec: stop tests on first failure"
     ,xmlout      = def     &= typ "FILE" &= help "Save test results to FILE in XML format."
     ,defmacro    = def  &= name "D" &= typ "D=DEF" &= help "Define a macro D to be replaced by DEF while parsing test files."
     ,execdir     = def     &= help "Run tests from within each test file's directory"
@@ -91,6 +98,7 @@ argdefs = Args {
     ,debug_parse = def     &= help "Show test file parsing results and stop"
     ,testpaths   = def     &= args &= typ "TESTFILES|TESTDIRS"
     ,print_      = def     &= typ "FORMAT" &= opt "v3" &= groupname "Print test file" &= help "Print test files in specified format (default: v3)."
+    ,hspec_      = def     &= name"hspec" &= help "Use hspec to run tests."
     }
     &= helpArg [explicit, name "help", name "h"]
     &= program progname
@@ -113,6 +121,12 @@ main = do
                ++ (if timeout args > 0 then ["--timeout=" ++ show (timeout args)] else [])
                ++ (if threads args > 0 then ["--threads=" ++ show (threads args)] else [])
                ++ (if not (xmlout args == []) then ["--jxml=" ++ (xmlout args)] else [])
+      hspecconf = defaultConfig
+                  {configConcurrentJobs = Just (threads args)
+                  ,configFastFail = fail_fast args
+                  -- TODO add other options; compare shelltest -h and http://hspec.github.io/options.html
+                  -- https://hackage.haskell.org/package/hspec-core-2.7.2/docs/Test-Hspec-Core-Runner.html#g:2
+                  }
 
 
   when (debug args) $ printf "%s\n" progversion >> printf "args: %s\n" (ppShow args)
@@ -141,8 +155,17 @@ main = do
       then mapM_ (printShellTestsWithResults args) parseresults
       else do
           when (debug args) $ printf "running tests:\n"
-          defaultMainWithArgs (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults) tfopts
+          if hspec_ args
+            then runTestsWithHspec args hspecconf parseresults
+            else defaultMainWithArgs (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults) tfopts
 
+runTestsWithHspec :: Args -> Config -> [Either ParseError [ShellTest]] -> IO ()
+runTestsWithHspec args conf parseresults = do
+  let hUnitTests :: [Test.HUnit.Test]
+      hUnitTests = map (testFileParseToHUnitTest args) parseresults
+  let spec :: Spec
+      spec = fromHUnitTest $ TestLabel "All shelltests" $ TestList hUnitTests
+  void $ runSpec spec conf
 
 printShellTestsWithResults :: Args -> Either ParseError [ShellTest] -> IO ()
 printShellTestsWithResults args (Right ts) = mapM_ (prepareShellTest args) ts
