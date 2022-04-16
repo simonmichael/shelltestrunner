@@ -77,7 +77,7 @@ argdefs = Args {
     ,all_        = def     &= help "Show all output without truncating, even if large"
     ,color       = def     &= help "Show colored output if your terminal supports it"
     ,diff        = def     &= name "d" &= help "Show differences between expected/actual output"
-    ,precise     = def     &= help "Show expected/actual output precisely, with quoting"
+    ,precise     = def     &= name "p" &= help "Show expected/actual output precisely, with quoting"
     ,hide_successes = def  &= explicit &= name "hide-successes" &= help "Show only test failures"
     ,xmlout      = def     &= typ "FILE" &= help "Save test results to FILE in XML format."
     ,defmacro    = def  &= name "D" &= typ "D=DEF" &= help "Define a macro D to be replaced by DEF while parsing test files."
