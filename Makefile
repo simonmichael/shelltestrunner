@@ -31,6 +31,10 @@ install:
 	$(STACK) install
 
 ghci:
+	@echo
+	@echo "Warning: argumentss will be accepted in GHCI only on first run after load,"
+	@echo "probably because of using cmdargs' unsafeperformio-based easy mode."
+	@echo
 	$(STACK) ghci
 
 ghcid:
