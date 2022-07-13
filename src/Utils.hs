@@ -36,7 +36,7 @@ containsRegex :: String -> String -> Bool
 containsRegex s "" = containsRegex s "^"
 containsRegex s r
     | length r <= 300 = s =~ r
-    | otherwise      =  error "please avoid regexps larger than 300 characters, they are currently problematic"
+    | otherwise      =  error "please avoid regexps larger than 300 characters, they trigger a memory leak in regex-tdfa"
 
 -- parsing
 
