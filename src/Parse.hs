@@ -397,7 +397,7 @@ whitespacechar = oneOf " \t"
 whitespace = many whitespacechar
 whitespaceline = try (newline >> return "") <|> try (whitespacechar >> whitespacechar `manyTill` newlineoreof)
 
--- a line beginning with optional whitespace and #, or beginning with one or more * (an org node)
+-- a line beginning with optional whitespace and #
 commentline = try (do
   prefix <- whitespace >> many1 (char '#')
   rest <- lineoreof
