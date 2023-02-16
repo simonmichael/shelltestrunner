@@ -355,19 +355,20 @@ The `--print` option prints tests to stdout.
 This can be used to convert between test formats.
 Format 1, 2, and 3 are supported.
 
-Caveats:
+Here are some issues to be aware of when converting between formats:
 
-- Comments before the first test in v2/v3 are currently not printed because of
-  the shared input feature which is not yet parsed in detail.
-- Missing newline at EOF will not be preserved.
-- Most tests in tests/, when printed, are not identical because
-  - redundant/empty results like `>= 0`
-  - `>=1` instead of `>= 1`
-  - comments before first test
-  - shared input
-  - no newline at EOF
-  - no tests at all, just comments
-  - no input/output marker `<<<`/`>>>`
+- Printing v1 as v2/v3
+  - A `>>>= 0` often gets converted to a `>>>2 //` or `>2 //`, when `>=` or nothing would be preferred.
+    This is semantically accurate, because v1 ignores out/err by default, and v2/v3 check for zero exit by default,
+    and therefore the safest conversion; but it's annoying
+- Printing v3 as v3
+  - loses comments at the top of the file, even above an explicit < delimiter
+  - may lose other data
+- A missing newline at EOF will not be preserved.
+- v2/v3 allow shared input, but v1 does not
+- A file containing only comments may be emptied
+
+In general, always review the result of a conversion yourself before committing it.
 
 ## Support/Contribute
 

@@ -1,3 +1,12 @@
+-- Print tests in any of the supported formats.
+-- Useful for debugging and for migrating between formats.
+-- Issues:
+--  converting v1 -> v2/v3
+--   a >>>= 0 often gets converted to a >>>2 // or >2 //, when >= or nothing would be preferred (but semantically less accurate, therefore risky to choose automatically)
+--  converting v3 -> v3
+--   loses comments at the top of the file, even above an explicit < delimiter
+--   may lose other data
+
 module Print
 where
 
