@@ -1,7 +1,7 @@
 $  false
 >= 1
 
-# no comment at begin of file because they are currently not parsed because of shared input
+# no comment is allowed at start of file, because of the first input's < delimiter being optional.
 
 $  echo foo
 foo
@@ -9,5 +9,9 @@ foo
 $  cat --unknown-option
 >2 /option/
 >= 1
+
+# slashes in a regexp matcher must be backslash-escaped
+$  echo 2000/1/2
+> /2000\/1\/2/
 
 # comment at end of file

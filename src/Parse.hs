@@ -1,3 +1,4 @@
+{-# LANGUAGE OverloadedStrings #-}
 module Parse
   ( parseShellTestFile
   )
@@ -350,7 +351,7 @@ regexmatcher = (do
   char '/'
   r <- (try escapedslash <|> noneOf "/") `manyTill` (char '/')
   whitespaceorcommentlineoreof
-  return $ PositiveRegex r) <?> "regex pattern"
+  return $ PositiveRegex $ MR r) <?> "regex pattern"
 
 escapedslash :: Parser Char
 escapedslash = char '\\' >> char '/'

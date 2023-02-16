@@ -59,13 +59,13 @@ printCommand prefix (ReplaceableCommand s) = printf "%s%s\n" prefix s
 printCommand prefix (FixedCommand s)       = printf "%s %s\n" prefix s
 
 printStdouterr :: String -> Maybe Matcher -> IO ()
-printStdouterr _ Nothing                    = return ()
-printStdouterr _ (Just (Lines _ ""))        = return ()
-printStdouterr _ (Just (Numeric _))         = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
-printStdouterr _ (Just (NegativeNumeric _)) = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
+printStdouterr _ Nothing                               = return ()
+printStdouterr _ (Just (Lines _ ""))                   = return ()
+printStdouterr _ (Just (Numeric _))                    = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
+printStdouterr _ (Just (NegativeNumeric _))            = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
 printStdouterr prefix (Just (Lines _ s)) | prefix==">" = printf "%s" s  -- omit v3's > delimiter, really no need for it
-printStdouterr prefix (Just (Lines _ s))    = printf "%s\n%s" prefix s
-printStdouterr prefix (Just regex)          = printf "%s %s\n" prefix (show regex)
+printStdouterr prefix (Just (Lines _ s))               = printf "%s\n%s" prefix s
+printStdouterr prefix (Just regex)                     = printf "%s %s\n" prefix (show regex)
 
 -- | Print expected exit status, unless the default (zero) is expected.
 -- Always print if a true first argument is provided.

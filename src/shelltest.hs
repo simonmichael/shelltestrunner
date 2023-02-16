@@ -236,8 +236,8 @@ hGetContentsStrictlyAnd :: Handle -> (String -> IO b) -> IO b
 hGetContentsStrictlyAnd h f = hGetContents h >>= \s -> length s `seq` f s
 
 matches :: String -> Matcher -> Bool
-matches s (PositiveRegex r)   = s `containsRegex` r
-matches s (NegativeRegex r)   = not $ s `containsRegex` r
+matches s (PositiveRegex (MR r))   = s `containsRegex` r
+matches s (NegativeRegex (MR r))   = not $ s `containsRegex` r
 matches s (Numeric p)         = s == p
 matches s (NegativeNumeric p) = not $ s == p
 matches s (Lines _ p)         = s == p
