@@ -1,2 +1,7 @@
 resolver: lts-18.28
 packages:
+
+extra-deps:
+- hspec-2.10.8
+- hspec-core-2.10.8
+- hspec-contrib-0.5.1.1

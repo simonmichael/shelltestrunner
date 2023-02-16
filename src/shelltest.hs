@@ -123,7 +123,7 @@ main = do
                ++ (if not (xmlout args == []) then ["--jxml=" ++ (xmlout args)] else [])
       hspecconf = defaultConfig
                   {configConcurrentJobs = Just (threads args)
-                  ,configFastFail = fail_fast args
+                  ,configFailFast = fail_fast args
                   -- TODO add other options; compare shelltest -h and http://hspec.github.io/options.html
                   -- https://hackage.haskell.org/package/hspec-core-2.7.2/docs/Test-Hspec-Core-Runner.html#g:2
                   }
