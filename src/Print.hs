@@ -5,6 +5,7 @@ import Import
 import Types
 
 -- | Print a shell test. See CLI documentation for details.
+-- For v3 (the preferred, lightweight format), avoid printing unnecessary delimiters.
 printShellTest
   :: String               -- ^ Shelltest format. Value of option @--print[=FORMAT]@.
   -> ShellTest            -- ^ Test to print
@@ -56,6 +57,7 @@ printStdouterr _ Nothing                    = return ()
 printStdouterr _ (Just (Lines _ ""))        = return ()
 printStdouterr _ (Just (Numeric _))         = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
 printStdouterr _ (Just (NegativeNumeric _)) = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
+printStdouterr prefix (Just (Lines _ s)) | prefix==">" = printf "%s" s  -- omit v3's > delimiter, really no need for it
 printStdouterr prefix (Just (Lines _ s))    = printf "%s\n%s" prefix s
 printStdouterr prefix (Just regex)          = printf "%s %s\n" prefix (show regex)
 

@@ -4,7 +4,6 @@ $  false
 # no comment at begin of file because they are currently not parsed because of shared input
 
 $  echo foo
->
 foo
 
 $  cat --unknown-option
