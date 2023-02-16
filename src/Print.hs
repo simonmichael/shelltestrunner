@@ -19,24 +19,24 @@ printShellTest format ShellTest{command=c,stdin=i,comments=comments,trailingComm
       printComments comments
       printCommand "" c
       printStdin "<<<" i
-      printStdouterr ">>>" o_expected
-      printStdouterr ">>>2" e_expected
+      printStdouterr False ">>>" o_expected
+      printStdouterr False ">>>2" e_expected
       printExitStatus True ">>>=" x_expected
       printComments trailingComments
     "v2" -> do
       printComments comments
       printStdin "<<<" i
       printCommand "$$$ " c
-      printStdouterr ">>>" o_expected
-      printStdouterr ">>>2" e_expected
+      printStdouterr True ">>>" o_expected
+      printStdouterr True ">>>2" e_expected
       printExitStatus trailingblanklines ">>>=" x_expected
       printComments trailingComments
     "v3" -> do
       printComments comments
       printStdin "<" i
       printCommand "$ "  c
-      printStdouterr ">" o_expected
-      printStdouterr ">2" e_expected
+      printStdouterr True ">" o_expected
+      printStdouterr True ">2" e_expected
       printExitStatus trailingblanklines ">=" x_expected
       printComments trailingComments
     _ -> fail $ "Unsupported --print format: " ++ format
@@ -58,16 +58,19 @@ printCommand :: String -> TestCommand -> IO ()
 printCommand prefix (ReplaceableCommand s) = printf "%s%s\n" prefix s
 printCommand prefix (FixedCommand s)       = printf "%s %s\n" prefix s
 
-printStdouterr :: String -> Maybe Matcher -> IO ()
-printStdouterr _ Nothing                               = return ()
-printStdouterr _ (Just (Lines _ ""))                   = return ()
-printStdouterr _ (Just (Numeric _))                    = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
-printStdouterr _ (Just (NegativeNumeric _))            = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
-printStdouterr prefix (Just (Lines _ s)) | prefix==">" = printf "%s" s  -- omit v3's > delimiter, really no need for it
-printStdouterr prefix (Just (Lines _ s))               = printf "%s\n%s" prefix s
-printStdouterr prefix (Just regex)                     = printf "%s %s\n" prefix (show regex)
+-- Print an expected stdout or stderr test, prefixed with the given delimiter.
+-- If no expected value is specified, print nothing if first argument is true
+-- (for format 1, which ignores unspecified out/err), otherwise print a dummy test.
+printStdouterr :: Bool -> String -> Maybe Matcher -> IO ()
+printStdouterr alwaystest _ Nothing                      = when alwaystest $ printf "%s //\n"
+printStdouterr _ _ (Just (Lines _ ""))                   = return ()
+printStdouterr _ _ (Just (Numeric _))                    = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
+printStdouterr _ _ (Just (NegativeNumeric _))            = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
+printStdouterr _ prefix (Just (Lines _ s)) | prefix==">" = printf "%s" s  -- omit v3's > delimiter, really no need for it
+printStdouterr _ prefix (Just (Lines _ s))               = printf "%s\n%s" prefix s
+printStdouterr _ prefix (Just regex)                     = printf "%s %s\n" prefix (show regex)
 
--- | Print expected exit status, unless the default (zero) is expected.
+-- | Print an expected exit status clause, unless the default (zero) is expected.
 -- Always print if a true first argument is provided.
 printExitStatus :: Bool -> String -> Matcher -> IO ()
 printExitStatus _ _ (Lines _ _) = fail "FATAL: Cannot handle Matcher (Lines) for exit status."
