@@ -1,5 +1,6 @@
 name:           shelltestrunner
-version:        1.9
+-- keep shelltest.hs synced:
+version:        1.10
 category:       Testing
 synopsis:       Easy, repeatable testing of CLI programs/commands
 

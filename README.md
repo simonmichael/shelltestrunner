@@ -37,8 +37,8 @@ Or, build the latest release on any major platform:
 
 |||
 |----------------|---------------------------------------
-| stack:         | **[get stack](https://haskell-lang.org/get-started)**, **`stack install shelltestrunner-1.9`**
-| cabal:         | **`cabal update; cabal install shelltestrunner-1.9`**
+| stack:         | **[get stack](https://haskell-lang.org/get-started)**, **`stack install shelltestrunner-1.10`**
+| cabal:         | **`cabal update; cabal install shelltestrunner-1.10`**
 
 ## Usage
 
@@ -93,7 +93,7 @@ shelltest --help | sed -e '/^shelltest file formats/,$d' -e 's/^/    /'
 -->
 
     $ shelltest --help
-    shelltest 1.9
+    shelltest 1.10
     
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
     

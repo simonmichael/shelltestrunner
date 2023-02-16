@@ -2,7 +2,7 @@
 {- |
 
 shelltest - for testing command-line programs. See shelltestrunner.cabal.
-(c) Simon Michael 2009-2023, released under GNU GPLv3 or later.
+(c) Simon Michael & contributors 2009-2023, released under GNU GPLv3 or later.
 
 -}
 
@@ -34,7 +34,7 @@ import Preprocessor
 
 progname, progversion :: String
 progname = "shelltest"
-progversion = progname ++ " " ++ "1.9"
+progversion = progname ++ " " ++ "1.10"
 proghelpsuffix :: [String]
 proghelpsuffix = [
    "shelltest file formats, tried in this order:"
