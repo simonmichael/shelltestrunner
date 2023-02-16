@@ -166,18 +166,18 @@ For example, the command:
 
 ## Test formats
 
-shelltestrunner 1.9 adds some experimental new test file formats, described below.
-These need more real-world testing and may evolve further, but they will remain supported or will have a migration path.
+shelltestrunner supports three test file formats:
 
-| Format name | Description                                                                  | Delimiters, in order       |
-|-------------|------------------------------------------------------------------------------|----------------------------|
-| format 1    | command first, exit status is required                                       | `(none) <<< >>> >>>2 >>>=` |
-| format 2    | input first, can be reused by multiple tests, some delimiters can be omitted | `<<<    $$$ >>> >>>2 >>>=` |
-| format 3    | like format 2, but with shorter delimiters                                   | `<      $   >   >2   >=`   |
+| Format name | Description                                                                                | Delimiters, in order       |
+|-------------|--------------------------------------------------------------------------------------------|----------------------------|
+| format 1    | old; command first, exit status is required                                                | `(none) <<< >>> >>>2 >>>=` |
+| format 2    | new, verbose: input first, can be reused by multiple tests, some delimiters can be omitted | `<<<    $$$ >>> >>>2 >>>=` |
+| format 3    | new, lightweight: like format 2, but with shorter delimiters                               | `<      $   >   >2   >=`   |
 
-shelltestrunner tries to parse each file first with format 2, then format 3, then format 1.
+To read each file, shelltestrunner tries the formats in this order: first format 2, then format 3, then format 1.
+Format 3 is the lightest and most pleasant; you should use this one, unless it clashes with your data,
+in which case use the more verbose format 2. Format 1 is just for backward compatibility with old tests.
 All tests within a file should use the same format.
-I suggest choosing format 3 (short delimiters), switching to format 2 when longer delimiters are needed.
 
 ### Format 1
 
@@ -344,7 +344,6 @@ Non-required `<` and `>` delimiters omitted:
     >= !0
 
     $ echo
-    >
 
     >2
 
