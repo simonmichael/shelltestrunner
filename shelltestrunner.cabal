@@ -18,8 +18,8 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       https://github.com/simonmichael/shelltestrunner
 bug-reports:    https://github.com/simonmichael/shelltestrunner/issues
 stability:      stable
-tested-with:    GHC==7.10.3, GHC==8.0.2, GHC==8.2.2
-cabal-version:  >= 1.6
+tested-with:    GHC==9.4.4
+cabal-version:  >= 1.8
 build-type:     Simple
 
 extra-tmp-files:
