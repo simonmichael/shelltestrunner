@@ -1,4 +1,4 @@
-{-# LANGUAGE DeriveDataTypeable, CPP #-}
+{-# LANGUAGE DeriveDataTypeable, CPP, DoAndIfThenElse #-}
 {- |
 
 shelltest - for testing command-line programs. See shelltestrunner.cabal.
@@ -24,7 +24,6 @@ import Test.Framework (defaultMainWithArgs)
 import Test.Framework.Providers.HUnit (hUnitTestToTests)
 import Test.HUnit
 import Text.Parsec
-import Test.Hspec (Spec)
 import Test.Hspec.Core.Runner (defaultConfig, runSpec, Config (..))
 import Test.Hspec.Contrib.HUnit (fromHUnitTest)
 
@@ -147,25 +146,28 @@ main = do
 
   -- parse test files
   when (debug args) $ printf "processing %d test files: %s\n" (length testfiles) (intercalate ", " testfiles)
-  parseresults <- mapM (parseShellTestFile (debug args || debug_parse args) preprocessor) testfiles
+  shelltests <- mapM (parseShellTestFile (debug args || debug_parse args) preprocessor) testfiles
 
-  -- run tests / print
-  unless (debug_parse args) $
-    if isJust $ print_ args
-      then mapM_ (printShellTestsWithResults args) parseresults
-      else do
-          when (debug args) $ printf "running tests:\n"
-          if hspec_ args
-            then runTestsWithHspec args hspecconf parseresults
-            else defaultMainWithArgs (concatMap (hUnitTestToTests . testFileParseToHUnitTest args) parseresults) tfopts
+  -- exit after --debug-parse output
+  if debug_parse args then exitSuccess
+  -- or print tests
+  else if isJust $ print_ args then mapM_ (printShellTestsWithResults args) shelltests
+  -- or run tests
+  else do
+    when (debug args) $ printf "running tests:\n"
+    if hspec_ args
+      then runWithHspec         args hspecconf shelltests
+      else runWithTestFramework args tfopts    shelltests
 
-runTestsWithHspec :: Args -> Config -> [Either ParseError [ShellTest]] -> IO ()
-runTestsWithHspec args conf parseresults = do
-  let hUnitTests :: [Test.HUnit.Test]
-      hUnitTests = map (testFileParseToHUnitTest args) parseresults
-  let spec :: Spec
-      spec = fromHUnitTest $ TestLabel "All shelltests" $ TestList hUnitTests
-  void $ runSpec spec conf
+runWithTestFramework :: Args -> [String] -> [Either ParseError [ShellTest]] -> IO ()
+runWithTestFramework args tfopts shelltests = defaultMainWithArgs hunittests tfopts
+  where hunittests = concatMap (hUnitTestToTests . testFileParseToHUnitTest args) shelltests
+
+runWithHspec :: Args -> Config -> [Either ParseError [ShellTest]] -> IO ()
+runWithHspec args hsconf shelltests = void $ runSpec spec hsconf
+  where
+    spec = fromHUnitTest $ TestLabel "All shelltests" $ TestList hunittests
+    hunittests = map (testFileParseToHUnitTest args) shelltests
 
 printShellTestsWithResults :: Args -> Either ParseError [ShellTest] -> IO ()
 printShellTestsWithResults args (Right ts) = mapM_ (prepareShellTest args) ts
