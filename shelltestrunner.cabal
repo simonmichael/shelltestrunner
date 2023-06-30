@@ -1,3 +1,4 @@
+cabal-version:  >= 1.8
 name:           shelltestrunner
 -- keep shelltest.hs synced:
 version:        1.10
@@ -10,7 +11,7 @@ description:
   commands, released under GPLv3+.  It reads simple test specifications
   defining a command to run, some input, and the expected output,
   stderr, and exit status.  It can run tests in parallel, selectively,
-  with a timeout, in color, etc. 
+  with a timeout, in color, etc.
 
 license:        GPL
 license-file:   LICENSE
@@ -19,9 +20,12 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       https://github.com/simonmichael/shelltestrunner
 bug-reports:    https://github.com/simonmichael/shelltestrunner/issues
 stability:      stable
-tested-with:    GHC==9.4.4
-cabal-version:  >= 1.8
 build-type:     Simple
+
+tested-with:
+  GHC==9.6.2
+  GHC==9.4.5
+  GHC==8.10.7
 
 extra-tmp-files:
 extra-source-files:

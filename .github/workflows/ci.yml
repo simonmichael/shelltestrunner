@@ -37,7 +37,8 @@ jobs:
       matrix:
         plan:
         - { ghc: "810" , stackyaml: "stack8.10.yaml", stack: "stack --stack-yaml=stack8.10.yaml" }
-        - { ghc: "94"  , stackyaml: "stack.yaml", stack: "stack --stack-yaml=stack.yaml" }
+        - { ghc: "94"  , stackyaml: "stack9.4.yaml", stack: "stack --stack-yaml=stack9.4.yaml" }
+        - { ghc: "96"  , stackyaml: "stack.yaml", stack: "stack --stack-yaml=stack.yaml" }
 
     steps:
 
