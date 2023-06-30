@@ -30,7 +30,7 @@ module Utils.Debug
   )
   where
 
-import Debug.Trace
+import Debug.Trace (trace)
 import Control.Monad (when)
 import Data.List
 import Safe (readDef)
