@@ -37,8 +37,8 @@ Or, build the latest release on any major platform:
 
 |||
 |----------------|---------------------------------------
-| stack:         | **[get stack](https://haskell-lang.org/get-started)**, **`stack install shelltestrunner-1.9`**
-| cabal:         | **`cabal update; cabal install shelltestrunner-1.9`**
+| stack:         | **[get stack](https://haskell-lang.org/get-started)**, **`stack install shelltestrunner-1.9.0.1`**
+| cabal:         | **`cabal update; cabal install shelltestrunner-1.9.0.1`**
 
 ## Usage
 
@@ -88,7 +88,7 @@ There are also some alternate test formats you'll read about below.
 ## Options
 
     $ shelltest --help
-    shelltest 1.9
+    shelltest 1.9.0.1
 
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
 

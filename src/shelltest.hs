@@ -33,7 +33,7 @@ import Preprocessor
 
 progname, progversion :: String
 progname = "shelltest"
-progversion = progname ++ " " ++ "1.9"
+progversion = progname ++ " " ++ "1.9.0.1"
 proghelpsuffix :: [String]
 proghelpsuffix = [
    "shelltest file formats, tried in this order:"
