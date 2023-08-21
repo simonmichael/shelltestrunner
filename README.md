@@ -15,7 +15,7 @@ command-line tool for testing command-line programs, or general shell
 commands, released under GPLv3+.  It reads simple test specifications
 defining a command to run, some input, and the expected output,
 stderr, and exit status.  It can run tests in parallel, selectively,
-with a timeout, in color, etc. 
+with a timeout, in color, etc.
 Projects using it include
 [hledger](http://hledger.org),
 [Agda](http://wiki.portal.chalmers.se/agda),
@@ -24,7 +24,7 @@ and
 
 ## Install
 
-There may be a new-enough 
+There may be a new-enough
 [packaged version](https://repology.org/metapackage/shelltestrunner/badges)
 on your platform. Eg:
 
@@ -50,11 +50,11 @@ Here's a minimal test file containing one shell test: <!-- keep synced with test
 
 They're called "shell test" because any shell (`/bin/sh` on POSIX, `CMD` on Windows)
 command line can be tested.
-Each test begins with the command to test, followed by optional stdin input, 
+Each test begins with the command to test, followed by optional stdin input,
 expected stdout and/or stderr output, and ends with the expected exit status.
 Here's another file containing two tests:
 
-    # Test that the "cat" program copies its input to stdout, 
+    # Test that the "cat" program copies its input to stdout,
     # nothing appears on stderr, and exit status is 0.
     cat
     <<<
@@ -63,7 +63,7 @@ Here's another file containing two tests:
     foo
     >>>2
     >>>= 0
-    
+
     # Test that cat prints an error containing "unrecognized option" or
     # "illegal option" and exits with non-zero status if given a bad flag.
     cat --no-such-flag
@@ -77,21 +77,21 @@ To run these tests:
     :cat.test:1: [OK]
     :cat.test:2: [OK]
 
-             Test Cases  Total      
-     Passed  3           3          
-     Failed  0           0          
-     Total   3           3          
+             Test Cases  Total
+     Passed  3           3
+     Failed  0           0
+     Total   3           3
 
-That's the basics! 
+That's the basics!
 There are also some alternate test formats you'll read about below.
 
 ## Options
 
     $ shelltest --help
     shelltest 1.9
-    
+
     shelltest [OPTIONS] [TESTFILES|TESTDIRS]
-    
+
     Common flags:
       -l --list             List all parsed tests and stop
       -a --all              Don't truncate output, even if large
@@ -115,7 +115,7 @@ There are also some alternate test formats you'll read about below.
       -? --help             Display help message
       -V --version          Print version information
          --numeric-version  Print just the version number
-    
+
 `shelltest` accepts one or more test file or directory arguments.
 A directory means all files below it named `*.test` (customisable with `--extension`).
 
@@ -138,7 +138,7 @@ not be affected by this option.
 `--hide-successes` gives quieter output, reporting only failed tests.
 
 Long flags can be abbreviated to a unique prefix.
- 
+
 
 For example, the command:
 
@@ -186,7 +186,7 @@ and/or error output, and a (required) exit status.
 When not specified, stdout/stderr are ignored.
 A space before the command protects it from -w/--with.
 
-Examples: 
+Examples:
 [above](#usage),
 [shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format1),
 [hledger](https://github.com/simonmichael/hledger/tree/master/tests),
@@ -195,13 +195,13 @@ Examples:
 
 ### Format 2
 
-(shelltestrunner 1.9+) 
+(shelltestrunner 1.9+)
 This improves on format 1 in two ways: it allows tests to reuse the
 same input, and it allows delimiters to often be omitted.
 
-Test files contain one or more test groups. 
+Test files contain one or more test groups.
 A test group consists of some optional standard input and one or more tests.
-Each test is a one-line shell command followed by optional expected standard output, 
+Each test is a one-line shell command followed by optional expected standard output,
 error output and/or numeric exit status, separated by delimiters.
 
     # COMMENTS OR BLANK LINES
@@ -346,6 +346,7 @@ Non-required `<` and `>` delimiters omitted:
 | Code                 | https://github.com/simonmichael/shelltestrunner
 | Issues               | https://github.com/simonmichael/shelltestrunner/issues
 | IRC                  | http://webchat.freenode.net?channels=shelltestrunner <!-- or /msg sm -->
+
 <!-- | Email                | [simon@joyful.com](mailto:simon@joyful.com?subject=[shelltestrunner]) -->
 
 [2012 user survey](https://docs.google.com/spreadsheet/pub?key=0Au47MrJax8HpdGpZSzdhWHlCUkJpR2hjX1MwMWFoUEE&single=true&gid=3&output=html).
