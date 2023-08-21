@@ -19,8 +19,21 @@ maintainer:     Simon Michael <simon@joyful.com>
 homepage:       https://github.com/simonmichael/shelltestrunner
 bug-reports:    https://github.com/simonmichael/shelltestrunner/issues
 stability:      stable
-tested-with:    GHC==7.10.3, GHC==8.0.2, GHC==8.2.2
 build-type:     Simple
+
+tested-with:
+  GHC == 9.8.0
+  GHC == 9.6.2
+  GHC == 9.4.5
+  GHC == 9.2.8
+  GHC == 9.0.2
+  GHC == 8.10.7
+  GHC == 8.8.4
+  GHC == 8.6.5
+  GHC == 8.4.4
+  GHC == 8.2.2
+  GHC == 8.0.2
+  GHC == 7.10.3
 
 extra-tmp-files:
 extra-source-files:
