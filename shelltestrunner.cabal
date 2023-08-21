@@ -1,5 +1,6 @@
+cabal-version:  >= 1.10
 name:           shelltestrunner
-version:        1.9
+version:        1.9.0.1
 category:       Testing
 synopsis:       Easy, repeatable testing of CLI programs/commands
 
@@ -9,7 +10,7 @@ description:
   commands, released under GPLv3+.  It reads simple test specifications
   defining a command to run, some input, and the expected output,
   stderr, and exit status.  It can run tests in parallel, selectively,
-  with a timeout, in color, etc. 
+  with a timeout, in color, etc.
 
 license:        GPL
 license-file:   LICENSE
@@ -19,7 +20,6 @@ homepage:       https://github.com/simonmichael/shelltestrunner
 bug-reports:    https://github.com/simonmichael/shelltestrunner/issues
 stability:      stable
 tested-with:    GHC==7.10.3, GHC==8.0.2, GHC==8.2.2
-cabal-version:  >= 1.6
 build-type:     Simple
 
 extra-tmp-files:
@@ -39,6 +39,7 @@ extra-source-files:
   tests/examples/*.test
 
 executable shelltest
+  default-language: Haskell2010
   ghc-options: -threaded -W -fwarn-tabs
   main-is: shelltest.hs
   hs-source-dirs: src
