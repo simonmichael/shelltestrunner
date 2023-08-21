@@ -38,10 +38,10 @@ proghelpsuffix :: [String]
 proghelpsuffix = [
    "shelltest file formats, tried in this order:"
   ,""
-  ,"Description                                            Delimiters, in order"    
+  ,"Description                                            Delimiters, in order"
   ,"------------------------------------------------------ ------------------------"
   ,"v2 input then multiple tests; some delimiters optional <<<    $$$ >>> >>>2 >>>="
-  ,"v3 same as v2, but with short delimiters               <      $   >   >2   >="  
+  ,"v3 same as v2, but with short delimiters               <      $   >   >2   >="
   ,"v1 command first; exit status is required              (none) <<< >>> >>>2 >>>="
   ,""
   ]
