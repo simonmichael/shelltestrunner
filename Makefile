@@ -18,7 +18,7 @@ SHELLTESTEXE = $(shell $(STACK) path --local-install-root)/bin/shelltest
 # the base shelltest command with common options,
 # and the STACKYAMLOPT env var which helps any tests
 # which run stack themselves (eg large-output.test)
-SHELLTEST = STACKYAMLOPT=$(STACKYAMLOPT) $(SHELLTESTEXE) --exclude /_ -j16 --hide-successes
+SHELLTEST = STACKYAMLOPT="$(STACKYAMLOPT)" $(SHELLTESTEXE) --exclude /_ -j16 --hide-successes
 
 # standard targets
 

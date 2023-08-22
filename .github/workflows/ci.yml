@@ -104,4 +104,4 @@ jobs:
         stackyaml: ${{ matrix.plan.stackyaml }}
       run: |
         export PATH=~/.local/bin:$PATH
-        STACKYAML=$stackyaml make test
+        make STACKYAMLOPT="--silent --stack-yaml=$stackyaml" test
