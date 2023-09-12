@@ -10,7 +10,7 @@ STACKYAML ?= stack.yaml
 STACKYAMLOPT = --stack-yaml=$(STACKYAML)
 
 # the current base stack command
-STACK = stack $(STACKYAMLOPT)
+STACK = stack --silent $(STACKYAMLOPT)
 
 # the shelltest executable built with current stack
 SHELLTESTEXE = $(shell $(STACK) path --local-install-root)/bin/shelltest
@@ -25,10 +25,10 @@ SHELLTEST = STACKYAMLOPT="$(STACKYAMLOPT)" $(SHELLTESTEXE) --exclude /_ -j16 --h
 default: build
 
 build:
-	$(STACK) build
+	@$(STACK) build
 
 install:
-	$(STACK) install
+	@$(STACK) install
 
 ghci:
 	@echo
@@ -47,7 +47,7 @@ test: testcross testunix testbash testexamples
 # run cross-platform shell tests
 testcross: build
 	@echo; echo "cross-platform tests should succeed:"
-	$(SHELLTEST) -w $(SHELLTESTEXE) tests -x /bash -x /examples -x .windows -x .unix -w $(SHELLTESTEXE)
+	$(SHELLTEST) -w $(SHELLTESTEXE) tests -x /bash -x /examples -x .windows -x .unix
 
 # run unix-specific shell tests
 testunix: build
