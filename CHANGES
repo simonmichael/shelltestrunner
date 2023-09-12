@@ -1,15 +1,21 @@
-1.10 (unreleased)
+1.10 (2023-09-12)
 
-* Add --print for printing tests/converting file format (#24, Jakob Schöttl)
-* Improve bash-related tests (#20, FC Stegerman, Simon Michael)
-* Set up CI testing (#18 FC Stegerman, Simon Michael)
+User-visible changes:
+
+* GHC 9.6 compatibility (Andreas Abel)
+* Add --print for printing tests and/or converting file format (#24, Jakob Schöttl)
+* Print test line number on failure (#14, Taavi Väljaots)
 * Add --shell option to select shell (#17, FC Stegerman)
 * Fix format1's handling of angle brackets in test data (#16)
-* Print test line number on failure (#14, Taavi Valjaots)
 * Add -p short flag for --precise
 * -h means --help, not --hide-successes
 * Clarify 300 char regex limit message
-* Improve tests
+
+Other:
+
+* Set up CI testing (#18 FC Stegerman, Simon Michael)
+* Improve bash-related tests (#20, FC Stegerman, Simon Michael)
+* Improved tests
 
 1.9 (2018/1/14)
 
