@@ -16,11 +16,6 @@ commands, released under GPLv3+.  It reads simple test specifications
 defining a command to run, some input, and the expected output,
 stderr, and exit status.  It can run tests in parallel, selectively,
 with a timeout, in color, etc. 
-Projects using it include
-[hledger](http://hledger.org),
-[Agda](http://wiki.portal.chalmers.se/agda),
-and
-[berp](https://github.com/bjpop/berp).
 
 ## Install
 
@@ -37,102 +32,114 @@ Or, build the latest release on any major platform:
 
 |||
 |----------------|---------------------------------------
-| stack:         | **[get stack](https://haskell-lang.org/get-started)**, **`stack install shelltestrunner-1.10`**
+| stack:         | **[get stack](https://docs.haskellstack.org)**, **`stack install shelltestrunner-1.10`**
 | cabal:         | **`cabal update; cabal install shelltestrunner-1.10`**
 
 ## Usage
 
-Here's a minimal test file containing one shell test: <!-- keep synced with tests/examples -->
+Here's a test file containing three simple tests.
+They're called "shell tests" because any shell command line can be tested.
+A test contains:
 
-    # A comment. Testing bash's builtin "echo" command (if /bin/sh is bash)
-    echo
-    >>>= 0
+- `<` and one or more lines of input to be provided on stdin (optional)
+- `$` and the command line to test (required)
+- zero or more lines of expected stdout output, or a regexp (optional)
+- `>2` and zero or more lines of expected stderr output, or a regexp (optional)
+- `>=` and an expected exit code, or a regexp (optional)
 
-They're called "shell test" because any shell (`/bin/sh` on POSIX, `CMD` on Windows)
-command line can be tested.
-Each test begins with the command to test, followed by optional stdin input, 
-expected stdout and/or stderr output, and ends with the expected exit status.
-Here's another file containing two tests:
+<!-- keep synced with tests/examples -->
+```
+# 1. Test that the "echo" command (a shell builtin, usually)
+# prints its argument on stdout, prints nothing on stderr,
+# and exits with a zero exit code.
 
-    # Test that the "cat" program copies its input to stdout, 
-    # nothing appears on stderr, and exit status is 0.
-    cat
-    <<<
-    foo
-    >>>
-    foo
-    >>>2
-    >>>= 0
-    
-    # Test that cat prints an error containing "unrecognized option" or
-    # "illegal option" and exits with non-zero status if given a bad flag.
-    cat --no-such-flag
-    >>>2 /(unrecognized|illegal) option/
-    >>>= !0
+$ echo a
+a
+
+# 2. Test that echo with no arguments prints a blank line,
+# no stderr output, and exits with zero.
+# Since the output ends with whitespace, this time we must write
+# the exit code test (>=) explicitly, to act as a delimiter.
+
+$ echo
+
+>=
+
+# 3. Test that cat with a bad flag prints nothing on stdout,
+# an error containing "unrecognized option" or "illegal option" on stderr,
+# and exits with non-zero status.
+
+$ cat --no-such-flag
+>2 /(unrecognized|illegal) option/
+>= !0
+
+```
 
 To run these tests:
 
-    $ shelltest echo.test cat.test
-    :echo.test: [OK]
-    :cat.test:1: [OK]
-    :cat.test:2: [OK]
+```
+$ shelltest examples.test
+:examples.test:1: [OK]
+:examples.test:2: [OK]
+:examples.test:3: [OK]
 
-             Test Cases  Total      
-     Passed  3           3          
-     Failed  0           0          
-     Total   3           3          
+         Test Cases  Total 
+ Passed  3           3     
+ Failed  0           0     
+ Total   3           3     
+```
 
 That's the basics! 
 There are also some alternate test formats you'll read about below.
 
 ## Options
 
-<!--
-Command to generate doc:
-shelltest --help | sed -e '/^shelltest file formats/,$d' -e 's/^/    /'
--->
+<!-- shelltest --help | sed -e '/^shelltest file formats/,$d' -->
+```
+shelltest 1.10
 
-    $ shelltest --help
-    shelltest 1.10
-    
-    shelltest [OPTIONS] [TESTFILES|TESTDIRS]
-    
-    Common flags:
-      -l --list             List the names of all tests found
-      -i --include=PAT      Include tests whose name contains this glob pattern
-                            (eg: -i1 -i{4,5,6})
-      -x --exclude=STR      Exclude test files whose path contains STR
-      -a --all              Show all output without truncating, even if large
-      -c --color            Show colored output if your terminal supports it
-      -d --diff             Show differences between expected/actual output
-         --precise          Show expected/actual output precisely, with quoting
-         --hide-successes   Show only test failures
-         --xmlout=FILE      Save test results to FILE in XML format.
-      -D --defmacro=D=DEF   Define a macro D to be replaced by DEF while parsing
-                            test files.
-         --execdir          Run tests from within each test file's directory
-         --extension=EXT    File suffix of test files (default: .test)
-      -w --with=EXE         Replace the first word of test commands with EXE
-                            (unindented commands only)
-      -o --timeout=SECS     Number of seconds a test may run (default: no limit)
-      -j --threads=N        Number of threads for running tests (default: 1)
-         --shell=EXE        The shell program to use (must accept -c CMD;
-                            default: /bin/sh on POSIX, cmd.exe on Windows)
-         --debug            Show debug info while running
-         --debug-parse      Show test file parsing results and stop
-    Print test file:
-         --print[=FORMAT]   Print test files in specified format (default: v3).
-    
-      -h --help             Display help message
-      -V --version          Print version information
-         --numeric-version  Print just the version number
+shelltest [OPTIONS] [TESTFILES|TESTDIRS]
 
+Common flags:
+  -l --list             List the names of all tests found
+  -i --include=PAT      Include tests whose name contains this glob pattern
+                        (eg: -i1 -i{4,5,6})
+  -x --exclude=STR      Exclude test files whose path contains STR
+  -a --all              Show all output without truncating, even if large
+  -c --color            Show colored output if your terminal supports it
+  -d --diff             Show differences between expected/actual output
+  -p --precise          Show expected/actual output precisely, with quoting
+     --hide-successes   Show only test failures
+  -f --fail-fast        Only hspec: stop tests on first failure
+     --xmlout=FILE      Save test results to FILE in XML format.
+  -D --defmacro=D=DEF   Define a macro D to be replaced by DEF while parsing
+                        test files.
+     --execdir          Run tests from within each test file's directory
+     --extension=EXT    File suffix of test files (default: .test)
+  -w --with=EXE         Replace the first word of test commands with EXE
+                        (unindented commands only)
+  -o --timeout=SECS     Number of seconds a test may run (default: no limit)
+  -j --threads=N        Number of threads for running tests (default: 1)
+     --shell=EXE        The shell program to use (must accept -c CMD;
+                        default: /bin/sh on POSIX, cmd.exe on Windows)
+     --debug            Show debug info while running
+     --debug-parse      Show test file parsing results and stop
+Print test file:
+     --print[=FORMAT]   Print test files in specified format (default: v3).
+     --hspec            Use hspec to run tests.
+  -h --help             Display help message
+  -V --version          Print version information
+     --numeric-version  Print just the version number
+
+```
     
 `shelltest` accepts one or more test file or directory arguments.
 A directory means all files below it named `*.test` (customisable with `--extension`).
 
-Test commands are run with `/bin/sh` on POSIX systems and with `CMD` on Windows.
-By default, they are run in the directory in which you ran `shelltest`;
+By default, test commands are run with `/bin/sh` on POSIX systems
+and with `CMD` on Windows; you can change this with the `--shell` option.
+
+By default, tests run in the directory in which you ran `shelltest`;
 with `--execdir` they will run in each test file's directory instead.
 
 `--include` selects only tests whose name (file name plus intra-file sequence number) matches a
@@ -168,18 +175,21 @@ For example, the command:
 
 shelltestrunner supports three test file formats:
 
-| Format name | Description                                                                                | Delimiters, in order       |
-|-------------|--------------------------------------------------------------------------------------------|----------------------------|
-| format 1    | old; command first, exit status is required                                                | `(none) <<< >>> >>>2 >>>=` |
-| format 2    | new, verbose: input first, can be reused by multiple tests, some delimiters can be omitted | `<<<    $$$ >>> >>>2 >>>=` |
-| format 3    | new, lightweight: like format 2, but with shorter delimiters                               | `<      $   >   >2   >=`   |
+| Format name           | Description                                                   | Delimiters, in order       |
+|-----------------------|---------------------------------------------------------------|----------------------------|
+| format 1 (deprecated) | command is first; exit status is required                     | `(none) <<< >>> >>>2 >>>=` |
+| format 2 (verbose)    | input is first, can be reused; all but command can be omitted | `<<<    $$$ >>> >>>2 >>>=` |
+| format 3 (preferred)  | same as format 2 but with short delimiters                    | `<      $   >   >2   >=`   |
 
-To read each file, shelltestrunner tries the formats in this order: first format 2, then format 3, then format 1.
-Format 3 is the lightest and most pleasant; you should use this one, unless it clashes with your data,
-in which case use the more verbose format 2. Format 1 is just for backward compatibility with old tests.
-All tests within a file should use the same format.
+To read each file, shelltestrunner tries the formats in this order: format 2, then format 3, then format 1.
+Within a file, all tests should use the same format.
+
+Here are the formats in detail, from oldest to newest.
+You should use format 3; or if that clashes with your data, then format 2.
 
 ### Format 1
+
+This old format is included for backward compatibility with old tests.
 
 Test files contain one or more individual tests, each consisting of a
 one-line shell command, optional input, expected standard output
@@ -199,18 +209,16 @@ When not specified, stdout/stderr are ignored.
 A space before the command protects it from -w/--with.
 
 Examples: 
-[above](#usage),
 [shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format1),
-[hledger](https://github.com/simonmichael/hledger/tree/master/tests),
 [Agda](https://github.com/agda/agda/tree/master/src/size-solver/test),
 [berp](https://github.com/bjpop/berp/tree/master/test/regression),
 [cblrepo](https://github.com/magthe/cblrepo/tree/master/tests).
 
 ### Format 2
 
-(shelltestrunner 1.9+) 
-This improves on format 1 in two ways: it allows tests to reuse the
-same input, and it allows delimiters to often be omitted.
+This is supported by shelltestrunner 1.9+. 
+It improves on format 1 in two ways: it allows tests to reuse the same input,
+and it allows delimiters/test clauses to be omitted, with more useful defaults.
 
 Test files contain one or more test groups. 
 A test group consists of some optional standard input and one or more tests.
@@ -245,10 +253,10 @@ Expected output/stderr extends to the next `>>>2` or `>>>=` if present,
 or to the last non-blank/comment line before the next `<<<` or `$$$` or file end.
 `/REGEX/` regular expression patterns may be used instead of
 specifying the expected output in full. The regex syntax is
-[regex-tdfa](http://hackage.haskell.org/package/regex-tdfa)'s, plus
+[regex-tdfa](https://hackage.haskell.org/package/regex-tdfa)'s, plus
 you can put `!` before `/REGEX/` to negate the match.
 
-The [exit status](http://en.wikipedia.org/wiki/Exit_status) is a
+The [exit status](https://en.wikipedia.org/wiki/Exit_status) is a
 number, normally 0 for a successful exit.  This too can be prefixed
 with `!` to negate the match, or you can use a `/REGEX/` pattern.
 A `>>>=` with nothing after it ignores the exit status.
@@ -293,8 +301,8 @@ Non-required `<<<` and `>>>` delimiters omitted:
 
 ### Format 3
 
-(shelltestrunner 1.9+)
-The same as format 2, but with more convenient short delimiters: < $ > >2 >=.
+This is supported by shelltestrunner 1.9+. 
+It is the preferred format - like format 2 but with more convenient short delimiters:
 
     # COMMENTS OR BLANK LINES
     <
@@ -347,7 +355,10 @@ Non-required `<` and `>` delimiters omitted:
 
     >2
 
-[shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format3)
+Also:
+[above](#usage),
+[shelltestrunner](https://github.com/simonmichael/shelltestrunner/tree/master/tests/format3),
+[hledger](https://github.com/simonmichael/hledger/tree/master/hledger/test).
 
 ## Printing tests
 
@@ -374,8 +385,8 @@ In general, always review the result of a conversion yourself before committing 
 
 |||
 |----------------------|--------------------------------------------------|
-| Released version:    | http://hackage.haskell.org/package/shelltestrunner
-| Changelog:           | http://hackage.haskell.org/package/shelltestrunner/changelog
+| Released version:    | https://hackage.haskell.org/package/shelltestrunner
+| Changelog:           | https://hackage.haskell.org/package/shelltestrunner/changelog
 | Code                 | https://github.com/simonmichael/shelltestrunner
 | Issues               | https://github.com/simonmichael/shelltestrunner/issues
 | Chat                 | Contact sm in the #hledger:matrix.org room on matrix or the #hledger channel on libera.chat
@@ -391,23 +402,26 @@ Feedback, testing, code, documentation, packaging, blogging, and funding are mos
 
 ## Credits
 
-[Simon Michael](http://joyful.com) wrote shelltestrunner,
+[Simon Michael](https://joyful.com) wrote shelltestrunner,
 inspired by John Wiegley's tests for Ledger.
 
-Code contributors include:
-Taavi Väljaots,
-John Macfarlane,
+Code contributors:
+Andreas Abel,
 Andrés Sicard-Ramírez,
-Iustin Pop,
-Trygve Laugstøl,
 Bernie Pope,
-Sergei Trofimovich,
+Felix C. Stegerman,
+Iustin Pop,
+Jakob Schöttl
 John Chee.
+John Macfarlane,
+Sergei Trofimovich,
+Taavi Väljaots,
+Trygve Laugstøl,
 
-shelltestrunner depends on several fine libraries, in particular Max
-Bolingbroke's test-framework, and of course on the Glorious Haskell
-Compiler.
+shelltestrunner depends on several fine libraries,
+in particular Max Bolingbroke's test-framework,
+and of course on the Glorious Haskell Compiler.
 
 The Blade Runner font is by Phil Steinschneider.
 
-<!-- http://www.explore-science-fiction-movies.com/blade-runner-movie-quotes.html -->
+<!-- https://www.explore-science-fiction-movies.com/blade-runner-movie-quotes.html -->
