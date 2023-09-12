@@ -2,11 +2,13 @@
 *.o
 TAGS
 ctags
+.obsidian
+.vscode
 _*
 /shelltest
 /shelltest.exe
 #/shelltest.hs.1
-t.test
+/[a-z].*
 .idea/
 *.iml
 .stack-work/
