@@ -1,0 +1,23 @@
+# 1. Test that the "echo" command (a shell builtin, usually)
+# prints its argument on stdout, prints nothing on stderr,
+# and exits with a zero exit code.
+
+$ echo a
+a
+
+# 2. Test that echo with no arguments prints a blank line,
+# no stderr output, and exits with zero.
+# Since the output ends with whitespace, this time we must write
+# the exit code test (>=) explicitly, to act as a delimiter.
+
+$ echo
+
+>=
+
+# 3. Test that cat with a bad flag prints nothing on stdout,
+# an error containing "unrecognized option" or "illegal option" on stderr,
+# and exits with non-zero status.
+
+$ cat --no-such-flag
+>2 /(unrecognized|illegal) option/
+>= !0

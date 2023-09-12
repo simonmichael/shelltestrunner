@@ -1,6 +1,2 @@
 
-$ shelltest --print=v1 tests/examples/cat.test | diff -u - tests/examples/cat.test
-
-$ shelltest --print=v1 tests/examples/echo.test | diff -u - tests/examples/echo.test
-
 $ shelltest --print=v1 tests/format1/abstract-test-with-macros | diff -u - tests/format1/abstract-test-with-macros
