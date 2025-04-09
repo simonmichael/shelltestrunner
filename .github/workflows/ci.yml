@@ -36,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         plan:
-        - { ghc: "910", stackyaml: "stack.yaml", stack: "stack --stack-yaml=stack.yaml" }
+        - { ghc: "912", stackyaml: "stack$ghc.yaml", stack: "stack --stack-yaml=$stackyaml" }
 
     steps:
 
@@ -69,19 +69,22 @@ jobs:
         restore-keys: |
              ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}
 
-    - name: Install stack
-      run: |
-        mkdir -p ~/.local/bin
-        export PATH=~/.local/bin:$PATH
-        # curl -sL https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack
-        if [[ ! -x ~/.local/bin/stack ]]; then curl -sL https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack; fi
-        stack --version
+    # - name: Install stack
+    #   run: |
+    #     mkdir -p ~/.local/bin
+    #     export PATH=~/.local/bin:$PATH
+    #     # curl -sL https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack
+    #     if [[ ! -x ~/.local/bin/stack ]]; then curl -sL https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack; fi
+    #     stack --version
 
-    - name: Install GHC
-      env:
-        stack: ${{ matrix.plan.stack }}
-      run: |
-        $stack setup --install-ghc
+    # - name: Install GHC
+    #   env:
+    #     stack: ${{ matrix.plan.stack }}
+    #   run: |
+    #     $stack setup --install-ghc
+
+    # Use preinstalled stack and ghc. This risks breaking when github updates these,
+    # but saves a lot of wasteful carbon emissions. As of 2024-04 they are 3.5.1 and 9.12.2.
 
     - name: Install haskell deps
       env:
