@@ -1,10 +1,8 @@
-cabal-version:  >= 1.10
-name:           shelltestrunner
--- keep shelltest.hs synced:
-version:        1.10
-category:       Testing
-synopsis:       Easy, repeatable testing of CLI programs/commands
-
+cabal-version: 3.0
+name:          shelltestrunner
+-- keep synced: shelltest.hs
+version:       1.10
+synopsis:      Easy, repeatable testing of CLI programs/commands
 description:
   shelltestrunner (executable: shelltest) is a portable
   command-line tool for testing command-line programs, or general shell
@@ -12,28 +10,26 @@ description:
   defining a command to run, some input, and the expected output,
   stderr, and exit status.  It can run tests in parallel, selectively,
   with a timeout, in color, etc.
+category:      Testing
+stability:     stable
+homepage:      https://github.com/simonmichael/shelltestrunner
+bug-reports:   https://github.com/simonmichael/shelltestrunner/issues
+author:        Simon Michael <simon@joyful.com>
+maintainer:    Simon Michael <simon@joyful.com>
+copyright:     Copyright: (c) 2009-2025 Simon Michael and contributors
+license:       GPL-3.0-or-later
+license-file:  LICENSE
+build-type:    Simple
+tested-with:   ghc==9.6, ghc==9.8, ghc==9.10, ghc==9.12
 
-license:        GPL
-license-file:   LICENSE
-author:         Simon Michael <simon@joyful.com>
-maintainer:     Simon Michael <simon@joyful.com>
-homepage:       https://github.com/simonmichael/shelltestrunner
-bug-reports:    https://github.com/simonmichael/shelltestrunner/issues
-stability:      stable
-build-type:     Simple
-
-tested-with:
-  GHC==9.6
-  GHC==9.8
-  GHC==9.10
-  GHC==9.12
-
-extra-tmp-files:
 extra-source-files:
   ANNOUNCE
-  CHANGES
   Makefile
   README.md
+  stack96.yaml
+  stack98.yaml
+  stack.yaml
+  stack912.yaml
   tests/README
   tests/bash/*.test
   tests/examples/*.test
@@ -54,11 +50,19 @@ extra-source-files:
   tests/format3/abstract-test-with-macros
   tests/format3/one-failing-test
 
+-- These are also copied to haddock docs.
+extra-doc-files:
+  CHANGES
+
+source-repository head
+  type:     git
+  location: https://github.com/simonmichael/shelltestrunner
+
 executable shelltest
+  hs-source-dirs: src
+  main-is: shelltest.hs
   default-language: Haskell2010
   ghc-options: -threaded -W -fwarn-tabs
-  main-is: shelltest.hs
-  hs-source-dirs: src
   other-modules:
     Import
     Parse
@@ -87,7 +91,3 @@ executable shelltest
     , hspec                >=2.9.0
     , hspec-core           >=2.9.0
     , hspec-contrib        >=0.5.1.1
-
-source-repository head
-  type:     git
-  location: https://github.com/simonmichael/shelltestrunner
