@@ -36,8 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         plan:
-        - { ghc: "810" , stackyaml: "stack8.10.yaml", stack: "stack --stack-yaml=stack8.10.yaml" }
-        # - { ghc: "96"  , stackyaml: "stack.yaml", stack: "stack --stack-yaml=stack.yaml" }
+        - { ghc: "910", stackyaml: "stack.yaml", stack: "stack --stack-yaml=stack.yaml" }
 
     steps:
 
