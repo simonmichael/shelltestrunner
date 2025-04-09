@@ -36,7 +36,7 @@ jobs:
       fail-fast: false
       matrix:
         plan:
-        - { ghc: "912", stackyaml: "stack$ghc.yaml", stack: "stack --stack-yaml=$stackyaml" }
+        - { ghc: "912", stack: "stack --stack-yaml=stack912.yaml" }
 
     steps:
 
@@ -89,8 +89,6 @@ jobs:
     - name: Install haskell deps
       env:
         stack: ${{ matrix.plan.stack }}
-        stackyaml: ${{ matrix.plan.stackyaml }}
-        ghc: ${{ matrix.plan.ghc }}
       run: |
         $stack build --test --bench --only-dependencies
         #  --no-terminal
@@ -98,16 +96,12 @@ jobs:
     - name: Build all shelltestrunner modules warning free, optimised and minimised, and run any unit/doc/bench tests
       env:
         stack: ${{ matrix.plan.stack }}
-        stackyaml: ${{ matrix.plan.stackyaml }}
-        ghc: ${{ matrix.plan.ghc }}
       run: |
         $stack install --test --bench --force-dirty --ghc-options=-fforce-recomp --ghc-options=-Werror --ghc-options=-split-sections --no-terminal
 
     - name: Run functional tests (excluding windows tests)
       env:
         stack: ${{ matrix.plan.stack }}
-        stackyaml: ${{ matrix.plan.stackyaml }}
-        ghc: ${{ matrix.plan.ghc }}
       run: |
         export PATH=~/.local/bin:$PATH
-        make STACKYAMLOPT="--stack-yaml=$stackyaml" test
+        make STACK="$stack" test
