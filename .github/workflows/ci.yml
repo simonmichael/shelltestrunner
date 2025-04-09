@@ -36,7 +36,9 @@ jobs:
       fail-fast: false
       matrix:
         plan:
-        - { ghc: "912", stack: "stack --stack-yaml=stack912.yaml" }
+        - { ghc: "912", stack: "stack --stack-yaml=stack912.yaml --system-ghc --no-install-ghc" }
+          # Use the preinstalled stack and ghc (3.5.1 and 9.12.2 as of 2025-04).
+          # This risks breaking when github updates these, but avoids a lot of wasted work.
 
     steps:
 
@@ -69,7 +71,7 @@ jobs:
         restore-keys: |
              ${{ runner.os }}-stack-work-${{ matrix.plan.ghc }}
 
-    # - name: Install stack
+    # - name: Install specific stack version
     #   run: |
     #     mkdir -p ~/.local/bin
     #     export PATH=~/.local/bin:$PATH
@@ -77,14 +79,11 @@ jobs:
     #     if [[ ! -x ~/.local/bin/stack ]]; then curl -sL https://get.haskellstack.org/stable/linux-x86_64.tar.gz | tar xz --wildcards --strip-components=1 -C ~/.local/bin '*/stack'; chmod a+x ~/.local/bin/stack; fi
     #     stack --version
     #
-    # - name: Install GHC
+    # - name: Install specific GHC version
     #   env:
     #     stack: ${{ matrix.plan.stack }}
     #   run: |
     #     $stack setup --install-ghc
-    #
-    # Instead, use preinstalled stack and ghc. This risks breaking when github updates these,
-    # but saves a lot of wasteful carbon emissions. As of 2025-04 they are 3.5.1 and 9.12.2.
 
     - name: Install haskell deps
       env:
