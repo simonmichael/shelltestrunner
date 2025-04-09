@@ -1,0 +1,3 @@
+packages:
+- '.'
+snapshot: lts-23.17
