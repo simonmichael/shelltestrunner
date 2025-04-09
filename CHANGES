@@ -1,3 +1,7 @@
+1.11 (unreleased)
+
+* Fixed: -i1 was not selecting the test if the file contained only one test ([#37], Thomas Miedema)
+
 1.10 (2023-09-12)
 
 User-visible changes:

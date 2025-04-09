@@ -1,7 +1,7 @@
 cabal-version: 3.0
 name:          shelltestrunner
 -- keep synced: shelltest.hs
-version:       1.10
+version:       1.10.99
 synopsis:      Easy, repeatable testing of CLI programs/commands
 description:
   shelltestrunner (executable: shelltest) is a portable
