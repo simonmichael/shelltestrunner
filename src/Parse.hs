@@ -32,8 +32,7 @@ parseShellTestFile debug preProcessor f = do
   p <- parseFromFileWithPreprocessor shelltestfile preProcessor f
   case p of
     Right ts -> do
-           let ts' | length ts > 1 = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
-                   | otherwise     = ts
+           let ts' = [t{testname=testname t++":"++show n} | (n,t) <- zip ([1..]::[Int]) ts]
            when (debug) $ do
              printf "parsed %s:\n" f
              mapM_ (putStrLn.(' ':).ppShow) ts'
