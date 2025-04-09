@@ -89,6 +89,8 @@ jobs:
     - name: Install haskell deps
       env:
         stack: ${{ matrix.plan.stack }}
+        stackyaml: ${{ matrix.plan.stackyaml }}
+        ghc: ${{ matrix.plan.ghc }}
       run: |
         $stack build --test --bench --only-dependencies
         #  --no-terminal
@@ -96,6 +98,8 @@ jobs:
     - name: Build all shelltestrunner modules warning free, optimised and minimised, and run any unit/doc/bench tests
       env:
         stack: ${{ matrix.plan.stack }}
+        stackyaml: ${{ matrix.plan.stackyaml }}
+        ghc: ${{ matrix.plan.ghc }}
       run: |
         $stack install --test --bench --force-dirty --ghc-options=-fforce-recomp --ghc-options=-Werror --ghc-options=-split-sections --no-terminal
 
@@ -103,6 +107,7 @@ jobs:
       env:
         stack: ${{ matrix.plan.stack }}
         stackyaml: ${{ matrix.plan.stackyaml }}
+        ghc: ${{ matrix.plan.ghc }}
       run: |
         export PATH=~/.local/bin:$PATH
         make STACKYAMLOPT="--stack-yaml=$stackyaml" test
