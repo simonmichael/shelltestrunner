@@ -1,0 +1,11 @@
+$  echo foo
+foo
+
+$  cat --invalid-option
+>2
+cat: unrecognized option '--invalid-option'
+Try 'cat --help' for more information.
+>= 1
+
+$  false
+>= 1

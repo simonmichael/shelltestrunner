@@ -2,3 +2,9 @@
 $ shelltest --print=v3 tests/format3/ideal.test | diff -u - tests/format3/ideal.test
 
 $ shelltest --print tests/format3/ideal.test | diff -u - tests/format3/ideal.test
+
+$ shelltest --print --actual=update tests/format3/ideal.test | diff -u - tests/format3/ideal.test
+
+$ shelltest --print --actual=all tests/print/print-actual.test | diff -u - tests/print/print-actual.test
+
+$  cp tests/print/print-actual-no-results.test.txt /tmp/print-actual-no-results.test && shelltest --print --actual=all /tmp/print-actual-no-results.test | diff -u - tests/print/print-actual.test

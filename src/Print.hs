@@ -8,53 +8,69 @@
 --   may lose other data
 
 module Print
+  ( printShellTest
+  , packResult
+  )
 where
 
-import Safe (lastMay)
 import Import
 import Types
 
--- | Print a shell test. See CLI documentation for details.
+-- | Print a shell test considering the @--actual=mode@ option. See CLI
+-- documentation for details on.
 -- For v3 (the preferred, lightweight format), avoid printing most unnecessary things
 -- (stdout delimiter, 0 exit status value).
 printShellTest
   :: String               -- ^ Shelltest format. Value of option @--print[=FORMAT]@.
+  -> Maybe String         -- ^ Value of option @--actual[=MODE]@. @Nothing@ if option is not given.
   -> ShellTest            -- ^ Test to print
+  -> Either String String -- ^ Actual stdout, non-matching or matching
+  -> Either String String -- ^ Actual stderr, non-matching or matching
+  -> Either Int Int       -- ^ Actual exit status, non-matching or matching
   -> IO ()
-printShellTest format ShellTest{command=c,stdin=i,comments=comments,trailingComments=trailingComments,
+printShellTest format actualMode ShellTest{command=c,stdin=i,comments=comments,trailingComments=trailingComments,
                stdoutExpected=o_expected,stderrExpected=e_expected,exitCodeExpected=x_expected}
-               = do
+               o_actual e_actual x_actual = do
+  (o,e,x) <- computeResults actualMode
   case format of
     "v1" -> do
       printComments comments
       printCommand "" c
       printStdin "<<<" i
-      printStdouterr False ">>>" o_expected
-      printStdouterr False ">>>2" e_expected
-      printExitStatus True True ">>>=" x_expected
+      printStdouterr ">>>" $ justMatcherOutErr o
+      printStdouterr ">>>2" $ justMatcherOutErr e
+      printExitStatus True ">>>=" x
       printComments trailingComments
     "v2" -> do
       printComments comments
       printStdin "<<<" i
       printCommand "$$$ " c
-      printStdouterr True ">>>" o_expected
-      printStdouterr True ">>>2" e_expected
-      printExitStatus trailingblanklines True ">>>=" x_expected
+      printStdouterr ">>>" $ justMatcherOutErr o
+      printStdouterr ">>>2" $ justMatcherOutErr e
+      printExitStatus False ">>>=" x
       printComments trailingComments
     "v3" -> do
       printComments comments
       printStdin "<" i
       printCommand "$ "  c
-      printStdouterr True ">" o_expected
-      printStdouterr True ">2" e_expected
-      printExitStatus trailingblanklines False ">=" x_expected
+      printStdouterr ">" $ justMatcherOutErr o
+      printStdouterr ">2" $ justMatcherOutErr e
+      printExitStatus False ">=" x
       printComments trailingComments
     _ -> fail $ "Unsupported --print format: " ++ format
   where
-    trailingblanklines = case (o_expected, e_expected) of
-      (Just (Lines _ o), Just (Lines _ e)) -> hasblanks $ if null e then o else e
-      _ -> False
-      where hasblanks s = maybe False null $ lastMay $ lines s
+    computeResults :: Maybe String -> IO (Maybe Matcher, Maybe Matcher, Matcher)
+    computeResults Nothing = return (o_expected, e_expected, x_expected)
+    computeResults (Just mode)
+     | mode `isPrefixOf` "all" = return
+         (Just $ Lines 0 $ fromEither o_actual
+         ,Just $ Lines 0 $ fromEither e_actual
+         ,Numeric $ show $ fromEither x_actual)
+     | mode `isPrefixOf` "update" = return
+         (either (Just . Lines 0) (const o_expected) o_actual
+         ,either (Just . Lines 0) (const e_expected) e_actual
+         ,either (Numeric . show) (const x_expected) x_actual)
+     | otherwise = fail "Unsupported argument for --actual option. Allowed: all, update, or a prefix thereof."
 
 printComments :: [String] -> IO ()
 printComments = mapM_ putStrLn
@@ -68,23 +84,32 @@ printCommand :: String -> TestCommand -> IO ()
 printCommand prefix (ReplaceableCommand s) = printf "%s%s\n" prefix s
 printCommand prefix (FixedCommand s)       = printf "%s %s\n" prefix s
 
--- Print an expected stdout or stderr test, prefixed with the given delimiter.
--- If no expected value is specified, print nothing if first argument is true
--- (for format 1, which ignores unspecified out/err), otherwise print a dummy test.
-printStdouterr :: Bool -> String -> Maybe Matcher -> IO ()
-printStdouterr alwaystest prefix Nothing                 = when alwaystest $ printf "%s //\n" prefix
-printStdouterr _ _ (Just (Lines _ ""))                   = return ()
-printStdouterr _ _ (Just (Numeric _))                    = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
-printStdouterr _ _ (Just (NegativeNumeric _))            = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
-printStdouterr _ prefix (Just (Lines _ s)) | prefix==">" = printf "%s" s  -- omit v3's > delimiter, really no need for it
-printStdouterr _ prefix (Just (Lines _ s))               = printf "%s\n%s" prefix s
-printStdouterr _ prefix (Just regex)                     = printf "%s %s\n" prefix (show regex)
+printStdouterr :: String -> Maybe Matcher -> IO ()
+printStdouterr _ Nothing                    = return ()
+printStdouterr _ (Just (Lines _ ""))        = return ()
+printStdouterr _ (Just (Numeric _))         = fail "FATAL: Cannot handle Matcher (Numeric) for stdout/stderr."
+printStdouterr _ (Just (NegativeNumeric _)) = fail "FATAL: Cannot handle Matcher (NegativeNumeric) for stdout/stderr."
+printStdouterr ">" (Just (Lines _ s))       = printf "%s" s -- omit the optional ">" in format v3
+printStdouterr prefix (Just (Lines _ s))    = printf "%s\n%s" prefix s
+printStdouterr prefix (Just regex)          = printf "%s %s\n" prefix (show regex)
+
 
 -- | Print an expected exit status clause, prefixed with the given delimiter.
--- If zero is expected:
---  if the first argument is not true, nothing will be printed;
---  otherwise if the second argument is not true, only the delimiter will be printed.
-printExitStatus :: Bool -> Bool ->  String -> Matcher ->      IO ()
-printExitStatus    _       _        _         (Lines _ _)   = fail "FATAL: Cannot handle Matcher (Lines) for exit status."
-printExitStatus    always  showzero prefix    (Numeric "0") = when always $ printf "%s %s\n" prefix (if showzero then "0" else "")
-printExitStatus    _       _        prefix    s             = printf "%s %s\n" prefix (show s)
+-- First arg says 'alwaysPrintEvenIfZero'.
+printExitStatus :: Bool -> String -> Matcher -> IO ()
+printExitStatus _ _ (Lines _ _) = fail "FATAL: Cannot handle Matcher (Lines) for exit status."
+printExitStatus False _     (Numeric "0") = return ()
+printExitStatus True prefix (Numeric "0") = printf "%s 0\n" prefix
+printExitStatus _ prefix s = printf "%s %s\n" prefix (show s)
+
+-- | Wrap result @a@ into 'Either' depending on wether it matches the expected result.
+packResult :: Bool -> a -> Either a a
+packResult True = Right
+packResult False = Left
+
+fromEither :: Either a a -> a
+fromEither = either id id
+
+-- | Return the default 'Matcher' for 'Nothing'.
+justMatcherOutErr :: Maybe Matcher -> Maybe Matcher
+justMatcherOutErr = Just . fromMaybe (Lines 0 "")
